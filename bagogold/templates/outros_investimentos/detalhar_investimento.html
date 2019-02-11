@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
+{% load misc %}
 
 {% block extra_head %}
 <link href={% static "assets/global/plugins/datatables/datatables.min.css" %} rel="stylesheet" type="text/css" />
@@ -113,6 +114,7 @@
 						<tr>
 							<th>Data</th>
 							<th>Rendimento</th>
+                            <th>Imposto</th>
 							<th><a href="{% url 'outros_investimentos:inserir_rendimento' investimento.id %}" class="btn btn-sm green-steel">Inserir</a></th>
 						</tr>
 					</thead>
@@ -121,6 +123,7 @@
 					<tr>
 						<td>{{rendimento.data|date:'d/m/Y'}}</td>
 						<td>R$ {{rendimento.valor}}</td>
+                        <td>R$ {% if rendimento.possui_imposto %}{{rendimento.valor_imposto|floatformat:2}} ({{rendimento.impostorendarendimento.percentual|casas_decimais}}%){% else %}0,00{% endif %}</td>
 						<td><a href="{% url 'outros_investimentos:editar_rendimento' rendimento.id %}" class="btn btn-sm yellow-crusta">Editar</a></td>
 					</tr>
 					{% endfor %}

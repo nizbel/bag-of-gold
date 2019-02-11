@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.lc import HistoricoTaxaDI
-from bagogold.outros_investimentos.models import Amortizacao, Rendimento
+import datetime
 from decimal import Decimal
+
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.aggregates import Sum, Count
 from django.db.models.expressions import Case, When, F
 from django.db.models.fields import DecimalField
-import datetime
+
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
+from bagogold.outros_investimentos.models import Amortizacao, Rendimento
+
 
 class Divisao (models.Model):
     nome = models.CharField(u'Nome da divisão', max_length=50)
@@ -23,24 +27,59 @@ class Divisao (models.Model):
         return self.investidor.divisaoprincipal.divisao.id == self.id
 
     def possui_operacoes_registradas(self):
-        possui_operacoes = (DivisaoOperacaoAcao.objects.filter(divisao=self).count() + DivisaoOperacaoCDB_RDB.objects.filter(divisao=self).count() + DivisaoOperacaoFII.objects.filter(divisao=self).count() + \
-            DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self).count() + DivisaoOperacaoLC.objects.filter(divisao=self).count() + DivisaoOperacaoTD.objects.filter(divisao=self).count()) > 0
+        possui_operacoes = (DivisaoOperacaoAcao.objects.filter(divisao=self).count() + DivisaoOperacaoCDB_RDB.objects.filter(divisao=self).count() + DivisaoOperacaoFII.objects.filter(divisao=self).count() \
+            + DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self).count() + DivisaoOperacaoLCI_LCA.objects.filter(divisao=self).count() + DivisaoOperacaoTD.objects.filter(divisao=self).count() \
+            + DivisaoOperacaoCriptomoeda.objects.filter(divisao=self).count() + DivisaoOperacaoDebenture.objects.filter(divisao=self).count() + DivisaoOperacaoCRI_CRA.objects.filter(divisao=self).count() \
+            + DivisaoInvestimento.objects.filter(divisao=self).count() + DivisaoOperacaoLetraCambio.objects.filter(divisao=self).count()) > 0
         
         return possui_operacoes
     
+    def buscar_data_primeira_operacao(self):
+        datas_primeira_operacao = list()
+        
+        # Preencher com as primeiras datas de operação para cada investimento
+        if DivisaoOperacaoAcao.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoAcao.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoCDB_RDB.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoCDB_RDB.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoCriptomoeda.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoCriptomoeda.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoFII.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoFII.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoLCI_LCA.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoLCI_LCA.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoDebenture.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoDebenture.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoCRI_CRA.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoCRI_CRA.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoOperacaoTD.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoOperacaoTD.objects.filter(divisao=self).order_by('operacao__data')[0].operacao.data)
+        if DivisaoInvestimento.objects.filter(divisao=self).exists():
+            datas_primeira_operacao.append(DivisaoInvestimento.objects.filter(divisao=self).order_by('investimento__data')[0].investimento.data)
+        
+        if len(datas_primeira_operacao) == 0:
+            return None
+        
+        return min(datas_primeira_operacao)
+    
     def saldo_acoes_bh(self, data=datetime.date.today()):
+        from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
         from bagogold.bagogold.utils.acoes import \
             calcular_poupanca_prov_acao_ate_dia_por_divisao
         """
         Calcula o saldo de operações de ações Buy and Hold de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
-        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='B', operacao__data__lte=data):
+        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='B', operacao__data__lte=data).select_related('operacao'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
-                saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos - operacao.qtd_proventos_utilizada()) * operacao_divisao.percentual_divisao())
+                saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
             elif operacao.tipo_operacao == 'V':
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
+        
+        saldo += UsoProventosOperacaoAcao.objects.filter(divisao_operacao__divisao=self).aggregate(qtd_total=Sum('qtd_utilizada'))['qtd_total'] or 0
         
         # Proventos
         saldo += calcular_poupanca_prov_acao_ate_dia_por_divisao(data, self)        
@@ -57,7 +96,7 @@ class Divisao (models.Model):
         Calcula o saldo de operações de ações para trade de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
-        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='T', operacao__data__lte=data):
+        for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='T', operacao__data__lte=data).select_related('operacao'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
@@ -72,9 +111,9 @@ class Divisao (models.Model):
         return saldo
     
     def saldo_cdb_rdb(self, data=datetime.date.today()):
-        from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di, \
+        from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_di, \
             calcular_valor_atualizado_com_taxa_prefixado
-        from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
+        from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
         from bagogold.cdb_rdb.models import CDB_RDB
         """
         Calcula o saldo de operações de CDB/RDB de uma divisão (dinheiro livre)
@@ -83,22 +122,26 @@ class Divisao (models.Model):
         historico_di = HistoricoTaxaDI.objects.all()
         # Computar compras
         saldo -= (DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
-        for venda_divisao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V'):
+        for venda_divisao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V') \
+            .annotate(tipo_rendimento=F('operacao__cdb_rdb__tipo_rendimento')).select_related('operacao__cdb_rdb'):
             # Para venda, calcular valor do cdb/rdb no dia da venda
             valor_venda = venda_divisao.quantidade
-            taxa = venda_divisao.operacao.porcentagem()
              
             # Calcular o valor atualizado
-            if venda_divisao.operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+            if venda_divisao.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
                 # DI
                 dias_de_rendimento = historico_di.filter(data__gte=venda_divisao.operacao.operacao_compra_relacionada().data, data__lt=venda_divisao.operacao.data)
                 taxas_dos_dias = dict(dias_de_rendimento.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-                valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, taxa)
-            elif venda_divisao.operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
+                valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, venda_divisao.operacao.porcentagem())
+                valor_venda -= sum(calcular_iof_e_ir_longo_prazo(valor_venda - venda_divisao.quantidade, 
+                                                              (venda_divisao.operacao.data - venda_divisao.operacao.operacao_compra_relacionada().data).days))
+            elif venda_divisao.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
                 # Prefixado
                 # Calcular quantidade dias para valorização
                 qtd_dias = qtd_dias_uteis_no_periodo(venda_divisao.operacao.operacao_compra_relacionada().data, venda_divisao.operacao.data)
-                valor_venda = calcular_valor_atualizado_com_taxa_prefixado(valor_venda, taxa, qtd_dias)
+                valor_venda = calcular_valor_atualizado_com_taxa_prefixado(valor_venda, venda_divisao.operacao.porcentagem(), qtd_dias)
+                valor_venda -= sum(calcular_iof_e_ir_longo_prazo(valor_venda - venda_divisao.quantidade, 
+                                                              (venda_divisao.operacao.data - venda_divisao.operacao.operacao_compra_relacionada().data).days))
             # Arredondar
             str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
             valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
@@ -155,7 +198,11 @@ class Divisao (models.Model):
                             When(operacao__operacaocriptomoedataxa__moeda=F('operacao__operacaocriptomoedamoeda__criptomoeda'), 
                                 then=F('quantidade') * F('operacao__preco_unitario') - F('operacao__operacaocriptomoedataxa__valor') * (F('quantidade') / F('operacao__quantidade'))))),
                             output_field=DecimalField())).aggregate(soma_total=Sum('total'))['soma_total'] or Decimal(0)
-                            
+        
+        # Transferências de criptomoedas
+        saldo -= DivisaoTransferenciaCriptomoeda.objects.filter(divisao=self, transferencia__data__lte=data, transferencia__moeda__isnull=True) \
+                    .aggregate(total_taxas=Sum('transferencia__taxa'))['total_taxas'] or 0
+        
         # Transferências
         saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRIPTOMOEDA, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
             + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRIPTOMOEDA, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
@@ -180,13 +227,13 @@ class Divisao (models.Model):
         return saldo
     
     def saldo_fii(self, data=datetime.date.today()):
-        from bagogold.bagogold.utils.fii import \
+        from bagogold.fii.utils import \
             calcular_poupanca_prov_fii_ate_dia_por_divisao
         """
         Calcula o saldo de operações de FII de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
-        for operacao_divisao in DivisaoOperacaoFII.objects.filter(divisao=self, operacao__data__lte=data):
+        for operacao_divisao in DivisaoOperacaoFII.objects.filter(divisao=self, operacao__data__lte=data).select_related('operacao'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.corretagem + operacao.emolumentos - operacao.qtd_proventos_utilizada()) * operacao_divisao.percentual_divisao())
@@ -194,7 +241,7 @@ class Divisao (models.Model):
                 saldo += (operacao_divisao.quantidade * operacao.preco_unitario - (operacao.corretagem + operacao.emolumentos) * operacao_divisao.percentual_divisao())
         
         # Proventos
-        saldo += calcular_poupanca_prov_fii_ate_dia_por_divisao(data, self)    
+        saldo += calcular_poupanca_prov_fii_ate_dia_por_divisao(self, data)    
         
         # Transferências
         saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FII, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
@@ -207,11 +254,10 @@ class Divisao (models.Model):
         Calcula o saldo de operações de fundo de investimento de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
-        for operacao_divisao in DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self, operacao__data__lte=data):
-            operacao = operacao_divisao.operacao
-            if operacao.tipo_operacao == 'C':
+        for operacao_divisao in DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self, operacao__data__lte=data).annotate(tipo_operacao=F('operacao__tipo_operacao')):
+            if operacao_divisao.tipo_operacao == 'C':
                 saldo -= operacao_divisao.quantidade 
-            elif operacao.tipo_operacao == 'V':
+            elif operacao_divisao.tipo_operacao == 'V':
                 saldo += operacao_divisao.quantidade
                 
         # Transferências
@@ -221,7 +267,53 @@ class Divisao (models.Model):
         return saldo
     
     def saldo_lc(self, data=datetime.date.today()):
-        from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di
+        from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_di, \
+            calcular_valor_atualizado_com_taxa_prefixado
+        from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
+        
+        from bagogold.lc.models import LetraCambio
+        """
+        Calcula o saldo de operações de Letra de Câmbio de uma divisão (dinheiro livre)
+        """
+        saldo = Decimal(0)
+        historico_di = HistoricoTaxaDI.objects.all()
+        
+        # Computar compras
+        saldo -= (DivisaoOperacaoLetraCambio.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        for venda_divisao in DivisaoOperacaoLetraCambio.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V') \
+            .annotate(tipo_rendimento=F('operacao__lc__tipo_rendimento')).select_related('operacao', 'operacao__lc'):
+            # Para venda, calcular valor do cdb/rdb no dia da venda
+            valor_venda = venda_divisao.quantidade
+             
+            # Calcular o valor atualizado
+            if venda_divisao.tipo_rendimento == LetraCambio.LC_DI:
+                # DI
+                dias_de_rendimento = historico_di.filter(data__gte=venda_divisao.operacao.operacao_compra_relacionada().data, data__lt=venda_divisao.operacao.data)
+                taxas_dos_dias = dict(dias_de_rendimento.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+                valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, venda_divisao.operacao.porcentagem())
+                valor_venda -= sum(calcular_iof_e_ir_longo_prazo(valor_venda - venda_divisao.quantidade, 
+                                                              (venda_divisao.operacao.data - venda_divisao.operacao.operacao_compra_relacionada().data).days))
+            elif venda_divisao.tipo_rendimento == LetraCambio.LC_PREFIXADO:
+                # Prefixado
+                # Calcular quantidade dias para valorização
+                qtd_dias = qtd_dias_uteis_no_periodo(venda_divisao.operacao.operacao_compra_relacionada().data, venda_divisao.operacao.data)
+                valor_venda = calcular_valor_atualizado_com_taxa_prefixado(valor_venda, venda_divisao.operacao.porcentagem(), qtd_dias)
+                valor_venda -= sum(calcular_iof_e_ir_longo_prazo(valor_venda - venda_divisao.quantidade, 
+                                                              (venda_divisao.operacao.data - venda_divisao.operacao.operacao_compra_relacionada().data).days))
+            
+            # Arredondar
+            str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
+            valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+            saldo += valor_venda
+        
+        # Transferências
+        saldo += -(TransferenciaEntreDivisoes.objects.filter(divisao_cedente=self, investimento_origem=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LC, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0) \
+            + (TransferenciaEntreDivisoes.objects.filter(divisao_recebedora=self, investimento_destino=TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LC, data__lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        
+        return saldo
+    
+    def saldo_lci_lca(self, data=datetime.date.today()):
+        from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_di
         """
         Calcula o saldo de operações de Letra de Crédito de uma divisão (dinheiro livre)
         """
@@ -229,16 +321,15 @@ class Divisao (models.Model):
         historico_di = HistoricoTaxaDI.objects.all()
         
         # Computar compras
-        saldo -= (DivisaoOperacaoLC.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
-        for venda_divisao in DivisaoOperacaoLC.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V'):
+        saldo -= (DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
+        for venda_divisao in DivisaoOperacaoLCI_LCA.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V').select_related('operacao', 'operacao__letra_credito'):
             # Para venda, calcular valor do cdb/rdb no dia da venda
             valor_venda = venda_divisao.quantidade
-            taxa = venda_divisao.operacao.porcentagem_di()
              
             # Calcular o valor atualizado
             dias_de_rendimento = historico_di.filter(data__gte=venda_divisao.operacao.operacao_compra_relacionada().data, data__lt=venda_divisao.operacao.data)
             taxas_dos_dias = dict(dias_de_rendimento.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-            valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, taxa)
+            valor_venda = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, valor_venda, venda_divisao.operacao.porcentagem())
             # Arredondar
             str_auxiliar = str(valor_venda.quantize(Decimal('.0001')))
             valor_venda = Decimal(str_auxiliar[:len(str_auxiliar)-2])
@@ -294,7 +385,7 @@ class Divisao (models.Model):
         Calcula o saldo de operações de Tesouro Direto de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
-        for operacao_divisao in DivisaoOperacaoTD.objects.filter(divisao=self, operacao__data__lte=data):
+        for operacao_divisao in DivisaoOperacaoTD.objects.filter(divisao=self, operacao__data__lte=data).select_related('operacao'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
                 saldo -= (operacao_divisao.quantidade * operacao.preco_unitario + (operacao.taxa_custodia + operacao.taxa_bvmf) * operacao_divisao.percentual_divisao())
@@ -331,9 +422,11 @@ class Divisao (models.Model):
         saldo += self.saldo_fii(data=data)
         # Fundo de investimento
         saldo += self.saldo_fundo_investimento(data=data)
-        # LC
+        # Letra de Câmbio
         saldo += self.saldo_lc(data=data)
-        # Outros investimetnos
+        # Letra de Crédito
+        saldo += self.saldo_lci_lca(data=data)
+        # Outros investimentos
         saldo += self.saldo_outros_invest(data=data)
         # TD
         saldo += self.saldo_td(data=data)
@@ -364,9 +457,9 @@ class DivisaoInvestimento (models.Model):
     def percentual_divisao(self):
         return self.quantidade / self.investimento.quantidade
     
-class DivisaoOperacaoLC (models.Model):
+class DivisaoOperacaoLetraCambio (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
-    operacao = models.ForeignKey('OperacaoLetraCredito')
+    operacao = models.ForeignKey('lc.OperacaoLetraCambio')
     """
     Guarda a quantidade da operação que pertence a divisão
     """
@@ -383,6 +476,78 @@ class DivisaoOperacaoLC (models.Model):
     """
     def percentual_divisao(self):
         return self.quantidade / self.operacao.quantidade
+    
+    def divisao_operacao_compra_relacionada(self):
+        from bagogold.lc.models import OperacaoVendaLetraCambio
+        if self.operacao.tipo_operacao == 'V':
+            return DivisaoOperacaoLetraCambio.objects.get(operacao=OperacaoVendaLetraCambio.objects.get(operacao_venda=self.operacao).operacao_compra, divisao_id=self.divisao_id)
+        else:
+            return None
+    
+    def qtd_disponivel_venda_na_data(self, data, desconsiderar_operacao=None):
+        from bagogold.lc.models import OperacaoVendaLetraCambio
+        if self.operacao.tipo_operacao != 'C':
+            raise ValueError('Operação deve ser de compra')
+        vendas = OperacaoVendaLetraCambio.objects.filter(operacao_compra=self.operacao_id, operacao_venda__data__lte=data).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
+        qtd_vendida = 0
+        for venda in DivisaoOperacaoLetraCambio.objects.filter(operacao__id__in=vendas, divisao_id=self.divisao_id):
+            qtd_vendida += venda.quantidade
+        return self.quantidade - qtd_vendida
+    
+class CheckpointDivisaoLetraCambio (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    divisao_operacao = models.ForeignKey('DivisaoOperacaoLetraCambio', limit_choices_to={'operacao__tipo_operacao': 'C'})
+    qtd_restante = models.DecimalField(u'Quantidade restante da operação', max_digits=11, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    qtd_atualizada = models.DecimalField(u'Quantidade atualizada da operação', max_digits=17, decimal_places=8, validators=[MinValueValidator(Decimal('0.00000001'))])
+    
+    class Meta:
+        unique_together=('divisao_operacao', 'ano')
+        
+class DivisaoOperacaoLCI_LCA (models.Model):
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    operacao = models.ForeignKey('lci_lca.OperacaoLetraCredito')
+    """
+    Guarda a quantidade da operação que pertence a divisão
+    """
+    quantidade = models.DecimalField('Quantidade',  max_digits=11, decimal_places=2)
+    
+    class Meta:
+        unique_together=('divisao', 'operacao')
+    
+    def __unicode__(self):
+        return self.divisao.nome + ': ' + str(self.quantidade) + ' de ' + unicode(self.operacao)
+    
+    """
+    Calcula o percentual da operação que foi para a divisão
+    """
+    def percentual_divisao(self):
+        return self.quantidade / self.operacao.quantidade
+    
+    def divisao_operacao_compra_relacionada(self):
+        from bagogold.lci_lca.models import OperacaoVendaLetraCredito
+        if self.operacao.tipo_operacao == 'V':
+            return DivisaoOperacaoLCI_LCA.objects.get(operacao=OperacaoVendaLetraCredito.objects.get(operacao_venda=self.operacao).operacao_compra, divisao_id=self.divisao_id)
+        else:
+            return None
+    
+    def qtd_disponivel_venda_na_data(self, data, desconsiderar_operacao=None):
+        from bagogold.lci_lca.models import OperacaoVendaLetraCredito
+        if self.operacao.tipo_operacao != 'C':
+            raise ValueError('Operação deve ser de compra')
+        vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra=self.operacao, operacao_venda__data__lte=data).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
+        qtd_vendida = 0
+        for venda in DivisaoOperacaoLCI_LCA.objects.filter(operacao__id__in=vendas, divisao_id=self.divisao_id):
+            qtd_vendida += venda.quantidade
+        return self.quantidade - qtd_vendida
+    
+class CheckpointDivisaoLCI_LCA (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    divisao_operacao = models.ForeignKey('DivisaoOperacaoLCI_LCA', limit_choices_to={'operacao__tipo_operacao': 'C'})
+    qtd_restante = models.DecimalField(u'Quantidade restante da operação', max_digits=11, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    qtd_atualizada = models.DecimalField(u'Quantidade atualizada da operação', max_digits=17, decimal_places=8, validators=[MinValueValidator(Decimal('0.00000001'))])
+    
+    class Meta:
+        unique_together=('divisao_operacao', 'ano')
     
 class DivisaoOperacaoCDB_RDB (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
@@ -403,6 +568,32 @@ class DivisaoOperacaoCDB_RDB (models.Model):
     """
     def percentual_divisao(self):
         return self.quantidade / self.operacao.quantidade
+    
+    def divisao_operacao_compra_relacionada(self):
+        from bagogold.cdb_rdb.models import OperacaoVendaCDB_RDB
+        if self.operacao.tipo_operacao == 'V':
+            return DivisaoOperacaoCDB_RDB.objects.get(operacao=OperacaoVendaCDB_RDB.objects.get(operacao_venda=self.operacao).operacao_compra, divisao_id=self.divisao_id)
+        else:
+            return None
+    
+    def qtd_disponivel_venda_na_data(self, data, desconsiderar_operacao=None):
+        from bagogold.cdb_rdb.models import OperacaoVendaCDB_RDB
+        if self.operacao.tipo_operacao != 'C':
+            raise ValueError('Operação deve ser de compra')
+        vendas = OperacaoVendaCDB_RDB.objects.filter(operacao_compra=self.operacao, operacao_venda__data__lte=data).exclude(operacao_venda=desconsiderar_operacao).values_list('operacao_venda__id', flat=True)
+        qtd_vendida = 0
+        for venda in DivisaoOperacaoCDB_RDB.objects.filter(operacao__id__in=vendas, divisao_id=self.divisao_id):
+            qtd_vendida += venda.quantidade
+        return self.quantidade - qtd_vendida
+    
+class CheckpointDivisaoCDB_RDB (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    divisao_operacao = models.ForeignKey('DivisaoOperacaoCDB_RDB', limit_choices_to={'operacao__tipo_operacao': 'C'})
+    qtd_restante = models.DecimalField(u'Quantidade restante da operação', max_digits=11, decimal_places=2, validators=[MinValueValidator(Decimal('0.01'))])
+    qtd_atualizada = models.DecimalField(u'Quantidade atualizada da operação', max_digits=17, decimal_places=8, validators=[MinValueValidator(Decimal('0.00000001'))])
+    
+    class Meta:
+        unique_together=('divisao_operacao', 'ano')
     
 class DivisaoOperacaoCriptomoeda (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
@@ -444,6 +635,20 @@ class DivisaoTransferenciaCriptomoeda (models.Model):
     def percentual_divisao(self):
         return self.quantidade / self.operacao.quantidade
     
+class DivisaoForkCriptomoeda (models.Model):
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    fork = models.ForeignKey('criptomoeda.Fork')
+    """
+    Guarda a quantidade do fork que pertence a divisão
+    """
+    quantidade = models.DecimalField('Quantidade', max_digits=21, decimal_places=12)
+    
+    class Meta:
+        unique_together=('divisao', 'fork')
+        
+    def __unicode__(self):
+        return self.divisao.nome + ': %s %s de fork de %s' % (str(self.quantidade), self.fork.moeda_recebida.ticker, self.fork.moeda_origem.ticker)
+    
 class DivisaoOperacaoCRI_CRA (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('cri_cra.OperacaoCRI_CRA')
@@ -466,7 +671,7 @@ class DivisaoOperacaoCRI_CRA (models.Model):
     
 class DivisaoOperacaoDebenture (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
-    operacao = models.ForeignKey('OperacaoDebenture')
+    operacao = models.ForeignKey('debentures.OperacaoDebenture')
     """
     Guarda a quantidade da operação que pertence a divisão
     """
@@ -526,7 +731,7 @@ class DivisaoOperacaoAcao (models.Model):
     
 class DivisaoOperacaoTD (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
-    operacao = models.ForeignKey('OperacaoTitulo')
+    operacao = models.ForeignKey('tesouro_direto.OperacaoTitulo')
     """
     Guarda a quantidade de títulos que pertence a divisão
     """
@@ -546,11 +751,11 @@ class DivisaoOperacaoTD (models.Model):
     
 class DivisaoOperacaoFII (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
-    operacao = models.ForeignKey('OperacaoFII')
+    operacao = models.ForeignKey('fii.OperacaoFII')
     """
     Guarda a quantidade de FIIs que pertence a divisão
     """
-    quantidade = models.IntegerField('Quantidade')
+    quantidade = models.IntegerField('Quantidade', validators=[MinValueValidator(1)])
     
     class Meta:
         unique_together=('divisao', 'operacao')
@@ -564,6 +769,25 @@ class DivisaoOperacaoFII (models.Model):
     def percentual_divisao(self):
         return Decimal(self.quantidade) / self.operacao.quantidade
     
+class CheckpointDivisaoFII (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    fii = models.ForeignKey('fii.FII')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    quantidade = models.IntegerField(u'Quantidade no ano', validators=[MinValueValidator(0)])
+    preco_medio = models.DecimalField(u'Preço médio', max_digits=11, decimal_places=4)
+    
+    class Meta:
+        unique_together=('fii', 'ano', 'divisao')
+    
+class CheckpointDivisaoProventosFII (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    valor = models.DecimalField(u'Valor da poupança de proventos', max_digits=22, decimal_places=16)
+        
+    class Meta:
+        unique_together=('ano', 'divisao')
+    
+    
 class TransferenciaEntreDivisoes(models.Model):
     TIPO_INVESTIMENTO_BUY_AND_HOLD = 'B'
     TIPO_INVESTIMENTO_CDB_RDB = 'C'
@@ -571,6 +795,7 @@ class TransferenciaEntreDivisoes(models.Model):
     TIPO_INVESTIMENTO_DEBENTURE = 'E'
     TIPO_INVESTIMENTO_FII = 'F'
     TIPO_INVESTIMENTO_FUNDO_INV = 'I'
+    TIPO_INVESTIMENTO_LC = 'A'
     TIPO_INVESTIMENTO_LCI_LCA = 'L'
     TIPO_INVESTIMENTO_CRIPTOMOEDA = 'M'
     TIPO_INVESTIMENTO_OUTROS_INVEST = 'O'
@@ -584,7 +809,8 @@ class TransferenciaEntreDivisoes(models.Model):
                                   (TIPO_INVESTIMENTO_DEBENTURE, 'Debênture'),
                                   (TIPO_INVESTIMENTO_FII, 'Fundo de Inv. Imobiliário'), 
                                   (TIPO_INVESTIMENTO_FUNDO_INV, 'Fundo de Investimento'),
-                                  (TIPO_INVESTIMENTO_LCI_LCA, 'Letras de Crédito'), 
+                                  (TIPO_INVESTIMENTO_LC, 'Letra de Câmbio'), 
+                                  (TIPO_INVESTIMENTO_LCI_LCA, 'LCI/LCA'), 
                                   (TIPO_INVESTIMENTO_CRIPTOMOEDA, 'Criptomoeda'),
                                   (TIPO_INVESTIMENTO_CRI_CRA, 'CRI/CRA'), 
                                   (TIPO_INVESTIMENTO_TRADING, 'Trading'),
@@ -598,8 +824,8 @@ class TransferenciaEntreDivisoes(models.Model):
     divisao_recebedora = models.ForeignKey('Divisao', verbose_name=u'Divisão recebedora', blank=True, null=True, related_name='divisao_recebedora')
     data = models.DateField(u'Data da transferência', blank=True, null=True)
     """
-    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debênture; F = FII; 
-    I = Fundo de investimento; L = Letra de Crédito; R = CRI/CRA; T = Trading; O = Outros investimentos; N = Não alocado
+    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debênture; F = FII; I = Fundo de investimento;
+    L = Letra de Crédito; M = Criptomoeda;  O = Outros investimentos; R = CRI/CRA; T = Trading; N = Não alocado
     """
     investimento_origem = models.CharField('Investimento de origem', blank=True, null=True, max_length=1)
     investimento_destino = models.CharField('Investimento de destino', blank=True, null=True, max_length=1)
@@ -634,6 +860,8 @@ class TransferenciaEntreDivisoes(models.Model):
             return 'FII'
         elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FUNDO_INV:
             return 'Fundo de inv.'
+        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LC:
+            return 'Letra de Câmbio'
         elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA:
             return 'Letra de Crédito'
         elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRIPTOMOEDA:
@@ -660,6 +888,8 @@ class TransferenciaEntreDivisoes(models.Model):
             return 'FII'
         elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FUNDO_INV:
             return 'Fundo de inv.'
+        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LC:
+            return 'Letra de Câmbio'
         elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA:
             return 'Letra de Crédito'
         elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_CRIPTOMOEDA:

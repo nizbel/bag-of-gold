@@ -21,11 +21,11 @@ class QuantidadesFundoInvestimentoTestCase(TestCase):
         
         fundo_1 = FundoInvestimento.objects.create(nome='Claritas 1', cnpj='00.000.000/0000-01', administrador=administrador, data_constituicao=datetime.date(2013, 2, 1),
                                                    situacao=FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL, tipo_prazo=FundoInvestimento.PRAZO_LONGO, classe=FundoInvestimento.CLASSE_FUNDO_MULTIMERCADO,
-                                                   exclusivo_qualificados=False, ultimo_registro=datetime.date(2017, 6, 14))
+                                                   data_registro=datetime.date(2013, 2, 1), exclusivo_qualificados=False, slug='claritas-1')
         
         fundo_2 = FundoInvestimento.objects.create(nome='Claritas 2', cnpj='00.000.000/0000-02', administrador=administrador, data_constituicao=datetime.date(2013, 2, 1),
                                                    situacao=FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL, tipo_prazo=FundoInvestimento.PRAZO_LONGO, classe=FundoInvestimento.CLASSE_FUNDO_MULTIMERCADO,
-                                                   exclusivo_qualificados=False, ultimo_registro=datetime.date(2017, 6, 14))
+                                                   data_registro=datetime.date(2013, 2, 1), exclusivo_qualificados=False, slug='claritas-2')
         
         operacao_1 = OperacaoFundoInvestimento.objects.create(fundo_investimento=fundo_1, quantidade=Decimal('4291.07590514'), valor=Decimal(10000), investidor=user.investidor,
                                                               tipo_operacao='C', data=datetime.date(2016, 12, 1))

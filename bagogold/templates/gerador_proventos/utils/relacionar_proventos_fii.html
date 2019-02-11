@@ -1,0 +1,42 @@
+{% load misc %}
+<div class="col-md-12">
+    <div class="portlet box yellow-crusta">
+        <div class="portlet-title">
+            <div class="caption">
+                <i class="fa fa-exchange"></i>Relacionar proventos FII adicionados pelo sistema
+            </div>
+            <div class="tools">
+                <a href="javascript:;" class="collapse"></a>
+            </div>
+        </div>
+        <div class="portlet-body">
+            {% for provento_relacionavel in proventos_relacionaveis %}
+            <div class="m-grid m-grid-responsive-xs">
+                <div class="m-grid-row">
+                    <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
+                    <div class="m-grid-col m-grid-col-left">{{provento_relacionavel.fii}}</div>
+                    <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
+                    <div class="m-grid-col m-grid-col-left">{{provento_relacionavel.descricao_tipo_provento}}</div>
+                    <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
+                    <div class="m-grid-col m-grid-col-left">R$ {{provento_relacionavel.valor_unitario|casas_decimais}}</div>
+                </div>
+                <div class="m-grid-row">
+                    <div class="m-grid-col m-grid-col-left"><strong>Data EX:</strong></div>
+                    <div class="m-grid-col m-grid-col-left">{{provento_relacionavel.data_ex|date:'d/m/Y'}}</div>
+                    <div class="m-grid-col m-grid-col-left"><strong>Pagamento:</strong></div>
+                    <div class="m-grid-col m-grid-col-left">{{provento_relacionavel.data_pagamento|date:'d/m/Y'}}</div>
+                    <div class="m-grid-col m-grid-col-left">
+                        <a href="{% url 'gerador_proventos:relacionar_proventos_fii' provento.id provento_relacionavel.id %}" class="btn btn-warning btn-xs">Relacionar</a></div>
+                </div>
+            </div>
+            {% if forloop.counter < proventos_relacionaveis|length %}
+            <hr>
+            {% endif %}
+            {% empty %}
+            <p align="center">
+                <strong>Não há proventos relacionáveis</strong>
+            </p>
+            {% endfor %}
+        </div>
+    </div>
+</div>

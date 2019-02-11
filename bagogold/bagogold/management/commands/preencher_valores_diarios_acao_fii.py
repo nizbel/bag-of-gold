@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao, ValorDiarioAcao
-from bagogold.bagogold.models.fii import FII, ValorDiarioFII
+from bagogold.fii.models import FII, ValorDiarioFII
 from bagogold.bagogold.tfs import buscar_ultimos_valores_geral_acao, \
     buscar_ultimos_valores_geral_fii
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
@@ -10,6 +10,7 @@ from django.utils import timezone
 import datetime
 import time
 
+ALPHA_VANTAGE_KEY = 'GEVFYOO2EY9BDEQQ'
 
 class Command(BaseCommand):
     help = 'Preenche valores diários para as ações e FIIs em mercado'
@@ -27,6 +28,7 @@ class Command(BaseCommand):
             
         # Acoes
         valores_diarios = buscar_ultimos_valores_geral_acao()
+        print valores_diarios
         for k, v in valores_diarios.iteritems():
             if v is not None:
                 acao = Acao.objects.get(ticker=k[:-3])

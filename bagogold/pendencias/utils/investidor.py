@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.td import OperacaoTitulo
+from bagogold.tesouro_direto.models import OperacaoTitulo
 from bagogold.pendencias.models.pendencias import \
     PendenciaVencimentoTesouroDireto, Pendencia, PendenciaDocumentoGeradorProventos
 from django.db.models.aggregates import Sum
@@ -10,6 +10,7 @@ import datetime
 def buscar_pendencias_investidor(investidor):
     """
     Traz todas as pendências de um investidor
+    
     Parâmetros: Investidor
     Retorno:    Lista com todas as pendências do investidor
     """
@@ -21,6 +22,7 @@ def buscar_pendencias_investidor(investidor):
 def verificar_pendencias_investidor(investidor):
     """
     Verifica todas as pendências que um investidor pode ter
+    
     Parâmetros: Investidor
     """
     # Pendências de vencimento de Tesouro Direto

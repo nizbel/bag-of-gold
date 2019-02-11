@@ -35,7 +35,7 @@
                 <div class="form-group col-md-6 {% if form_operacao_fundo_investimento.data.errors %} has-error {% endif %}">
                     <label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_fundo_investimento.data.label}}: </label>
                     <div class="col-md-8">
-                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy">
                             <input type="text" class="form-control" id="id_data" name="data" value="{{form_operacao_fundo_investimento.data.value|default:''}}">
                             <span class="input-group-btn">
                                 <button class="btn default" type="button">
@@ -144,7 +144,7 @@
 <script src={% static "assets/global/plugins/select2/js/select2.full.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/select2/js/i18n/pt-BR.js" %} type="text/javascript"></script>
 {{ form_operacao_fundo_investimento.media }}
-<script>
+<script type="text/javascript">
 $(document).ready(function() {
     $('#id_fundo_investimento').select2({
         language: 'pt-BR',
@@ -188,6 +188,7 @@ $(document).ready(function() {
     });
     
     $('.date-picker').datepicker({
+        todayHighlight: true,
         language: 'pt-BR'
     }).on('changeDate', function(e) {
         buscarValorCotaHistorico();

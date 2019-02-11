@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao, OperacaoAcao, HistoricoAcao, \
     Provento
-from bagogold.cdb_rdb.models import CDB_RDB, \
-    HistoricoPorcentagemCDB_RDB, OperacaoCDB_RDB
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.bagogold.models.fii import ProventoFII, FII, OperacaoFII, \
-    HistoricoFII
-from bagogold.bagogold.models.lc import LetraCredito, \
-    HistoricoPorcentagemLetraCredito, OperacaoLetraCredito, HistoricoTaxaDI
-from bagogold.bagogold.models.td import Titulo, OperacaoTitulo
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxas_di
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
+from bagogold.tesouro_direto.models import Titulo, OperacaoTitulo
+from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_di
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
     verificar_feriado_bovespa, qtd_dias_uteis_no_periodo, \
     calcular_domingo_pascoa_no_ano, buscar_valores_diarios_selic, \
     calcular_rendimentos_ate_data, formatar_zeros_a_direita_apos_2_casas_decimais
+from bagogold.cdb_rdb.models import CDB_RDB, HistoricoPorcentagemCDB_RDB, \
+    OperacaoCDB_RDB, HistoricoVencimentoCDB_RDB
+from bagogold.fii.models import ProventoFII, FII, OperacaoFII, HistoricoFII
+from bagogold.lci_lca.models import LetraCredito, \
+    HistoricoPorcentagemLetraCredito, OperacaoLetraCredito
 from decimal import Decimal, ROUND_DOWN
 from django.contrib.auth.models import User
 from django.db.models.aggregates import Count
@@ -39,24 +39,6 @@ class IOFTestCase(TestCase):
         self.assertEqual(calcular_iof_regressivo(15), 0.50)
         self.assertEqual(calcular_iof_regressivo(29), 0.03)
 
-class BuscarTaxaSELICTestCase(TestCase):
-    
-    def test_nao_buscar_se_periodo_maior_10_anos(self):
-        """Testa se há erro caso o período escolhido seja superior a 10 anos"""
-        with self.assertRaises(ValueError):
-            buscar_valores_diarios_selic(datetime.date(2006,11,16), datetime.date(2016,11,17))
-        
-    def test_buscar_se_periodo_igual_10_anos(self):
-        """Testa se busca funciona para período igual a 10 anos"""
-        dados = buscar_valores_diarios_selic(datetime.date(2006,11,17), datetime.date(2016,11,17))
-        self.assertTrue(len(dados) == 2513)
-
-    def test_buscar_unico_dia(self):
-        """Testa se função retorna resultado para um dia"""
-        dados = buscar_valores_diarios_selic(datetime.date(2016,11,17), datetime.date(2016,11,17))
-        self.assertTrue(len(dados) == 1)
-        self.assertEqual(dados[0], (datetime.date(2016,11,17), Decimal('1.00051660')))
-        
 class VerificarFeriadoBovespaTestCase(TestCase):
     
     def test_domingo_pascoa(self):
@@ -90,6 +72,14 @@ class QtdDiasUteisNoPeriodoTestCase(TestCase):
     def test_quantidade_com_feriados(self):
         """Testa se retorna os 81 dias úteis"""
         self.assertEqual(qtd_dias_uteis_no_periodo(datetime.date(2016, 7, 1), datetime.date(2016, 10, 26)), 81)
+        
+    def test_um_dia_apenas(self):
+        """Testa função para trazer apenas um dia"""
+        self.assertEqual(qtd_dias_uteis_no_periodo(datetime.date(2018, 3, 8), datetime.date(2018, 3, 9)), 1)
+        
+    def test_zero_dias(self):
+        """Testa função para trazer 0 caso sejam enviadas datas iguais"""
+        self.assertEqual(qtd_dias_uteis_no_periodo(datetime.date(2018, 3, 9), datetime.date(2018, 3, 9)), 0)
 
 class FormatarZerosADireitaApos2CasasTestCase(TestCase):
     
@@ -145,15 +135,16 @@ class RendimentosTestCase(TestCase):
                                    data=data_atual - datetime.timedelta(days=20), tipo_operacao='C', fii=fii, emolumentos=Decimal(0))
         
         # CDB/RDB
-        cdb_rdb = CDB_RDB.objects.create(nome='CDB de teste', investidor=user.investidor, tipo='C', tipo_rendimento='2')
-        cdb_rdb_porcentagem_di = HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_rdb, porcentagem=Decimal(90))
-        operacao_cdb_rdb1 = OperacaoCDB_RDB.objects.create(investidor=user.investidor, investimento=cdb_rdb, data=data_atual + datetime.timedelta(days=1), tipo_operacao='C',
+        cdb_rdb = CDB_RDB.objects.create(nome='CDB de teste', investidor=user.investidor, tipo=CDB_RDB.CDB, tipo_rendimento=CDB_RDB.CDB_RDB_DI)
+        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_rdb, porcentagem=Decimal(90))
+        HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cdb_rdb, vencimento=2000)
+        operacao_cdb_rdb1 = OperacaoCDB_RDB.objects.create(investidor=user.investidor, cdb_rdb=cdb_rdb, data=data_atual + datetime.timedelta(days=1), tipo_operacao='C',
                                            quantidade=Decimal(1000))
-        operacao_cdb_rdb2 = OperacaoCDB_RDB.objects.create(investidor=user.investidor, investimento=cdb_rdb, data=data_atual - datetime.timedelta(days=10), tipo_operacao='C',
+        operacao_cdb_rdb2 = OperacaoCDB_RDB.objects.create(investidor=user.investidor, cdb_rdb=cdb_rdb, data=data_atual - datetime.timedelta(days=10), tipo_operacao='C',
                                            quantidade=Decimal(2000))
         
         # Gerar valores históricos
-        date_list = [data_atual - datetime.timedelta(days=x) for x in range(0, (data_atual - datetime.date(2016, 10, 1)).days+1)]
+        date_list = [data_atual - datetime.timedelta(days=x) for x in xrange(0, (data_atual - datetime.date(2016, 10, 1)).days+1)]
         date_list = [data for data in date_list if data.weekday() < 5 and not verificar_feriado_bovespa(data)]
         
         for data in date_list:
@@ -170,6 +161,7 @@ class RendimentosTestCase(TestCase):
     def test_deve_trazer_zero_caso_nao_haja_investimentos(self):
         """Testa se método traz resultado 0 caso não haja investimentos"""
         investidor = User.objects.get(username='tester').investidor
+        
         self.assertEqual(Decimal(0), sum(calcular_rendimentos_ate_data(investidor, datetime.date(2016, 1, 1)).values()))
         
     def test_deve_trazer_valor_apenas_de_cdb_rdb(self):

@@ -1,0 +1,27 @@
+{% load misc %}
+<table id="proventos" class="table table-striped table-bordered table-hover table-header-fixed">
+    <thead>
+        <tr>
+            <th>Ação</th>
+            <th>Tipo</th>
+            <th>Data EX</th>
+            <th>Data de pagamento</th>
+            <th>Valor</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for provento in proventos %}
+        <tr>
+            <td><a href="{% url 'acoes:geral:detalhar_provento_acao' provento.id %}">{{provento.acao.ticker}}</a></td>
+            <td>{{provento.descricao_tipo_provento}}</td>
+            <td>{{provento.data_ex|date:'d/m/Y'}}</td>
+            <td>{{provento.data_pagamento|date:'d/m/Y'}}</td>
+            <td>{% if provento.tipo_provento == 'A' %}
+            {{provento.valor_final|casas_decimais}} %
+            {% else %}
+            R$ {{provento.valor_final|casas_decimais}}
+            {% endif %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

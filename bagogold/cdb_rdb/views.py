@@ -1,16 +1,37 @@
 # -*- coding: utf-8 -*-
 
+import calendar
+import datetime
+from decimal import Decimal
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.mail import mail_admins
+from django.db.models.expressions import F, Case, When, Value
+from django.shortcuts import get_object_or_404
+import json
+import traceback
+
+from django.core.urlresolvers import reverse
+from django.db import transaction
+from django.db.models.aggregates import Count
+from django.db.models.fields import CharField, DecimalField
+from django.forms import inlineformset_factory
+from django.http import HttpResponseRedirect, HttpResponse
+from django.template.response import TemplateResponse
+
+from bagogold import settings
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoCDB_RDBFormSet
 from bagogold.bagogold.forms.utils import LocalizedModelForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoCDB_RDB, Divisao
-from bagogold.bagogold.models.lc import HistoricoTaxaDI
-from bagogold.bagogold.models.td import HistoricoIPCA
-from bagogold.bagogold.utils.lc import calcular_valor_atualizado_com_taxa_di, \
-    calcular_valor_atualizado_com_taxas_di, \
-    calcular_valor_atualizado_com_taxa_prefixado
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI, \
+    HistoricoIPCA
 from bagogold.bagogold.utils.misc import calcular_iof_regressivo, \
     qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
+from bagogold.bagogold.utils.taxas_indexacao import \
+    calcular_valor_atualizado_com_taxa_di, calcular_valor_atualizado_com_taxas_di, \
+    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.cdb_rdb.forms import OperacaoCDB_RDBForm, \
     HistoricoPorcentagemCDB_RDBForm, CDB_RDBForm, HistoricoCarenciaCDB_RDBForm, \
     HistoricoVencimentoCDB_RDBForm
@@ -18,20 +39,10 @@ from bagogold.cdb_rdb.models import OperacaoCDB_RDB, HistoricoPorcentagemCDB_RDB
     CDB_RDB, HistoricoCarenciaCDB_RDB, OperacaoVendaCDB_RDB, \
     HistoricoVencimentoCDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia, \
-    buscar_operacoes_vigentes_ate_data
-from decimal import Decimal
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied, ValidationError
-from django.core.urlresolvers import reverse
-from django.db import transaction
-from django.db.models import Count
-from django.forms import inlineformset_factory
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
-from django.template.response import TemplateResponse
-import calendar
-import datetime
+    buscar_operacoes_vigentes_ate_data, calcular_valor_atualizado_operacao_ate_dia, \
+    calcular_valor_operacao_cdb_rdb_ate_dia, calcular_valor_venda_cdb_rdb, \
+    simulador_cdb_rdb
+
 
 @login_required
 @adiciona_titulo_descricao('Detalhar CDB/RDB', 'Detalhar CDB/RDB, incluindo histórico de carência e '
@@ -60,38 +71,39 @@ def detalhar_cdb_rdb(request, cdb_rdb_id):
     cdb_rdb.lucro = Decimal(0)
     cdb_rdb.lucro_percentual = Decimal(0)
     
-    operacoes = OperacaoCDB_RDB.objects.filter(investimento=cdb_rdb).order_by('data')
+    operacoes = OperacaoCDB_RDB.objects.filter(cdb_rdb=cdb_rdb).order_by('data')
     # Contar total de operações já realizadas 
     cdb_rdb.total_operacoes = len(operacoes)
     # Remover operacoes totalmente vendidas
     operacoes = [operacao for operacao in operacoes if operacao.tipo_operacao == 'C' and operacao.qtd_disponivel_venda() > 0]
     if operacoes:
-        historico_di = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, datetime.date.today()])
+#         historico_di = HistoricoTaxaDI.objects.filter(data__range=[operacoes[0].data, datetime.date.today()])
         for operacao in operacoes:
             # Total investido
             cdb_rdb.total_investido += operacao.qtd_disponivel_venda()
             
             # Saldo atual
-            taxas = historico_di.filter(data__gte=operacao.data).values('taxa').annotate(qtd_dias=Count('taxa'))
-            taxas_dos_dias = {}
-            for taxa in taxas:
-                taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
-            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem())
+#             taxas = historico_di.filter(data__gte=operacao.data).values('taxa').annotate(qtd_dias=Count('taxa'))
+#             taxas_dos_dias = {}
+#             for taxa in taxas:
+#                 taxas_dos_dias[taxa['taxa']] = taxa['qtd_dias']
+#             operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.qtd_disponivel_venda(), operacao.porcentagem())
+            operacao.atual = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, datetime.date.today(), arredondar=False, valor_liquido=False)
             cdb_rdb.saldo_atual += operacao.atual
             
             # Calcular impostos
             qtd_dias = (datetime.date.today() - operacao.data).days
             # IOF
-            operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.quantidade)
+            operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.qtd_disponivel_venda())
             # IR
             if qtd_dias <= 180:
-                operacao.imposto_renda =  Decimal(0.225) * (operacao.atual - operacao.quantidade - operacao.iof)
+                operacao.imposto_renda = Decimal(0.225) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
             elif qtd_dias <= 360:
-                operacao.imposto_renda =  Decimal(0.2) * (operacao.atual - operacao.quantidade - operacao.iof)
+                operacao.imposto_renda = Decimal(0.2) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
             elif qtd_dias <= 720:
-                operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.quantidade - operacao.iof)
+                operacao.imposto_renda = Decimal(0.175) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
             else: 
-                operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.quantidade - operacao.iof)
+                operacao.imposto_renda = Decimal(0.15) * (operacao.atual - operacao.qtd_disponivel_venda() - operacao.iof)
             cdb_rdb.total_ir += operacao.imposto_renda
             cdb_rdb.total_iof += operacao.iof
     
@@ -132,7 +144,7 @@ def editar_cdb_rdb(request, cdb_rdb_id):
                 
         # TODO verificar o que pode acontecer na exclusão
         elif request.POST.get("delete"):
-            if OperacaoCDB_RDB.objects.filter(investimento=cdb_rdb).exists():
+            if OperacaoCDB_RDB.objects.filter(cdb_rdb=cdb_rdb).exists():
                 messages.error(request, 'Não é possível excluir o %s pois existem operações cadastradas' % (cdb_rdb.descricao_tipo()))
                 return HttpResponseRedirect(reverse('cdb_rdb:detalhar_cdb_rdb', kwargs={'cdb_rdb_id': cdb_rdb.id}))
             else:
@@ -242,19 +254,19 @@ def editar_historico_porcentagem(request, historico_porcentagem_id):
             inicial = False
             form_historico_porcentagem = HistoricoPorcentagemCDB_RDBForm(instance=historico_porcentagem, cdb_rdb=historico_porcentagem.cdb_rdb, \
                                                                          investidor=investidor)
-            
-    return TemplateResponse(request, 'cdb_rdb/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem, 'inicial': inicial}) 
-    
+
+    return TemplateResponse(request, 'cdb_rdb/editar_historico_porcentagem.html', {'form_historico_porcentagem': form_historico_porcentagem, 'inicial': inicial})
+
 @login_required
 @adiciona_titulo_descricao('Editar registro de vencimento de um CDB/RDB', 'Alterar um registro de vencimento no '
                                                                         'histórico do CDB/RDB')
 def editar_historico_vencimento(request, historico_vencimento_id):
     investidor = request.user.investidor
     historico_vencimento = get_object_or_404(HistoricoVencimentoCDB_RDB, id=historico_vencimento_id)
-    
+
     if historico_vencimento.cdb_rdb.investidor != investidor:
         raise PermissionDenied
-    
+
     if request.method == 'POST':
         if request.POST.get("save"):
             if historico_vencimento.data is None:
@@ -297,15 +309,15 @@ def editar_historico_vencimento(request, historico_vencimento_id):
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em CDB/RDB', 'Alterar valores de uma operação de compra/venda em CDB/RDB')
-def editar_operacao_cdb_rdb(request, operacao_id):
+def editar_operacao_cdb_rdb(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_cdb_rdb = get_object_or_404(OperacaoCDB_RDB, id=operacao_id)
+    operacao_cdb_rdb = get_object_or_404(OperacaoCDB_RDB, id=id_operacao)
     if operacao_cdb_rdb.investidor != investidor:
         raise PermissionDenied
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoCDB_RDB, DivisaoOperacaoCDB_RDB, fields=('divisao', 'quantidade'),
@@ -317,60 +329,76 @@ def editar_operacao_cdb_rdb(request, operacao_id):
         
         if request.POST.get("save"):
             if form_operacao_cdb_rdb.is_valid():
-                operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
-                formset_divisao = DivisaoFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
-                if varias_divisoes:
-                    if formset_divisao.is_valid():
-                        operacao_cdb_rdb.save()
-                        if operacao_cdb_rdb.tipo_operacao == 'V':
-                            if not OperacaoVendaCDB_RDB.objects.filter(operacao_venda=operacao_cdb_rdb):
-                                operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
-                                operacao_venda_cdb_rdb.save()
-                            else: 
-                                operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb)
-                                if operacao_venda_cdb_rdb.operacao_compra != operacao_compra:
-                                    operacao_venda_cdb_rdb.operacao_compra = operacao_compra
+                try:
+                    with transaction.atomic():
+                        operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
+                        formset_divisao = DivisaoFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
+                        if varias_divisoes:
+                            if formset_divisao.is_valid():
+                                operacao_cdb_rdb.save()
+                                if operacao_cdb_rdb.tipo_operacao == 'V':
+                                    if not OperacaoVendaCDB_RDB.objects.filter(operacao_venda=operacao_cdb_rdb):
+                                        operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
+                                        operacao_venda_cdb_rdb.save()
+                                    else: 
+                                        operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb)
+                                        if operacao_venda_cdb_rdb.operacao_compra != operacao_compra:
+                                            operacao_venda_cdb_rdb.operacao_compra = operacao_compra
+                                            operacao_venda_cdb_rdb.save()
+                                formset_divisao.save()
+                                messages.success(request, 'Operação editada com sucesso')
+                                return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
+                            for erro in formset_divisao.non_form_errors():
+                                messages.error(request, erro)
+                                
+                        else:
+                            operacao_cdb_rdb.save()
+                            if operacao_cdb_rdb.tipo_operacao == 'V':
+                                if not OperacaoVendaCDB_RDB.objects.filter(operacao_venda=operacao_cdb_rdb):
+                                    operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
                                     operacao_venda_cdb_rdb.save()
-                        formset_divisao.save()
-                        messages.success(request, 'Operação editada com sucesso')
-                        return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
-                    for erro in formset_divisao.non_form_errors():
-                        messages.error(request, erro)
-                        
-                else:
-                    operacao_cdb_rdb.save()
-                    if operacao_cdb_rdb.tipo_operacao == 'V':
-                        if not OperacaoVendaCDB_RDB.objects.filter(operacao_venda=operacao_cdb_rdb):
-                            operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
-                            operacao_venda_cdb_rdb.save()
-                        else: 
-                            operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb)
-                            if operacao_venda_cdb_rdb.operacao_compra != operacao_compra:
-                                operacao_venda_cdb_rdb.operacao_compra = operacao_compra
-                                operacao_venda_cdb_rdb.save()
-                    divisao_operacao = DivisaoOperacaoCDB_RDB.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_cdb_rdb)
-                    divisao_operacao.quantidade = operacao_cdb_rdb.quantidade
-                    divisao_operacao.save()
-                    messages.success(request, 'Operação editada com sucesso')
-                    return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
+                                else: 
+                                    operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb)
+                                    if operacao_venda_cdb_rdb.operacao_compra != operacao_compra:
+                                        operacao_venda_cdb_rdb.operacao_compra = operacao_compra
+                                        operacao_venda_cdb_rdb.save()
+                            divisao_operacao = DivisaoOperacaoCDB_RDB.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_cdb_rdb)
+                            divisao_operacao.quantidade = operacao_cdb_rdb.quantidade
+                            divisao_operacao.save()
+                            messages.success(request, 'Operação editada com sucesso')
+                            return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
+                except:
+                    messages.error(request, 'Houve um erro ao editar a operação')
+                    if settings.ENV == 'DEV':
+                        raise
+                    elif settings.ENV == 'PROD':
+                        mail_admins(u'Erro ao editar operação em CDB/RDB', traceback.format_exc().decode('utf-8'))     
                 
-            for erro in [erro for erro in form_operacao_cdb_rdb.non_field_errors()]:
+            for erro in form_operacao_cdb_rdb.non_field_errors():
                 messages.error(request, erro)
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
                 
         elif request.POST.get("delete"):
-            # Testa se operação a excluir não é uma operação de compra com vendas já registradas
-            if not OperacaoVendaCDB_RDB.objects.filter(operacao_compra=operacao_cdb_rdb):
-                divisao_cdb_rdb = DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao_cdb_rdb)
-                for divisao in divisao_cdb_rdb:
-                    divisao.delete()
-                if operacao_cdb_rdb.tipo_operacao == 'V':
-                    OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb).delete()
-                operacao_cdb_rdb.delete()
-                messages.success(request, 'Operação excluída com sucesso')
-                return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
-            else:
-                messages.error(request, 'Não é possível excluir operação de compra que já tenha vendas registradas')
+            try:
+                with transaction.atomic():
+                    # Testa se operação a excluir não é uma operação de compra com vendas já registradas
+                    if not OperacaoVendaCDB_RDB.objects.filter(operacao_compra=operacao_cdb_rdb):
+                        divisao_cdb_rdb = DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao_cdb_rdb)
+                        for divisao in divisao_cdb_rdb:
+                            divisao.delete()
+                        if operacao_cdb_rdb.tipo_operacao == 'V':
+                            OperacaoVendaCDB_RDB.objects.get(operacao_venda=operacao_cdb_rdb).delete()
+                        operacao_cdb_rdb.delete()
+                        messages.success(request, 'Operação excluída com sucesso')
+                        return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
+                    else:
+                        messages.error(request, 'Não é possível excluir operação de compra que já tenha vendas registradas')
+            except:
+                messages.error(request, 'Houve um erro ao apagar a operação')
+                if settings.ENV == 'DEV':
+                    raise
+                elif settings.ENV == 'PROD':
+                    mail_admins(u'Erro ao editar apagar em CDB/RDB', traceback.format_exc().decode('utf-8')) 
  
     else:
         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(instance=operacao_cdb_rdb, initial={'operacao_compra': operacao_cdb_rdb.operacao_compra_relacionada(),}, \
@@ -389,22 +417,28 @@ def historico(request):
                                                     'graf_gasto_total': list(), 'graf_patrimonio': list()})
      
     # Processa primeiro operações de venda (V), depois compra (C)
-    operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data', '-tipo_operacao') 
+    operacoes = OperacaoCDB_RDB.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data', '-tipo_operacao') \
+                                        .annotate(tipo=Case(When(tipo_operacao='C', then=Value(u'Compra')),
+                                                            When(tipo_operacao='V', then=Value(u'Venda')), output_field=CharField())) \
+                                        .annotate(qtd_vendida=Case(When(tipo_operacao='C', then=Value(0)), output_field=DecimalField())) \
+                                        .annotate(atual=Case(When(tipo_operacao='C', then=F('quantidade')), output_field=DecimalField())) \
+                                        .prefetch_related('cdb_rdb__historicovencimentocdb_rdb_set', 'cdb_rdb__historicoporcentagemcdb_rdb_set')
     # Verifica se não há operações
     if not operacoes:
         return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': {}, 'operacoes': list(), 
                                                     'graf_gasto_total': list(), 'graf_patrimonio': list()})
      
     # Prepara o campo valor atual
-    for operacao in operacoes:
-        operacao.taxa = operacao.porcentagem()
-        operacao.atual = operacao.quantidade
-        if operacao.tipo_operacao == 'C':
-            operacao.qtd_vendida = 0
-            operacao.tipo = 'Compra'
-        else:
-            operacao.tipo = 'Venda'
-     
+#     for operacao in operacoes:
+#         if operacao.tipo_operacao == 'C':
+#             operacao.atual = operacao.quantidade
+#             operacao.qtd_vendida = 0
+#         if operacao.tipo_operacao == 'C':
+#             operacao.qtd_vendida = 0
+#             operacao.tipo = 'Compra'
+#         else:
+#             operacao.tipo = 'Venda'
+
     total_gasto = 0
     total_patrimonio = 0
      
@@ -422,33 +456,19 @@ def historico(request):
         else:
             total_gasto -= operacao.quantidade
             # Preparar o valor atual e reiniciar valor da operação de compra
-            historico = HistoricoTaxaDI.objects.filter(data__range=[operacao.operacao_compra_relacionada().data, (operacao.data - datetime.timedelta(days=1))])
-            taxas_dos_dias = dict(historico.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.taxa)
-            # Retirar iof e IR
-            operacao.atual -= sum(calcular_iof_e_ir_longo_prazo(operacao.atual - operacao.quantidade, (operacao.data - operacao.operacao_compra_relacionada().data).days))
-            str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-            operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+            # Valor atual
+            operacao.atual = calcular_valor_venda_cdb_rdb(operacao, True, True)
              
             # Buscar operação de compra relacionada para reiniciar
+            indice_operacao_compra = operacao.operacao_compra_relacionada().id
             for indice_relacionada in xrange(indice):
-                if operacoes[indice_relacionada].id == operacao.operacao_compra_relacionada().id:
-                    operacoes[indice_relacionada].qtd_vendida = operacao.quantidade
+                if operacoes[indice_relacionada].id == indice_operacao_compra:
+                    operacoes[indice_relacionada].qtd_vendida += operacao.quantidade
                     operacoes[indice_relacionada].atual = operacoes[indice_relacionada].quantidade - operacoes[indice_relacionada].qtd_vendida
                     if operacoes[indice_relacionada].atual > 0:
                         # Atualizar o valor
-                        if operacoes[indice_relacionada].investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
-                            # DI
-                            historico = HistoricoTaxaDI.objects.filter(data__range=[operacoes[indice_relacionada].data, ultima_data])
-                            taxas_dos_dias = dict(historico.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-                            operacoes[indice_relacionada].atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacoes[indice_relacionada].atual, 
-                                                                                                         operacoes[indice_relacionada].taxa)
-                        elif operacoes[indice_relacionada].investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
-                            # Prefixado
-                            # Calcular quantidade dias para valorização, adicionar 1 pois a função exclui a data final
-                            qtd_dias = qtd_dias_uteis_no_periodo(operacoes[indice_relacionada].data, ultima_data) + 1
-                            operacoes[indice_relacionada].atual = calcular_valor_atualizado_com_taxa_prefixado(operacoes[indice_relacionada].atual, 
-                                                                                                               operacoes[indice_relacionada].taxa, qtd_dias)
+                        operacoes[indice_relacionada].atual = calcular_valor_atualizado_operacao_ate_dia(operacoes[indice_relacionada].atual, operacoes[indice_relacionada].data, 
+                                                                       ultima_data, operacoes[indice_relacionada], operacoes[indice_relacionada].atual)
                     break
              
         # Verifica se é última operação ou próxima operação ocorre na mesma data
@@ -456,34 +476,38 @@ def historico(request):
          
             # Calcular o valor atualizado do patrimonio
             total_patrimonio = 0
-             
+            
+            # Preparar taxas do DI no período
+            historico_di = HistoricoTaxaDI.objects.filter(data__range=[ultima_data, operacao.data])
+            taxas_dos_dias_di = dict(historico_di.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+            
             for indice_atualizacao in xrange(indice+1):
                 if operacoes[indice_atualizacao].tipo_operacao == 'C' and operacoes[indice_atualizacao].atual > 0:
                     # Pegar primeira data de valorização para a operação feita na data
                     primeira_data_valorizacao = max(operacoes[indice_atualizacao].data, ultima_data)
                     # Pegar última data de valorização
-                    ultima_data_valorizacao = min(operacoes[indice_atualizacao].data_vencimento(), operacao.data)
+                    ultima_data_valorizacao = min(operacoes[indice_atualizacao].data_vencimento() - datetime.timedelta(days=1), operacao.data)
                     if ultima_data_valorizacao >= ultima_data:
-                        # Calcular o valor atualizado para cada operacao
-                        if operacoes[indice_atualizacao].investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
-                            # DI
-                            historico = HistoricoTaxaDI.objects.filter(data__range=[primeira_data_valorizacao, ultima_data_valorizacao])
-                            taxas_dos_dias = dict(historico.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-                            operacoes[indice_atualizacao].atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacoes[indice_atualizacao].atual, 
-                                                                                                         operacoes[indice_atualizacao].taxa)
-                        elif operacoes[indice_atualizacao].investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
-                            # Prefixado
-                            # Calcular quantidade dias para valorização, adicionar 1 pois a função exclui a data final
-                            qtd_dias = qtd_dias_uteis_no_periodo(primeira_data_valorizacao, ultima_data_valorizacao) + 1
-                            operacoes[indice_atualizacao].atual = calcular_valor_atualizado_com_taxa_prefixado(operacoes[indice_atualizacao].atual, 
-                                                                                                           operacoes[indice_atualizacao].taxa, qtd_dias)
+                        # Indexado pelo DI usa as taxas já definidas
+                        if operacoes[indice_atualizacao].tipo_rendimento_cdb_rdb == CDB_RDB.CDB_RDB_DI:
+                            if primeira_data_valorizacao == ultima_data and ultima_data_valorizacao == operacao.data:
+                                taxas_dos_dias = taxas_dos_dias_di
+                            else:
+                                taxas_dos_dias = dict(historico_di.filter(data__range=[primeira_data_valorizacao, ultima_data_valorizacao]) \
+                                                      .values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+                            operacoes[indice_atualizacao].atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacoes[indice_atualizacao].atual, operacoes[indice_atualizacao].porcentagem())
+                        else:
+                            # Calcular o valor atualizado para cada operacao
+                            operacoes[indice_atualizacao].atual = calcular_valor_atualizado_operacao_ate_dia(operacoes[indice_atualizacao].atual, 
+                                                                         primeira_data_valorizacao, ultima_data_valorizacao, operacoes[indice_atualizacao], 
+                                                                         operacoes[indice_atualizacao].atual)
+#                             print operacoes[indice_atualizacao], operacoes[indice_atualizacao].atual
                  
                     total_patrimonio += operacoes[indice_atualizacao].atual
                          
             # Preencher gráficos
             graf_gasto_total += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(total_gasto)]]
             graf_patrimonio += [[str(calendar.timegm(operacao.data.timetuple()) * 1000), float(total_patrimonio)]]
-             
              
             # Guardar data como última data usada para calcular valor atualizado
             ultima_data = operacao.data + datetime.timedelta(days=1)
@@ -494,21 +518,27 @@ def historico(request):
     if data_final > ultima_data:
         # Adicionar o restante de período (última operação até data atual)
         total_patrimonio = 0
+
+        # Preparar taxas do DI no período
+        historico_di = HistoricoTaxaDI.objects.filter(data__range=[ultima_data, data_final])
+        taxas_dos_dias_di = dict(historico_di.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+        
         for operacao in operacoes:
             if operacao.tipo_operacao == 'C' and operacao.atual > 0:
-                ultima_data_valorizacao = min(operacao.data_vencimento(), data_final)
+                ultima_data_valorizacao = min(operacao.data_vencimento() - datetime.timedelta(days=1), data_final)
                 if ultima_data_valorizacao >= ultima_data:
-                    # Calcular o valor atualizado para cada operacao
-                    if operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
-                        # DI
-                        historico = HistoricoTaxaDI.objects.filter(data__range=[ultima_data, ultima_data_valorizacao])
-                        taxas_dos_dias = dict(historico.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-                        operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.taxa)
-                    elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
-                        # Prefixado
-                        # Calcular quantidade dias para valorização, adicionar 1 pois a função exclui a data final
-                        qtd_dias = qtd_dias_uteis_no_periodo(ultima_data, ultima_data_valorizacao) + 1
-                        operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias)
+                    # Indexado pelo DI usa as taxas já definidas
+                    if operacao.tipo_rendimento_cdb_rdb == CDB_RDB.CDB_RDB_DI:
+                        if ultima_data_valorizacao == data_final:
+                            taxas_dos_dias = taxas_dos_dias_di
+                        else:
+                            taxas_dos_dias = dict(historico_di.filter(data__lte=ultima_data_valorizacao).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
+                        operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.porcentagem())
+                    else:
+                        # Calcular o valor atualizado para cada operacao
+                        operacao.atual = calcular_valor_atualizado_operacao_ate_dia(operacao.atual, ultima_data, ultima_data_valorizacao, operacao, 
+                                                                                    operacao.quantidade)
+                        print operacao, operacao.atual
                 # Formatar
                 str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
                 operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
@@ -518,7 +548,7 @@ def historico(request):
         # Preencher gráficos
         graf_gasto_total += [[str(calendar.timegm(datetime.date.today().timetuple()) * 1000), float(total_gasto)]]
         graf_patrimonio += [[str(calendar.timegm(datetime.date.today().timetuple()) * 1000), float(total_patrimonio)]]
-    
+        
     dados = {}
     dados['total_gasto'] = total_gasto
     dados['patrimonio'] = total_patrimonio
@@ -676,7 +706,7 @@ def inserir_operacao_cdb_rdb(request):
                                             extra=1, formset=DivisaoOperacaoCDB_RDBFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(request.POST, investidor=investidor)
@@ -688,64 +718,76 @@ def inserir_operacao_cdb_rdb(request):
             operacao_cdb_rdb.investidor = investidor
             operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
             formset_divisao_cdb_rdb = DivisaoCDB_RDBFormSet(request.POST, instance=operacao_cdb_rdb, operacao_compra=operacao_compra, investidor=investidor) if varias_divisoes else None
-                
-            # Validar em caso de venda
-            if form_operacao_cdb_rdb.cleaned_data['tipo_operacao'] == 'V':
-                operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
-                # Caso de venda total do cdb/rdb
-                if form_operacao_cdb_rdb.cleaned_data['quantidade'] == operacao_compra.quantidade:
-                    # Desconsiderar divisões inseridas, copiar da operação de compra
-                    operacao_cdb_rdb.save()
-                    for divisao_cdb_rdb in DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao_compra):
-                        divisao_cdb_rdb_venda = DivisaoOperacaoCDB_RDB(quantidade=divisao_cdb_rdb.quantidade, divisao=divisao_cdb_rdb.divisao, \
-                                                             operacao=operacao_cdb_rdb)
-                        divisao_cdb_rdb_venda.save()
-                    operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
-                    operacao_venda_cdb_rdb.save()
-                    messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
-                # Vendas parciais
-                else:
-                    # Verificar se varias divisões
-                    if varias_divisoes:
-                        if formset_divisao_cdb_rdb.is_valid():
+            
+            try:
+                with transaction.atomic():
+                    # Validar em caso de venda
+                    if form_operacao_cdb_rdb.cleaned_data['tipo_operacao'] == 'V':
+                        operacao_compra = form_operacao_cdb_rdb.cleaned_data['operacao_compra']
+                        # Caso de venda total do cdb/rdb
+                        if form_operacao_cdb_rdb.cleaned_data['quantidade'] == operacao_compra.quantidade:
+                            # Desconsiderar divisões inseridas, copiar da operação de compra
                             operacao_cdb_rdb.save()
-                            formset_divisao_cdb_rdb.save()
+                            # Consolidar venda
                             operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
                             operacao_venda_cdb_rdb.save()
+                            for divisao_cdb_rdb in DivisaoOperacaoCDB_RDB.objects.filter(operacao=operacao_compra):
+                                divisao_cdb_rdb_venda = DivisaoOperacaoCDB_RDB(quantidade=divisao_cdb_rdb.quantidade, divisao=divisao_cdb_rdb.divisao, \
+                                                                     operacao=operacao_cdb_rdb)
+                                divisao_cdb_rdb_venda.save()
+                                    
                             messages.success(request, 'Operação inserida com sucesso')
                             return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
-                        for erro in formset_divisao_cdb_rdb.non_form_errors():
-                            messages.error(request, erro)
-                                
-                    else:
-                        operacao_cdb_rdb.save()
-                        divisao_operacao = DivisaoOperacaoCDB_RDB(operacao=operacao_cdb_rdb, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cdb_rdb.quantidade)
-                        divisao_operacao.save()
-                        operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
-                        operacao_venda_cdb_rdb.save()
-                        messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
-            
-            # Compra
-            else:
-                # Verificar se várias divisões
-                if varias_divisoes:
-                    if formset_divisao_cdb_rdb.is_valid():
-                        operacao_cdb_rdb.save()
-                        formset_divisao_cdb_rdb.save()
-                        messages.success(request, 'Operação inserida com sucesso')
-                        return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
-                    for erro in formset_divisao_cdb_rdb.non_form_errors():
-                        messages.error(request, erro)
-                                
-                else:
-                    operacao_cdb_rdb.save()
-                    divisao_operacao = DivisaoOperacaoCDB_RDB(operacao=operacao_cdb_rdb, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cdb_rdb.quantidade)
-                    divisao_operacao.save()
-                    messages.success(request, 'Operação inserida com sucesso')
-                    return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
+                        # Vendas parciais
+                        else:
+                            # Verificar se varias divisões
+                            if varias_divisoes:
+                                if formset_divisao_cdb_rdb.is_valid():
+                                    operacao_cdb_rdb.save()
+                                    # Consolidar venda
+                                    operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
+                                    operacao_venda_cdb_rdb.save()
+                                    formset_divisao_cdb_rdb.save()
+                                    messages.success(request, 'Operação inserida com sucesso')
+                                    return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
+                                for erro in formset_divisao_cdb_rdb.non_form_errors():
+                                    messages.error(request, erro)
+                                        
+                            else:
+                                operacao_cdb_rdb.save()
+                                # Consolidar venda
+                                operacao_venda_cdb_rdb = OperacaoVendaCDB_RDB(operacao_compra=operacao_compra, operacao_venda=operacao_cdb_rdb)
+                                operacao_venda_cdb_rdb.save()
+                                divisao_operacao = DivisaoOperacaoCDB_RDB(operacao=operacao_cdb_rdb, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cdb_rdb.quantidade)
+                                divisao_operacao.save()
+                                messages.success(request, 'Operação inserida com sucesso')
+                                return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
                     
+                    # Compra
+                    else:
+                        # Verificar se várias divisões
+                        if varias_divisoes:
+                            if formset_divisao_cdb_rdb.is_valid():
+                                operacao_cdb_rdb.save()
+                                formset_divisao_cdb_rdb.save()
+                                messages.success(request, 'Operação inserida com sucesso')
+                                return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
+                            for erro in formset_divisao_cdb_rdb.non_form_errors():
+                                messages.error(request, erro)
+                                        
+                        else:
+                            operacao_cdb_rdb.save()
+                            divisao_operacao = DivisaoOperacaoCDB_RDB(operacao=operacao_cdb_rdb, divisao=investidor.divisaoprincipal.divisao, quantidade=operacao_cdb_rdb.quantidade)
+                            divisao_operacao.save()
+                            messages.success(request, 'Operação inserida com sucesso')
+                            return HttpResponseRedirect(reverse('cdb_rdb:historico_cdb_rdb'))
+             
+            except:
+                messages.error(request, 'Houve um erro ao inserir a operação')
+                if settings.ENV == 'DEV':
+                    raise
+                elif settings.ENV == 'PROD':
+                    mail_admins(u'Erro ao gerar operação em CDB/RDB', traceback.format_exc().decode('utf-8'))     
         for erro in [erro for erro in form_operacao_cdb_rdb.non_field_errors()]:
             messages.error(request, erro)
 #                         print '%s %s'  % (divisao_cdb_rdb.quantidade, divisao_cdb_rdb.divisao)
@@ -799,30 +841,17 @@ def painel(request):
         return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': {}, 'dados': dados})
      
     # Pegar data final, nivelar todas as operações para essa data
-    data_final = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
+    data_final, taxa_final = HistoricoTaxaDI.objects.all().values_list('data', 'taxa').order_by('-data')[0]
      
     # Prepara o campo valor atual
     for operacao in operacoes:
         operacao.quantidade = operacao.qtd_disponivel_venda
-        operacao.atual = operacao.quantidade
-        operacao.inicial = operacao.quantidade
         operacao.taxa = operacao.porcentagem()
         data_final_valorizacao = min(data_final, operacao.data_vencimento() - datetime.timedelta(days=1))
+
         # Calcular o valor atualizado
-        if operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
-            # DI
-            historico = HistoricoTaxaDI.objects.filter(data__range=[operacao.data, data_final_valorizacao])
-            taxas_dos_dias = dict(historico.values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-            operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.taxa)
-        elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_PREFIXADO:
-            # Prefixado
-            # Calcular quantidade dias para valorização, adicionar 1 pois a função exclui a data final
-            qtd_dias = qtd_dias_uteis_no_periodo(operacao.data, data_final_valorizacao) + 1
-            operacao.atual = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias)
-        # Arredondar valores
-        str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-        operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-                         
+        operacao.atual = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, data_final_valorizacao)
+        
     # Remover operações que não estejam mais rendendo
     operacoes = [operacao for operacao in operacoes if (operacao.atual > 0 and operacao.tipo_operacao == 'C')]
      
@@ -832,17 +861,15 @@ def painel(request):
     total_ganho_prox_dia = 0
     total_vencimento = 0
      
-    ultima_taxa_di = HistoricoTaxaDI.objects.filter().order_by('-data')[0].taxa
-     
     for operacao in operacoes:
         # Calcular o ganho no dia seguinte
         if data_final < operacao.data_vencimento():
             # Se prefixado apenas pegar rendimento de 1 dia
-            if operacao.investimento.eh_prefixado():
+            if operacao.cdb_rdb.eh_prefixado():
                 operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa) - operacao.atual
-            elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+            elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
                 # Considerar rendimento do dia anterior
-                operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_di(ultima_taxa_di, operacao.atual, operacao.taxa) - operacao.atual
+                operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_di(taxa_final, operacao.atual, operacao.taxa) - operacao.atual
             # Formatar
             str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
             operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
@@ -851,19 +878,8 @@ def painel(request):
             operacao.ganho_prox_dia = Decimal('0.00')
          
         # Calcular impostos
-        qtd_dias = (datetime.date.today() - operacao.data).days
-#         print qtd_dias, calcular_iof_regressivo(qtd_dias)
-        # IOF
-        operacao.iof = Decimal(calcular_iof_regressivo(qtd_dias)) * (operacao.atual - operacao.inicial)
-        # IR
-        if qtd_dias <= 180:
-            operacao.imposto_renda =  Decimal(0.225) * (operacao.atual - operacao.inicial - operacao.iof)
-        elif qtd_dias <= 360:
-            operacao.imposto_renda =  Decimal(0.2) * (operacao.atual - operacao.inicial - operacao.iof)
-        elif qtd_dias <= 720:
-            operacao.imposto_renda =  Decimal(0.175) * (operacao.atual - operacao.inicial - operacao.iof)
-        else: 
-            operacao.imposto_renda =  Decimal(0.15) * (operacao.atual - operacao.inicial - operacao.iof)
+        operacao.iof, operacao.imposto_renda = calcular_iof_e_ir_longo_prazo(operacao.atual - operacao.quantidade, 
+                                                 (datetime.date.today() - operacao.data).days)
          
         # Valor líquido
         operacao.valor_liquido = operacao.atual - operacao.imposto_renda - operacao.iof
@@ -872,11 +888,11 @@ def painel(request):
         if data_final < operacao.data_vencimento():
             qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
             # Se prefixado apenas pegar rendimento de 1 dia
-            if operacao.investimento.eh_prefixado():
+            if operacao.cdb_rdb.eh_prefixado():
                 operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
-            elif operacao.investimento.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+            elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
                 # Considerar rendimento do dia anterior
-                operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({HistoricoTaxaDI.objects.get(data=data_final).taxa: qtd_dias_uteis_ate_vencimento},
+                operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({taxa_final: qtd_dias_uteis_ate_vencimento},
                                                      operacao.atual, operacao.taxa)
             str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
             operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
@@ -902,17 +918,33 @@ def painel(request):
 
 @adiciona_titulo_descricao('Sobre CDB/RDB', 'Detalha o que são CDB e RDB')
 def sobre(request):
-    data_atual = datetime.date.today()
-    historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
-    graf_historico_di = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_di]
-    
-    historico_ipca = HistoricoIPCA.objects.filter(ano__gte=(data_atual.year-3)).exclude(mes__lt=data_atual.month, ano=data_atual.year-3)
-    graf_historico_ipca = [[str(calendar.timegm(valor_historico.data().timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
-    
-    if request.user.is_authenticated():
-        total_atual = sum(calcular_valor_cdb_rdb_ate_dia(request.user.investidor).values())
+    if request.is_ajax():
+        try:
+            aplicacao = Decimal(request.GET.get('qtd').replace('.', '').replace(',', '.'))
+            filtros_simulador = {'periodo': Decimal(request.GET.get('periodo')), 'percentual_indice': Decimal(request.GET.get('percentual_indice').replace('.', '').replace(',', '.')), \
+                             'tipo': request.GET.get('tipo'), 'aplicacao': aplicacao}
+        except:
+            return HttpResponse(json.dumps({'sucesso': False, 'mensagem': u'Variáveis de entrada inválidas'}), content_type = "application/json") 
+        
+        graf_simulador = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_cdb_rdb)] for data, valor_cdb_rdb in simulador_cdb_rdb(filtros_simulador)]
+        return HttpResponse(json.dumps({'sucesso': True, 'graf_simulador': graf_simulador}), content_type = "application/json") 
     else:
-        total_atual = 0
+        data_atual = datetime.date.today()
+        historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3)).order_by('data')
+        graf_historico_di = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_di]
     
-    return TemplateResponse(request, 'cdb_rdb/sobre.html', {'graf_historico_di': graf_historico_di, 'graf_historico_ipca': graf_historico_ipca,
-                                                            'total_atual': total_atual})
+        historico_ipca = HistoricoIPCA.objects.filter(data_inicio__year__gte=(data_atual.year-3)).order_by('data_inicio')
+        graf_historico_ipca = [[str(calendar.timegm(valor_historico.data_inicio.timetuple()) * 1000), float(valor_historico.valor * 100)] for valor_historico in historico_ipca]
+    
+        if request.user.is_authenticated():
+            total_atual = sum(calcular_valor_cdb_rdb_ate_dia(request.user.investidor).values())
+        else:
+            total_atual = 0
+        
+        filtros_simulador = {'periodo': Decimal(365), 'percentual_indice': Decimal(100), 'tipo': 'POS', 'aplicacao': Decimal(1000)}
+        
+        graf_simulador = [[str(calendar.timegm(data.timetuple()) * 1000), float(valor_cdb_rdb)] for data, valor_cdb_rdb in simulador_cdb_rdb(filtros_simulador)]
+    
+        return TemplateResponse(request, 'cdb_rdb/sobre.html', {'graf_historico_di': graf_historico_di, 'graf_historico_ipca': graf_historico_ipca,
+                                                                'total_atual': total_atual, 'filtros_simulador': filtros_simulador,
+                                                                'graf_simulador': graf_simulador})

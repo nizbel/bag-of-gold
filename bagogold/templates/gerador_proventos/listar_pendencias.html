@@ -44,7 +44,7 @@
                         {% endif %}
                             ">{{pendencia.tipo_pendencia}}</a></td>
                         <td>{{pendencia.data_criacao|date:'d/m/Y'}}</td>
-                        <td><a href="{% url 'gerador_proventos:detalhar_documento' pendencia.documento.id %}">{{pendencia.documento}}</a></td>
+                        <td><a href="{% url 'gerador_proventos:detalhar_documento' pendencia.documento.id %}">{{pendencia.documento.nome}}</a></td>
                         <td>{{pendencia.tipo_documento}}</td>
                         <td>
                             <span id="responsavel_{{pendencia.id|floatformat:'f'}}" {% if not pendencia.responsavel or pendencia.responsavel.id == request.user.investidor.id %}style="display: none"{% endif %}>{{pendencia.responsavel}}</span>
@@ -123,6 +123,36 @@
                                                     <span class="check"></span>
                                                     <span class="box"></span> Apenas reserváveis</label>
                                             </div>
+                                            <label class="col-md-12 control-label">Investimento:</label>
+                                            <div class="md-radio-list">
+                                                <div class="md-radio col-md-12">
+                                                    <input type="radio" class="md-radiobtn" name="filtro_tipo_inv" id="radioDocumentoTodos" value="T" 
+                                                    {% if filtros.filtro_tipo_inv == 'T' %}checked{% endif %}>
+                                                    <label for="radioDocumentoTodos">
+                                                        <span></span>
+                                                        <span class="check"></span>
+                                                        <span class="box"></span> Todos 
+                                                    </label>
+                                                </div>
+                                                <div class="md-radio col-md-12">
+                                                    <input type="radio" class="md-radiobtn" name="filtro_tipo_inv" id="radioDocumentoAcao" value="A"
+                                                    {% if filtros.filtro_tipo_inv == 'A' %}checked{% endif %}>
+                                                    <label for="radioDocumentoAcao">
+                                                        <span></span>
+                                                        <span class="check"></span>
+                                                        <span class="box"></span> Ações 
+                                                    </label>
+                                                </div>
+                                                <div class="md-radio col-md-12">
+                                                    <input type="radio" class="md-radiobtn" name="filtro_tipo_inv" id="radioDocumentoFII" value="F"
+                                                    {% if filtros.filtro_tipo_inv == 'F' %}checked{% endif %}>
+                                                    <label for="radioDocumentoFII">
+                                                        <span></span>
+                                                        <span class="check"></span>
+                                                        <span class="box"></span> FIIs 
+                                                    </label>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -140,7 +170,7 @@
     </div>
 </div>
 
-<script>
+<script type="text/javascript">
 function puxar_responsabilidade(id) {
     var id_pendencia = id;
 //     console.log(id_pendencia + "..." + table.fnPagingInfo().iPage);
@@ -210,11 +240,11 @@ function remover_responsabilidade(id) {
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
-<script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/datetime-moment.js" type="text/javascript"></script>
+<script src={% static "assets/global/plugins/datatables/plugins/datetime-moment.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/nouislider/wNumb.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/nouislider/nouislider.min.js" %} type="text/javascript"></script>
 
-<script>
+<script type="text/javascript">
 $.fn.dataTable.moment( 'DD/MM/YYYY' );
 $( document ).ready(function() {
     var tooltipSlider = document.getElementById('rangeFiltro');

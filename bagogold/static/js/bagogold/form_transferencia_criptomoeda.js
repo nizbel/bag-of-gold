@@ -71,6 +71,7 @@ $(document).ready(function() {
 	});
 	
     $('.date-picker').datepicker({
+        todayHighlight: true,
         language: 'pt-BR'
     });
 	

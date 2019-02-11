@@ -1,11 +1,14 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.criptomoeda.models import OperacaoCriptomoeda, Criptomoeda,\
-    TransferenciaCriptomoeda
-from bagogold.criptomoeda.utils import \
-    calcular_qtd_moedas_ate_dia_por_criptomoeda
 from django import forms
 from django.forms import widgets
+
+from bagogold.bagogold.forms.utils import LocalizedModelForm
+from bagogold.bagogold.models.divisoes import Divisao
+from bagogold.criptomoeda.models import OperacaoCriptomoeda, Criptomoeda, \
+    TransferenciaCriptomoeda, Fork
+from bagogold.criptomoeda.utils import \
+    calcular_qtd_moedas_ate_dia_por_criptomoeda
+
 
 ESCOLHAS_TIPO_OPERACAO=(('C', "Compra"),
                         ('V', "Venda"))
@@ -24,7 +27,7 @@ class OperacaoCriptomoedaForm(LocalizedModelForm):
         labels = {'criptomoeda': 'Criptomoeda'}
     
     class Media:
-        js = ('js/bagogold/form_operacao_criptomoeda.js',)
+        js = ('js/bagogold/form_operacao_criptomoeda.min.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -64,7 +67,7 @@ class TransferenciaCriptomoedaForm(LocalizedModelForm):
                                             'placeholder':'Selecione uma data'}),}
         
     class Media:
-        js = ('js/bagogold/form_transferencia_criptomoeda.js',)
+        js = ('js/bagogold/form_transferencia_criptomoeda.min.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
@@ -86,3 +89,64 @@ class TransferenciaCriptomoedaForm(LocalizedModelForm):
         # Testar se o campo criptomoeda foi preenchido, se não, transferência de reais
         if data.get('criptomoeda') and data.get('quantidade') > calcular_qtd_moedas_ate_dia_por_criptomoeda(self.investidor, data.get('criptomoeda').id, data.get('data')):
             raise forms.ValidationError('Não é possível transferir quantidade informada. Quantidade em %s: %s %s' % (data.get('data').strftime('%d/%m/%Y'), data.get('quantidade'), data.get('criptomoeda').ticker))
+        
+class OperacaoCriptomoedaLoteForm(forms.Form):
+    divisao = forms.ModelChoiceField(queryset=None, label=u'Divisão')
+    operacoes_lote = forms.CharField(label=u'Operações', widget=forms.Textarea)
+    
+    class Media:
+        js = ('js/bagogold/form_operacao_criptomoeda_lote.min.js',)
+    
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(OperacaoCriptomoedaLoteForm, self).__init__(*args, **kwargs)
+        # there's a `fields` property now
+        self.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+
+    def clean(self):
+        data = super(OperacaoCriptomoedaLoteForm, self).clean()
+        
+class TransferenciaCriptomoedaLoteForm(forms.Form):
+    divisao = forms.ModelChoiceField(queryset=None, label=u'Divisão')
+    transferencias_lote = forms.CharField(label=u'Transferências', widget=forms.Textarea)
+    
+    class Media:
+        js = ('js/bagogold/form_transferencia_criptomoeda_lote.min.js',)
+    
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(TransferenciaCriptomoedaLoteForm, self).__init__(*args, **kwargs)
+        # there's a `fields` property now
+        self.fields['divisao'].queryset = Divisao.objects.filter(investidor=self.investidor)
+
+    def clean(self):
+        data = super(TransferenciaCriptomoedaLoteForm, self).clean()       
+         
+class ForkForm(LocalizedModelForm):
+    class Meta:
+        model = Fork
+        fields = ('moeda_origem', 'moeda_recebida', 'data', 'quantidade',)
+        widgets={'data': widgets.DateInput(attrs={'class':'datepicker', 
+                                            'placeholder':'Selecione uma data'}),}
+        
+    class Media:
+        js = ('js/bagogold/form_fork_criptomoeda.min.js',)
+        
+    def __init__(self, *args, **kwargs):
+        self.investidor = kwargs.pop('investidor')
+        # first call parent's constructor
+        super(ForkForm, self).__init__(*args, **kwargs)
+        escolhas_moeda = Criptomoeda.objects.all().order_by('nome')
+        self.fields['moeda_origem'].choices = [(moeda.id, '%s (%s)' % (moeda.ticker, moeda.nome)) for moeda in escolhas_moeda]
+        self.fields['moeda_recebida'].choices = [(moeda.id, '%s (%s)' % (moeda.ticker, moeda.nome)) for moeda in escolhas_moeda]
+        
+    def clean(self):
+        data = super(ForkForm, self).clean()
+        if data.get('moeda_origem') == data.get('moeda_recebida'):
+            raise forms.ValidationError('Moeda de origem deve ser diferente de moeda recebida')
+        
+        # Testar se investidor possuía quantidade de moedas de origem igual a quantidade recebida
+        if calcular_qtd_moedas_ate_dia_por_criptomoeda(self.investidor, data.get('moeda_origem').id, data.get('data')) < data.get('quantidade'):
+            raise forms.ValidationError('Investidor deve possuir a moeda de origem informada em quantidade pelo menos igual a informada para o fork')

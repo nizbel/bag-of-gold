@@ -3,5 +3,5 @@ from __future__ import unicode_literals
 
 from django.apps import AppConfig
 
-class CriptomoedaConfig(AppConfig):
+class OutrosInvestimentosConfig(AppConfig):
     name = 'outros_investimentos'

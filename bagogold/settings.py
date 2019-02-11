@@ -19,18 +19,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '3$z^a73@q+n$h@v)j-$vo0j5k((s6u#jebu5t9qhcl+k!@zg=s'
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 # ALLOWED_HOSTS = ['bagofgold.com.br']
-
-ADMINS = [('Guilherme', 'kingbowserii@gmail.com'), ]
-MANAGERS = [('Guilherme', 'kingbowserii@gmail.com'), ]
-SERVER_EMAIL = 'django@bagofgold.com.br'
-
 
 # Application definition
 
@@ -42,16 +34,22 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    'yahoo_finance',
+    'storages',
     
     #Bag-O-Gold
     'bagogold.bagogold',
     'bagogold.pendencias',
+    'bagogold.blog',
     'bagogold.cdb_rdb',
     'bagogold.cri_cra',
+    'bagogold.fii',
     'bagogold.fundo_investimento',
     'bagogold.criptomoeda',
+    'bagogold.lci_lca',
     'bagogold.outros_investimentos',
+    'bagogold.lc',
+    'bagogold.tesouro_direto',
+    'bagogold.debentures',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -89,18 +87,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'bagogold.wsgi.application'
 
-# Database
-# https://docs.djangoproject.com/en/1.8/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'bagogold',
-        'USER': 'bagogold',
-        'PASSWORD': 'bagogold',
-    }
-}
-
 LOGIN_REDIRECT_URL = 'inicio:painel_geral'
 
 # Internationalization
@@ -127,33 +113,38 @@ USE_THOUSAND_SEPARATOR = True
 
 LOGIN_URL= '/login/'
 
-# Django-registration
-DEFAULT_FROM_EMAIL = 'Bag of Gold <do-not-reply@bagofgold.com.br>'
-ACCOUNT_ACTIVATION_DAYS = 3
-EMAIL_USE_TLS = True
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'bagofgold@bagofgold.com.br'
-EMAIL_HOST_PASSWORD = '9jU3IU8hse'
-EMAIL_PORT = 587
+# Testes
+TEST_RUNNER = 'bagogold.bagogold.tests.runner.TimeLoggingTestRunner'
+
+# Configuracoes extras
+from conf.conf import *
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
-
 STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR + '/bagogold', "static"),
-    '/var/www/static/',
 ]
 
-MEDIA_ROOT = PROJECT_ROOT + '/media/'
-
-# Caminho para doc proventos
+MEDIA_ROOT = 'media/'
 
 # Caminho para arquivos de fundos de investimento
 CAMINHO_FUNDO_INVESTIMENTO = MEDIA_ROOT + 'fundo investimento/'
 CAMINHO_FUNDO_INVESTIMENTO_CADASTRO = CAMINHO_FUNDO_INVESTIMENTO + 'cadastro/' 
 CAMINHO_FUNDO_INVESTIMENTO_HISTORICO = CAMINHO_FUNDO_INVESTIMENTO + 'historico/' 
+
+# Caminho para historico de acoes/FIIs
+CAMINHO_HISTORICO_ACOES_FIIS = MEDIA_ROOT + 'historico passado/'
+
+# Caminho para arquivos de historico recente acoes/fiis
+CAMINHO_HISTORICO_RECENTE_ACOES_FIIS = MEDIA_ROOT + 'historico recente/'
+
+# Caminho para arquivos de proventos
+CAMINHO_DOCUMENTO_PROVENTOS = MEDIA_ROOT + 'doc proventos/'
+
+# Caminho para backups
+CAMINHO_BACKUPS = BASE_DIR + '/backups'
 
 # Configurar precisao de decimais
 from decimal import getcontext

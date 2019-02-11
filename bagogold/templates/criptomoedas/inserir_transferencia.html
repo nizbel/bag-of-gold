@@ -48,7 +48,7 @@
                 <div class="form-group col-md-6 {% if form_transferencia_criptomoeda.data.errors %} has-error {% endif %}">
                     <label class="control-label col-md-4" style="text-align: left;"> {{form_transferencia_criptomoeda.data.label}}: </label>
                     <div class="col-md-8">
-                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+                        <div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy">
                             <input type="text" class="form-control" id="id_data" name="data" value="{{form_transferencia_criptomoeda.data.value|default:''}}">
                             <span class="input-group-btn">
                                 <button class="btn default" type="button">

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import OperacaoAcao
-from bagogold.bagogold.models.fii import OperacaoFII
-from bagogold.bagogold.models.lc import OperacaoLetraCredito
-from bagogold.bagogold.models.td import OperacaoTitulo
+from bagogold.fii.models import OperacaoFII
+from bagogold.lci_lca.models import OperacaoLetraCredito
+from bagogold.tesouro_direto.models import OperacaoTitulo
 from bagogold.bagogold.utils.divisoes import preencher_operacoes_div_principal
 from django.core.management.base import BaseCommand
 

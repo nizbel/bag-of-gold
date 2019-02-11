@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao, OperacaoAcao, Provento, AcaoProvento
-from bagogold.bagogold.models.fii import FII, HistoricoFII
+from bagogold.fii.models import FII, HistoricoFII
 from decimal import Decimal
 from django.contrib.auth.models import User
 import csv

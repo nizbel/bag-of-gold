@@ -1,9 +1,19 @@
 # -*- coding: utf-8 -*-
+from bagogold.bagogold.models.acoes import OperacaoAcao
+from bagogold.debentures.models import OperacaoDebenture
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoPrincipal
+from bagogold.fii.models import OperacaoFII
+from bagogold.lci_lca.models import OperacaoLetraCredito
+from bagogold.tesouro_direto.models import OperacaoTitulo
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB
+from bagogold.cri_cra.models.cri_cra import OperacaoCRI_CRA
+from bagogold.criptomoeda.models import OperacaoCriptomoeda
+from bagogold.fundo_investimento.models import OperacaoFundoInvestimento
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from bagogold.outros_investimentos.models import Investimento
  
 class Investidor (models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -18,6 +28,35 @@ class Investidor (models.Model):
     def __unicode__(self):
         return self.user.username
     
+    def buscar_data_primeira_operacao(self):
+        datas_primeira_operacao = list()
+        
+        # Preencher com as primeiras datas de operação para cada investimento
+        if OperacaoAcao.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoAcao.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoCDB_RDB.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoCDB_RDB.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoCriptomoeda.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoCriptomoeda.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoFII.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoFII.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoLetraCredito.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoLetraCredito.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoDebenture.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoDebenture.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoFundoInvestimento.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoFundoInvestimento.objects.filter(investidor=self).order_by('data')[0].data)
+        if OperacaoCRI_CRA.objects.filter(cri_cra__investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoCRI_CRA.objects.filter(cri_cra__investidor=self).order_by('data')[0].data)
+        if OperacaoTitulo.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(OperacaoTitulo.objects.filter(investidor=self).order_by('data')[0].data)
+        if Investimento.objects.filter(investidor=self).exists():
+            datas_primeira_operacao.append(Investimento.objects.filter(investidor=self).order_by('data')[0].data)
+        
+        if len(datas_primeira_operacao) == 0:
+            return None
+        
+        return min(datas_primeira_operacao)
     
 @receiver(post_save, sender=User, dispatch_uid="usuario_criado")
 def create_investidor(sender, instance, created, **kwargs):

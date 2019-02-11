@@ -60,6 +60,7 @@ $(document).ready(function() {
  		prefix: 'R$'
  	});
  	$('.date-picker').datepicker({
+ 	   todayHighlight: true,
  	   language: 'pt-BR'
  	});
      $("select[id$='-divisao']").selectpicker('refresh');
@@ -67,20 +68,20 @@ $(document).ready(function() {
 
      if ($('#id_tipo_operacao').parent().find('button').attr('title') == 'Venda') {
         $("#grupo_operacao_compra").removeClass('hidden');
-        $("#grupo_investimento").addClass('hidden');
+        $("#grupo_cdb_rdb").addClass('hidden');
     } else {
         $("#grupo_operacao_compra").addClass('hidden');
-        $("#grupo_investimento").removeClass('hidden');
+        $("#grupo_cdb_rdb").removeClass('hidden');
     }
 	
 	// Adiciona alterações para o form dependendo do tipo de operação
 	$("#id_tipo_operacao").change(function() {
 	   if ($(this).val() == 'C') {
 		   $("#grupo_operacao_compra").addClass('hidden');
-		   $("#grupo_investimento").removeClass('hidden');
+		   $("#grupo_cdb_rdb").removeClass('hidden');
 	   } else {
         $("#grupo_operacao_compra").removeClass('hidden');
-        $("#grupo_investimento").addClass('hidden');
+        $("#grupo_cdb_rdb").addClass('hidden');
 	   }
 	});
 });

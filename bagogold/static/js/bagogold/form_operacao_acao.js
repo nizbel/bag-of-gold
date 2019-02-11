@@ -103,6 +103,7 @@ $(document).ready(function() {
 		prefix: 'R$'
 	});
 	$('.date-picker').datepicker({
+    	todayHighlight: true,
     	language: 'pt-BR'
 	});
 });

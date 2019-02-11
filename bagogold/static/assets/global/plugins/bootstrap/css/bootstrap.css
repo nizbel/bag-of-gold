@@ -2243,11 +2243,11 @@ table th[class*="col-"] {
         .table-responsive > .table-bordered > tfoot > tr:last-child > td {
           border-bottom: 0; } }
 
-fieldset {
+/*fieldset {
   padding: 0;
   margin: 0;
   border: 0;
-  min-width: 0; }
+  min-width: 0; } */
 
 legend {
   display: block;
@@ -3570,7 +3570,7 @@ tbody.collapse.in {
   .nav > li > a > img {
     max-width: none; }
 
-.nav-tabs {
+/*.nav-tabs {
   border-bottom: 1px solid #ddd; }
   .nav-tabs > li {
     float: left;
@@ -3603,7 +3603,7 @@ tbody.collapse.in {
   float: none; }
   .nav-stacked > li + li {
     margin-top: 2px;
-    margin-left: 0; }
+    margin-left: 0; } */
 
 .nav-justified, .nav-tabs.nav-justified {
   width: 100%; }
@@ -3828,7 +3828,7 @@ tbody.collapse.in {
           padding-top: 15px;
           padding-bottom: 15px; } }
 
-.navbar-form {
+/*.navbar-form {
   margin-left: -15px;
   margin-right: -15px;
   padding: 10px 15px;
@@ -3890,7 +3890,7 @@ tbody.collapse.in {
       padding-top: 0;
       padding-bottom: 0;
       -webkit-box-shadow: none;
-      box-shadow: none; } }
+      box-shadow: none; } } */
 
 .navbar-nav > li > .dropdown-menu {
   margin-top: 0;
@@ -3932,7 +3932,7 @@ tbody.collapse.in {
     .navbar-right ~ .navbar-right {
       margin-right: 0; } }
 
-.navbar-default {
+/*.navbar-default {
   background-color: #f8f8f8;
   border-color: #e7e7e7; }
   .navbar-default .navbar-brand {
@@ -3988,9 +3988,9 @@ tbody.collapse.in {
     .navbar-default .btn-link[disabled]:hover, .navbar-default .btn-link[disabled]:focus,
     fieldset[disabled] .navbar-default .btn-link:hover,
     fieldset[disabled] .navbar-default .btn-link:focus {
-      color: #ccc; }
+      color: #ccc; } */
 
-.navbar-inverse {
+/*.navbar-inverse {
   background-color: #222;
   border-color: #090909; }
   .navbar-inverse .navbar-brand {
@@ -4050,7 +4050,7 @@ tbody.collapse.in {
     .navbar-inverse .btn-link[disabled]:hover, .navbar-inverse .btn-link[disabled]:focus,
     fieldset[disabled] .navbar-inverse .btn-link:hover,
     fieldset[disabled] .navbar-inverse .btn-link:focus {
-      color: #444; }
+      color: #444; } */
 
 .breadcrumb {
   padding: 8px 15px;
@@ -4280,7 +4280,7 @@ a.badge:hover, a.badge:focus {
   text-decoration: none;
   cursor: pointer; }
 
-.jumbotron {
+/*.jumbotron {
   padding-top: 30px;
   padding-bottom: 30px;
   margin-bottom: 30px;
@@ -4312,7 +4312,7 @@ a.badge:hover, a.badge:focus {
         padding-right: 60px; }
       .jumbotron h1,
       .jumbotron .h1 {
-        font-size: 63px; } }
+        font-size: 63px; } } */
 
 .thumbnail {
   display: block;
@@ -4987,7 +4987,7 @@ button.list-group-item-danger {
       color: #fbe1e3;
       background-color: #e73d4a; }
   .panel-danger > .panel-footer + .panel-collapse > .panel-body {
-    border-bottom-color: #fbe1e3; }
+    border-bottom-color: #fbe1e3; } 
 
 .embed-responsive {
   position: relative;
@@ -5411,7 +5411,7 @@ button.close {
     border-left-color: #fff/*rtl:ignore*/;
     bottom: -10px; }
 
-.carousel {
+/*.carousel {
   position: relative; }
 
 .carousel-inner {
@@ -5599,7 +5599,7 @@ button.close {
     right: 20%;
     padding-bottom: 30px; }
   .carousel-indicators {
-    bottom: 20px; } }
+    bottom: 20px; } } */
 
 .clearfix:before, .clearfix:after {
   content: " ";

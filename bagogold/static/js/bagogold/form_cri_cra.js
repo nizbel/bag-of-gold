@@ -26,6 +26,7 @@ $(document).ready(function() {
          $("[name=dataremuneracaocri_cra_set-TOTAL_FORMS]").val(form_count_remuneracao);
          // ready bootstrap elements
          row.find('.date-picker').datepicker({
+             todayHighlight: true,
              language: 'pt-BR'
          });
      });
@@ -68,6 +69,7 @@ $(document).ready(function() {
           $("[name=dataamortizacaocri_cra_set-TOTAL_FORMS]").val(form_count_amortizacao);
           // ready bootstrap elements
           row.find('.date-picker').datepicker({
+              todayHighlight: true,
               language: 'pt-BR'
           });
           var campo_percentual= row.find('.bootstrap-touchspin input').detach();

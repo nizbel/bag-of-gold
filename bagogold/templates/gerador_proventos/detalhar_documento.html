@@ -33,10 +33,12 @@
                         <div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>Validado:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{documento.pendente|yesno:"Não,Sim,Indefinido"}}</div>
+                            {% with leitor_padrao=documento.pendente|yesno:"N/A,Sistema,N/A" %}
                             <div class="m-grid-col m-grid-col-left"><strong>Responsável por ler:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{documento.responsavel_leitura|default:'N/A'}}</div>
+                            <div class="m-grid-col m-grid-col-left">{{documento.responsavel_leitura|default:leitor_padrao}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Responsável por validar:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{documento.responsavel_validacao|default:'N/A'}}</div>
+                            <div class="m-grid-col m-grid-col-left">{{documento.responsavel_validacao|default:leitor_padrao}}</div>
+                            {% endwith %}
                             <div class="m-grid-col m-grid-col-left"><strong>Pendências:</strong></div>
                             <div class="m-grid-col m-grid-col-left">
                                 {% for pendencia in documento.pendencias %}
@@ -52,11 +54,20 @@
                                 {% endfor %}
                             </div>
                         </div>
-                        <a href="{% if documento.pendencias or proventos %}
-                        {% url 'gerador_proventos:baixar_documento_provento' documento.id %}
-                        {% else %}
-                        {{documento.url}}
-                        {% endif %}" class="btn btn-warning">{% if documento.pendencias or proventos %}Download{% else %}Ver na Bovespa{% endif %}</a>
+                        <div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left">
+                                <a href="{% if documento.pendencias or proventos %}
+                                {% url 'gerador_proventos:baixar_documento_provento' documento.id %}
+                                {% else %}
+                                {{documento.url}}
+                                {% endif %}" class="btn btn-warning">{% if documento.pendencias or proventos %}Download{% else %}Ver na Bovespa{% endif %}</a>
+                            </div>
+                            <div class="m-grid-col m-grid-col-left">
+                                {% if request.user.is_superuser %}
+                                <a href="#modal_reiniciar" data-toggle="modal" class="btn btn-warning">Reiniciar documento</a>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -80,7 +91,7 @@
                     <div class="m-grid m-grid-responsive-xs">
                         <div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>Ação:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{provento.acao}}</div>
+                            <div class="m-grid-col m-grid-col-left"><a href="{% url 'acoes:geral:detalhar_acao' provento.acao.ticker %}">{{provento.acao}}</a></div>
                             <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
@@ -132,7 +143,7 @@
                     <div class="m-grid m-grid-responsive-xs">
                         <div class="m-grid-row">
                             <div class="m-grid-col m-grid-col-left"><strong>FII:</strong></div>
-                            <div class="m-grid-col m-grid-col-left">{{provento.fii}}</div>
+                            <div class="m-grid-col m-grid-col-left"><a href="{% url 'fii:detalhar_fii' provento.fii.ticker %}">{{provento.fii}}</a></div>
                             <div class="m-grid-col m-grid-col-left"><strong>Tipo:</strong></div>
                             <div class="m-grid-col m-grid-col-left">{{provento.descricao_tipo_provento}}</div>
                             <div class="m-grid-col m-grid-col-left"><strong>Valor unit.:</strong></div>
@@ -164,4 +175,21 @@
     {% endif %}
 </div>
 
+<div class="modal fade" id="modal_reiniciar" tabindex="-1" role="basic" aria-hidden="true" data-backdrop="static" data-keyboard="false"  style="display: none;">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true"></button>
+                <h4 class="modal-title">Confirmar reinício de documento</h4>
+            </div>
+            <div class="modal-body">Confirma a operação de reiniciar esse documento?</div>
+            <div class="modal-footer">
+                <a class="btn dark btn-outline" data-dismiss="modal">Cancelar</a>
+                <a href="{% url 'gerador_proventos:reiniciar_documento_proventos' documento.id %}" class="btn red-thunderbird">Confirmar</a>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
 {% endblock %}

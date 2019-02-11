@@ -26,7 +26,7 @@
 				<div class="form-group col-md-6 {% if form_rendimento.data.errors %} has-error {% endif %}">
 					<label class="control-label col-md-4" style="text-align: left;"> {{ form_rendimento.data.label }}: </label>
 					<div class="col-md-8">
-						<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy" data-date-viewmode="years">
+						<div class="input-group input-medium date date-picker" data-date-format="dd/mm/yyyy">
 							<input type="text" class="form-control" id="id_data" name="data" 
                             value="{% if form_rendimento.data.value|date:'d/m/Y'|default:'' == '' %}{{form_rendimento.data.value|default:''}}{% else %}{{form_rendimento.data.value|date:'d/m/Y'}}{% endif %}">
 							<span class="input-group-btn">
@@ -54,7 +54,26 @@
 						{% if form_rendimento.investimento.errors %} <span class="help-block"> {{ form_rendimento.investimento.errors.as_text }} </span> {% endif %}
 					</div>
 				</div>
-			</div>
+                <div class="form-group col-md-6 {% if form_rendimento.imposto_renda.errors %} has-error {% endif %}">
+                    <label class="control-label col-md-4"> {{ form_rendimento.imposto_renda.label}}: </label>
+                    <div class="col-md-8">
+                        <select class="selectpicker form-control" id="id_imposto_renda" name="imposto_renda">
+                        {% for key, value in form_rendimento.fields.imposto_renda.widget.choices %}<option value="{{ key }}" 
+                        {% if key == form_rendimento.imposto_renda.value %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
+                        </select>
+                        {% if form_rendimento.imposto_renda.errors %} <span class="help-block"> {{ form_rendimento.imposto_renda.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group col-md-6 {% if form_rendimento.percentual_imposto.errors %} has-error {% endif %}" id="grupo_percentual">
+                    <label class="control-label col-md-4"> {{ form_rendimento.percentual_imposto.label}}: </label>
+                    <div class="col-md-8">
+                        <input id="id_percentual_imposto" {% if form_rendimento.imposto_renda.value != 'S' %}disabled="disabled"{% endif %} type="text" value="{{form_rendimento.percentual_imposto.value}}" name="percentual_imposto" class="form-control">
+                        {% if form_rendimento.percentual_imposto.errors %} <span class="help-block"> {{ form_rendimento.percentual_imposto.errors.as_text }} </span> {% endif %}
+                    </div>
+                </div>
+            </div>
 			<div class="form-actions">
 				<div class="row">
 					<div class="col-md-offset col-md-3">
@@ -85,6 +104,7 @@
         </div>
 	</form>
 	<!-- END FORM-->
+    <input type="hidden" value="{{data_investimento|date:'Y-m-d'}}" id="id_data_investimento">
 </div>
 
 {% endblock %}
@@ -99,7 +119,7 @@
 <script src={% static "assets/global/plugins/bootstrap-datepicker/js/bootstrap-datepicker.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
 {{ form_rendimento.media }}
-<script>
+<script type="text/javascript">
 $( document ).ready(function() {	
 	$("input[name='valor']").TouchSpin({
 		initval: 0.01,
@@ -111,8 +131,69 @@ $( document ).ready(function() {
 		prefix: 'R$'
 	});
 	$('.date-picker').datepicker({
-		language: 'pt-BR'
-	});
+        todayHighlight: true,
+        language: 'pt-BR'
+    }).on('changeDate', function(e) {
+        if ($('#id_imposto_renda').val() == 'L') {
+            verificarImpostoLongoPrazo();
+        }
+    });
+    
+    $("input[name='percentual_imposto']").TouchSpin({
+        initval: 0.01,
+        min: 0.001,
+        max: 99.999,
+        step: 0.001,
+        decimals: 3,
+        maxboostedstep: 100,
+        postfix: '%'
+    });
+    
+    // Verificar se imposto de longo prazo foi selecionado
+    $("#id_imposto_renda").change(function() {
+       definirPercentual();
+    });
+    
+    // Definir percentual inicial
+    definirPercentual();
 });
+    
+function verificarImpostoLongoPrazo() {
+    var data = $('#id_data').val();
+    if (data == null || (data == undefined) || (data == '')) {
+        $('#id_percentual_imposto').val('22,5');
+    } else {
+        var partesData = data.split('/');
+        var data = new Date(partesData[2] + '-' + partesData[1] + '-' + partesData[0]);
+        var dataInvestimento = new Date($('#id_data_investimento').val());
+        
+        var oneDay = 24*60*60*1000;
+
+        var diffDays = Math.round(Math.abs((data.getTime() - dataInvestimento.getTime())/(oneDay)));
+        if (diffDays > 720) {
+            $('#id_percentual_imposto').val('15');
+        } else if (diffDays > 360) {
+            $('#id_percentual_imposto').val('17,5');
+        } else if (diffDays > 180) {
+            $('#id_percentual_imposto').val('20');
+        } else {
+            $('#id_percentual_imposto').val('22,5');
+        }
+    }
+}
+
+function definirPercentual() {
+    var elementoImpostoRenda = $("#id_imposto_renda");
+    if (elementoImpostoRenda.val() == 'P') {
+        $('#id_percentual_imposto').removeAttr('disabled');
+        $('#grupo_percentual').show();
+    } else if (elementoImpostoRenda.val() == 'L') {
+        $('#id_percentual_imposto').attr('disabled', 'disabled');
+        verificarImpostoLongoPrazo();
+        $('#grupo_percentual').show();
+    } else if (elementoImpostoRenda.val() == 'S') {
+        $('#grupo_percentual').hide();
+    }
+}
 </script>
 {% endblock %}

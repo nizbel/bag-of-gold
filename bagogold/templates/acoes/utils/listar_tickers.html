@@ -1,0 +1,1 @@
+[{% for acao in acoes %}{"label":"{{acao.ticker}}","title":"{{acao.ticker}}","value":"{{acao.id|stringformat:"s"}}"}{% if not forloop.last %},{% endif %}{% endfor %}]

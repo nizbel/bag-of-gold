@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block extra_head %}
+<link href={% static "assets/global/plugins/datatables/datatables.min.css" %} rel="stylesheet" type="text/css" />
+<link href={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.css" %} rel="stylesheet" type="text/css" />
+{% endblock %}
+
+{% block pagina_titulo_icone %}
+<i class="icon-diamond font-yellow-crusta"></i>
+{% endblock %}
+
+{% block content %}
+<div class="portlet-body">
+	<table id="letras" class="table table-striped table-bordered table-hover table-header-fixed">
+	<thead>
+		<tr>
+			<th>Nome</th>
+			<th>Carência atual</th>
+			<th>Rendimento atual (DI)</th>
+            <th>Vencimento atual</th>
+		</tr>
+	</thead>
+	<tbody>
+	{% for lci_lca in letras_credito %}
+	<tr>
+		<td><a href="{% url 'lci_lca:detalhar_lci_lca' lci_lca.id %}" class="tooltips" data-placement="top" data-original-title="Detalhar Letra de Crédito">{{lci_lca.nome}}</a></td>
+		<td>{{lci_lca.carencia_atual}} dia(s)</td>
+		<td>{{lci_lca.porcentagem_atual}}%</td>
+        <td>{{lci_lca.vencimento_atual}} dia(s)</td>
+	</tr>
+	{% endfor %}
+	</tbody>
+	</table>
+</div>
+
+{% endblock %}
+
+{% block extra_footer %}
+<script src={% static "assets/global/scripts/datatable.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/datatables/datatables.min.js" %} type="text/javascript"></script>
+<script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
+<script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
+{% endblock %}

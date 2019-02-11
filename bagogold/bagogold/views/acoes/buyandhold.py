@@ -1,52 +1,55 @@
 # -*- coding: utf-8 -*-
+import calendar
+import datetime
+from decimal import Decimal
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.db.models.expressions import F
+from django.shortcuts import get_object_or_404
+from itertools import chain
+import json
+from operator import attrgetter
+
+from django.core.urlresolvers import reverse
+from django.db import transaction
+from django.db.models import Q
+from django.forms import inlineformset_factory
+from django.http import HttpResponse, HttpResponseRedirect
+from django.template.response import TemplateResponse
+
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoAcaoFormSet
 from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm, \
     UsoProventosOperacaoAcaoForm
-from bagogold.bagogold.forms.provento_acao import ProventoAcaoForm
 from bagogold.bagogold.forms.taxa_custodia_acao import TaxaCustodiaAcaoForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, \
-    ValorDiarioAcao, Provento, UsoProventosOperacaoAcao, TaxaCustodiaAcao, Acao, \
-    AcaoProvento
+    ValorDiarioAcao, Provento, UsoProventosOperacaoAcao, TaxaCustodiaAcao, Acao
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao, Divisao
 from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_media_proventos_6_meses, calcular_operacoes_sem_proventos_por_mes, \
     calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
-from bagogold.bagogold.utils.divisoes import calcular_saldo_geral_acoes_bh
-from bagogold.bagogold.utils.investidores import is_superuser, \
-    buscar_acoes_investidor_na_data
-from decimal import Decimal
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required, user_passes_test
-from django.core.exceptions import PermissionDenied, ValidationError
-from django.core.urlresolvers import reverse
-from django.db import transaction
-from django.db.models import Q
-from django.db.models.expressions import F
-from django.forms import inlineformset_factory
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
-from django.template.response import TemplateResponse
-from itertools import chain
-from operator import attrgetter
-import calendar
-import datetime
-import json
+# from bagogold.bagogold.utils.divisoes import calcular_saldo_geral_acoes_bh
+from bagogold.bagogold.utils.investidores import buscar_acoes_investidor_na_data
+
 
 @login_required
 def calcular_poupanca_proventos_na_data(request):
     investidor = request.user.investidor
-    data = datetime.datetime.strptime(request.GET['dataEscolhida'], '%d/%m/%Y').date()
+    try:
+        data = datetime.datetime.strptime(request.GET.get('dataEscolhida'), '%d/%m/%Y').date()
+    except:
+        return HttpResponse(json.dumps({'mensagem': u'Data inválida'}), content_type = "application/json")
     poupanca_proventos = str(calcular_poupanca_prov_acao_ate_dia(investidor, data))
     return HttpResponse(json.dumps(poupanca_proventos), content_type = "application/json") 
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Ações (Buy and Hold)', 'Altera valores de operação de compra/venda em Ações para Buy and Hold')
-def editar_operacao_acao(request, operacao_id):
+def editar_operacao_acao(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_acao = get_object_or_404(OperacaoAcao, pk=operacao_id, destinacao='B')
+    operacao_acao = get_object_or_404(OperacaoAcao, pk=id_operacao, destinacao='B')
     
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_acao.investidor != investidor:
@@ -60,7 +63,7 @@ def editar_operacao_acao(request, operacao_id):
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
 
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -148,169 +151,6 @@ def editar_operacao_acao(request, operacao_id):
     return TemplateResponse(request, 'acoes/buyandhold/editar_operacao_acao.html', {'form_operacao_acao': form_operacao_acao, 'form_uso_proventos': form_uso_proventos,
                                                                        'formset_divisao': formset_divisao, 'poupanca_proventos': poupanca_proventos, 'varias_divisoes': varias_divisoes})
 
-@adiciona_titulo_descricao('Estatísticas da ação', 'Mostra estatísticas e valores históricos de uma ação')
-def estatisticas_acao(request, ticker=None):
-    if request.user.is_authenticated():
-        investidor = request.user.investidor
-        
-    if (ticker):
-        acao = get_object_or_404(Acao, ticker=ticker)
-    else:
-        acao = Acao.objects.all()[0]
-    
-    # Buscar historicos
-    historico = HistoricoAcao.objects.filter(acao__ticker=ticker).order_by('data')
-    if not historico:
-        return TemplateResponse(request, 'acoes/buyandhold/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
-                               'graf_historico_proventos': list(), 'graf_historico': list()})
-        
-    graf_historico = list()
-    # Preparar gráfico com os valores históricos da acao
-    for item in historico:
-        data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
-        graf_historico += [[data_formatada, float(item.preco_unitario)]]
-    
-    if not request.user.is_authenticated():
-        return TemplateResponse(request, 'acoes/buyandhold/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
-                               'graf_historico_proventos': list(), 'graf_historico': graf_historico})
-        
-    operacoes = OperacaoAcao.objects.filter(destinacao='B', acao__ticker=ticker, investidor=investidor).exclude(data__isnull=True).order_by('data')
-    # Pega os proventos em ações recebidos por outras ações
-    proventos_em_acoes = AcaoProvento.objects.filter(acao_recebida__ticker=ticker).exclude(provento__acao__ticker=ticker).order_by('provento__data_ex')
-    
-    # Verifica se houve operação
-    # TODO testar data mais antiga para ver se é operação ou provento em ação de outra ação
-    data_mais_antiga = datetime.date.today()
-    if operacoes:
-        data_mais_antiga = min(data_mais_antiga, operacoes[0].data)
-    if proventos_em_acoes:
-        data_mais_antiga = min(data_mais_antiga, proventos_em_acoes[0].data)
-    proventos = Provento.objects.filter(acao__ticker=ticker).exclude(data_ex__isnull=True).filter(data_ex__range=[data_mais_antiga, datetime.date.today()]).order_by('data_ex')
-    for provento in proventos:
-        provento.data = provento.data_ex
-    
-    proventos = list(proventos)
-    # Adicionar os proventos em ações provenientes de outras ações
-    for provento_em_acoes in proventos_em_acoes:
-        provento = provento_em_acoes.provento
-        provento.data = provento.data_ex
-        proventos.append(provento)
-        
-    # Proventos devem vir antes
-    lista_conjunta = sorted(chain(proventos, operacoes), key=attrgetter('data'))
-    
-    graf_historico_proventos = list()
-    graf_preco_medio = list()
-    graf_preco_medio_valor_acao = list()
-    
-    preco_medio = 0
-    total_gasto = 0
-    total_proventos = 0
-    proventos_acumulado = 0
-    qtd_acoes = 0
-    
-    for item in lista_conjunta:
-#         print item
-        if isinstance(item, OperacaoAcao):   
-            # Verificar se se trata de compra ou venda
-            if item.tipo_operacao == 'C':
-                item.total_gasto = -1 * (item.quantidade * item.preco_unitario + \
-                item.emolumentos + item.corretagem)
-                total_gasto += item.total_gasto
-                qtd_acoes += item.quantidade
-                
-            elif item.tipo_operacao == 'V':
-                item.total_gasto = (item.quantidade * item.preco_unitario - \
-                item.emolumentos - item.corretagem)
-                total_proventos += item.total_gasto
-                total_gasto += item.total_gasto
-                qtd_acoes -= item.quantidade
-        
-        # Verifica se é recebimento de proventos
-        elif isinstance(item, Provento):
-            if item.data_pagamento <= datetime.date.today():
-                if item.tipo_provento in ['D', 'J']:
-                    total_recebido = qtd_acoes * item.valor_unitario
-                    if item.tipo_provento == 'J':
-                        total_recebido = total_recebido * Decimal(0.85)
-                    total_gasto += total_recebido
-                    total_proventos += total_recebido
-                    proventos_acumulado += item.valor_unitario
-                elif item.tipo_provento == 'A':
-                    provento_acao = item.acaoprovento_set.all()[0]
-                    if provento_acao.acao_recebida.ticker == ticker:
-                        acoes_recebidas = int((quantidade_acoes_ate_dia(investidor, item.acao.ticker, item.data) * item.valor_unitario ) / 100 )
-                        qtd_acoes += acoes_recebidas
-                    if item.acao.ticker == ticker:
-                        if provento_acao.valor_calculo_frac > 0:
-                            if provento_acao.data_pagamento_frac <= datetime.date.today():
-    #                                 print u'recebido fracionado %s, %s ações de %s a %s' % (total_recebido, acoes[item.acao.ticker], item.acao.ticker, item.valor_unitario)
-                                total_gasto += (((qtd_acoes * item.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
-                                total_proventos += (((qtd_acoes * item.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
-                
-                # Preencher gráfico do histórico
-                data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
-                # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-                if len(graf_historico_proventos) > 0 and graf_historico_proventos[len(graf_historico_proventos)-1][0] == data_formatada:
-                    graf_historico_proventos[len(graf_historico_proventos)-1][1] = float(proventos_acumulado)
-                else:
-                    graf_historico_proventos += [[data_formatada, float(proventos_acumulado)]]
-                    
-                                
-        data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
-        ultimo_dia_util = item.data
-        while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao=acao):
-            ultimo_dia_util -= datetime.timedelta(days=1)
-        # Preço médio corrente
-        try:
-            preco_medio_corrente = float(-float(total_gasto)/qtd_acoes)
-        except ZeroDivisionError:
-            preco_medio_corrente = float(0)
-        # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-        if len(graf_preco_medio) > 0 and graf_preco_medio[len(graf_preco_medio)-1][0] == data_formatada:
-            graf_preco_medio[len(graf_preco_medio)-1][1] = preco_medio_corrente
-            graf_preco_medio_valor_acao[len(graf_preco_medio_valor_acao)-1][1] = float(historico.filter(data=ultimo_dia_util)[0].preco_unitario)
-        else:
-            graf_preco_medio += [[data_formatada, preco_medio_corrente]]
-            graf_preco_medio_valor_acao += [[data_formatada, float(historico.filter(data=ultimo_dia_util)[0].preco_unitario)]]
-                
-    
-    # Adicionar data atual
-    data_atual_formatada = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
-#     ultimo_dia_util = datetime.date.today()
-#     while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao=acao):
-#         ultimo_dia_util -= datetime.timedelta(days=1)
-    try:
-        preco_unitario = ValorDiarioAcao.objects.filter(acao__ticker=acao, data_hora__day=datetime.date.today().day, data_hora__month=datetime.date.today().month).order_by('-data_hora')[0].preco_unitario
-    except:
-        preco_unitario = HistoricoAcao.objects.filter(acao__ticker=acao).order_by('-data')[0].preco_unitario
-        
-    # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-    if len(graf_historico) > 0 and graf_historico[len(graf_historico)-1][0] == data_atual_formatada:
-        graf_historico[len(graf_historico)-1][1] = float(preco_unitario)
-    else:
-        graf_historico += [[data_atual_formatada, float(preco_unitario)]]
-    # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-    if len(graf_historico_proventos) > 0 and graf_historico_proventos[len(graf_historico_proventos)-1][0] == data_atual_formatada:
-        graf_historico_proventos[len(graf_historico_proventos)-1][1] = float(proventos_acumulado)
-    else:
-        graf_historico_proventos += [[data_atual_formatada, float(proventos_acumulado)]]
-    # Preço médio corrente
-    try:
-        preco_medio_corrente = float(-float(total_gasto)/qtd_acoes)
-    except ZeroDivisionError:
-        preco_medio_corrente = float(0)
-    # Verifica se altera ultima posicao do grafico ou adiciona novo registro
-    if len(graf_preco_medio) > 0 and graf_preco_medio[len(graf_preco_medio)-1][0] == data_atual_formatada:
-        graf_preco_medio[len(graf_preco_medio)-1][1] = preco_medio_corrente
-        graf_preco_medio_valor_acao[len(graf_preco_medio_valor_acao)-1][1] = float(preco_unitario)
-    else:
-        graf_preco_medio += [[data_atual_formatada, preco_medio_corrente]]
-        graf_preco_medio_valor_acao += [[data_atual_formatada, float(preco_unitario)]]
-    
-    return TemplateResponse(request, 'acoes/buyandhold/estatisticas_acao.html', {'graf_preco_medio': graf_preco_medio, 'graf_preco_medio_valor_acao': graf_preco_medio_valor_acao,
-                               'graf_historico_proventos': graf_historico_proventos, 'graf_historico': graf_historico})
-
 @login_required
 def evolucao_posicao(request):
     if request.is_ajax():
@@ -356,7 +196,7 @@ def historico(request):
                                'graf_gasto_op_sem_prov_mes': list(), 'graf_uso_proventos_mes': list(),
                                 'graf_dividendos_mensal': list(), 'graf_jscp_mensal': list(), 'dados': {}})
     
-    operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True).order_by('data')
+    operacoes = OperacaoAcao.objects.filter(destinacao='B', investidor=investidor).exclude(data__isnull=True).annotate(acao_ticker=F('acao__ticker')).order_by('data')
     
     if not operacoes:
         return TemplateResponse(request, 'acoes/buyandhold/historico.html', {'operacoes': list(), 'graf_total_gasto': list(), 'graf_patrimonio': list(),
@@ -367,11 +207,11 @@ def historico(request):
     acoes = list(set(operacoes.values_list('acao', flat=True)))
 
     proventos = Provento.objects.filter(acao__in=acoes).exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex') \
-        .annotate(data=F('data_ex'))
-    for acao_id in operacoes.values_list('acao', flat=True):
+        .annotate(data=F('data_ex')).annotate(acao_ticker=F('acao__ticker')).select_related('acao')
+    for acao_id in acoes:
         proventos = proventos.filter((Q(acao__id=acao_id) & Q(data_ex__gt=operacoes.filter(acao__id=acao_id)[0].data)) | ~Q(acao__id=acao_id))
      
-    taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')
+    taxas_custodia = list(TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia'))
 #     for taxa in taxas_custodia:
 #         taxa.data = datetime.date(taxa.ano_vigencia, taxa.mes_vigencia, 1)
     
@@ -380,7 +220,7 @@ def historico(request):
                             key=attrgetter('data'))
     
     # Adicionar dias de pagamento de taxa de custodia
-    datas_custodia = set()
+    datas_custodia = list()
     
     ano_inicial = lista_conjunta[0].data.year
     mes_inicial = lista_conjunta[0].data.month
@@ -391,20 +231,78 @@ def historico(request):
         for ano in range(ano_inicial, datetime.date.today().year+1):
             for mes_inicial in range(mes_inicial, 13):
                 # Verificar se há nova taxa de custodia vigente
-                taxa_custodia_atual = taxas_custodia.filter(Q(ano_vigencia__lt=ano) | Q(ano_vigencia=ano, mes_vigencia__lte=mes_inicial) ).order_by('-ano_vigencia', '-mes_vigencia')[0]
-                
+#                 taxa_custodia_atual = taxas_custodia.filter(Q(ano_vigencia__lt=ano) | Q(ano_vigencia=ano, mes_vigencia__lte=mes_inicial) ).order_by('-ano_vigencia', '-mes_vigencia')[0]
+                taxa_custodia_atual = [taxa_custodia for taxa_custodia in taxas_custodia if taxa_custodia.ano_vigencia < ano or \
+                                       (taxa_custodia.ano_vigencia == ano and taxa_custodia.mes_vigencia <= mes_inicial)][-1]
+                 
                 data_custodia = Object()
                 data_custodia.data = datetime.date(ano, mes_inicial, 1)
                 data_custodia.valor = taxa_custodia_atual.valor_mensal
-                data_custodia.acao = operacoes[0].acao
-                datas_custodia.add(data_custodia)
-                
+                data_custodia.acao_ticker = operacoes[0].acao_ticker
+                datas_custodia.append(data_custodia)
+                 
                 # Parar caso esteja no ano atual
                 if ano == datetime.date.today().year:
                     if mes_inicial == datetime.date.today().month:
                         break
             mes_inicial = 1
-        
+
+
+#     # Se houver registro de taxas de custódia, adicionar ao histórico
+#     if taxas_custodia.exists():
+#         for taxa_custodia in taxas_custodia:
+#             data_custodia = Object()
+#             data_custodia.data = datetime.date(taxa_custodia.ano_vigencia, taxa_custodia.mes_vigencia, 1)
+#             data_custodia.valor = taxa_custodia.valor_mensal
+#             data_custodia.acao_ticker = operacoes[0].acao_ticker
+#             datas_custodia.append(data_custodia)
+#         
+#         for indice, data_custodia in reversed(list(enumerate(datas_custodia))):
+#             novas_datas_custodia = list()
+#             # Verificar se último registro
+#             if indice == len(datas_custodia) - 1:
+#                 ano_custodia = data_custodia.data.year
+#                 mes_custodia = data_custodia.data.month
+#                 while ano_custodia <= datetime.date.today().year:
+#                     mes_custodia += 1
+#                     if mes_custodia == 13:
+#                         mes_custodia = 1
+#                         ano_custodia += 1
+#                     
+#                     if ano_custodia == datetime.date.today().year and mes_custodia > datetime.date.today().month:
+#                         break
+#                     
+#                     nova_data_custodia = Object()
+#                     nova_data_custodia.data = datetime.date(ano_custodia, mes_custodia, 1)
+#                     nova_data_custodia.valor = data_custodia.valor
+#                     nova_data_custodia.acao_ticker = data_custodia.acao_ticker
+#                     novas_datas_custodia.append(nova_data_custodia)
+#                 
+#             else:
+#                 ano_custodia = data_custodia.data.year
+#                 mes_custodia = data_custodia.data.month
+#                 while ano_custodia <= datas_custodia[indice+1].data.year:
+#                     mes_custodia += 1
+#                     if mes_custodia == 13:
+#                         mes_custodia = 1
+#                         ano_custodia += 1
+#                     
+#                     if ano_custodia == datas_custodia[indice+1].data.year and mes_custodia == datas_custodia[indice+1].data.month:
+#                         break
+#                     
+#                     nova_data_custodia = Object()
+#                     nova_data_custodia.data = datetime.date(ano_custodia, mes_custodia, 1)
+#                     nova_data_custodia.valor = data_custodia.valor
+#                     nova_data_custodia.acao_ticker = data_custodia.acao_ticker
+#                     novas_datas_custodia.append(nova_data_custodia)
+#                     
+#             for nova_data_custodia in reversed(novas_datas_custodia):
+#                 datas_custodia.insert(indice+1, nova_data_custodia)
+#                 
+#     # Remover datas de custódia anteriores a primeira operação em ações
+#     datas_custodia = [data_custodia for data_custodia in datas_custodia if data_custodia.data.year > ano_inicial \
+#                       or (data_custodia.data.year == ano_inicial and data_custodia.data.month >= mes_inicial)]
+                
     lista_conjunta = sorted(chain(lista_conjunta, datas_custodia),
                             key=attrgetter('data'))
     
@@ -450,8 +348,8 @@ def historico(request):
     
     # Calculos de patrimonio e gasto total
     for item_lista in lista_conjunta:      
-        if item_lista.acao.ticker not in acoes.keys():
-            acoes[item_lista.acao.ticker] = 0
+        if item_lista.acao_ticker not in acoes.keys():
+            acoes[item_lista.acao_ticker] = 0
         # Verifica se é uma compra/venda
         if isinstance(item_lista, OperacaoAcao):   
             # Verificar se se trata de compra ou venda
@@ -465,7 +363,7 @@ def historico(request):
                     # Remover proventos gastos do total gasto
                     item_lista.total_gasto += qtd_utilizada
                 total_gasto += item_lista.total_gasto
-                acoes[item_lista.acao.ticker] += item_lista.quantidade
+                acoes[item_lista.acao_ticker] += item_lista.quantidade
                 
             elif item_lista.tipo_operacao == 'V':
                 item_lista.tipo = 'Venda'
@@ -473,13 +371,13 @@ def historico(request):
                 item_lista.emolumentos - item_lista.corretagem)
 #                     total_proventos += item_lista.total_gasto
                 total_gasto += item_lista.total_gasto
-                acoes[item_lista.acao.ticker] -= item_lista.quantidade
+                acoes[item_lista.acao_ticker] -= item_lista.quantidade
         
         # Verifica se é recebimento de proventos
         elif isinstance(item_lista, Provento):
             if item_lista.data_pagamento <= datetime.date.today():
                 if item_lista.tipo_provento in ['D', 'J']:
-                    total_recebido = acoes[item_lista.acao.ticker] * item_lista.valor_unitario
+                    total_recebido = acoes[item_lista.acao_ticker] * item_lista.valor_unitario
                     if item_lista.tipo_provento == 'J':
                         item_lista.tipo = 'JSCP'
                         total_recebido = total_recebido * Decimal(0.85)
@@ -488,42 +386,39 @@ def historico(request):
 #                         total_gasto += total_recebido
                     total_proventos += total_recebido
                     item_lista.total_gasto = total_recebido
-                    item_lista.quantidade = acoes[item_lista.acao.ticker]
+                    item_lista.quantidade = acoes[item_lista.acao_ticker]
                     item_lista.preco_unitario = item_lista.valor_unitario
                     
                 elif item_lista.tipo_provento == 'A':
 #                         print '%s %s' % (type(item_lista.tipo_provento), type(u'A'))
-                    item_lista.tipo = 'Ações'
+                    item_lista.tipo = u'Ações'
 #                         print item_lista.acaoprovento_set.all()[0]
                     provento_acao = item_lista.acaoprovento_set.all()[0]
                     if provento_acao.acao_recebida.ticker not in acoes.keys():
                         acoes[provento_acao.acao_recebida.ticker] = 0
-                    acoes_recebidas = int((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 )
+                    acoes_recebidas = int((acoes[item_lista.acao_ticker] * item_lista.valor_unitario ) / 100 )
                     item_lista.total_gasto = acoes_recebidas
                     acoes[provento_acao.acao_recebida.ticker] += acoes_recebidas
                     if provento_acao.valor_calculo_frac > 0:
                         if provento_acao.data_pagamento_frac <= datetime.date.today():
-#                                 print u'recebido fracionado %s, %s ações de %s a %s' % (total_recebido, acoes[item_lista.acao.ticker], item_lista.acao.ticker, item_lista.valor_unitario)
-#                                 total_gasto += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
-                            total_proventos += (((acoes[item_lista.acao.ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
+#                                 print u'recebido fracionado %s, %s ações de %s a %s' % (total_recebido, acoes[item_lista.acao_ticker], item_lista.acao_ticker, item_lista.valor_unitario)
+#                                 total_gasto += (((acoes[item_lista.acao_ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
+                            total_proventos += (((acoes[item_lista.acao_ticker] * item_lista.valor_unitario ) / 100 ) % 1) * provento_acao.valor_calculo_frac
                             
         # Verifica se é pagamento de custódia
         elif isinstance(item_lista, Object):
-            if taxas_custodia:
-                total_gasto -= item_lista.valor
-                total_custodia += item_lista.valor
+#             if taxas_custodia:
+            total_gasto -= item_lista.valor
+            total_custodia += item_lista.valor
                 
+        # Rodar calculo de patrimonio
         patrimonio = 0
         
-        # Rodar calculo de patrimonio
+        # Pegar último dia util com negociação da ação para calculo do patrimonio
+        historicos_na_data = {ticker: valor for ticker, valor in HistoricoAcao.objects.filter(acao__ticker__in=acoes.keys(), data__lte=item_lista.data).order_by('acao__ticker', '-data') \
+            .distinct('acao__ticker').values_list('acao__ticker', 'preco_unitario')}
         for acao in acoes.keys():
-            # Pegar último dia util com negociação da ação para calculo do patrimonio
-            ultimo_dia_util = item_lista.data
-            while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao__ticker=acao):
-                ultimo_dia_util -= datetime.timedelta(days=1)
-        
-            valor_acao = HistoricoAcao.objects.get(acao__ticker=acao, data=ultimo_dia_util).preco_unitario
-            patrimonio += (valor_acao * acoes[acao])
+            patrimonio += (historicos_na_data[acao] * acoes[acao])
         
         data_formatada = str(calendar.timegm(item_lista.data.timetuple()) * 1000)
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
@@ -544,16 +439,14 @@ def historico(request):
                 
     # Adicionar dia mais atual
     patrimonio = 0
-    for acao in acoes.keys():
+    for acao in acoes:
         if acoes[acao] > 0:
 #             print '%s %s' % (acao, acoes[acao])
-            valor_diario_mais_recente = ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')
-            historico_mais_recente = HistoricoAcao.objects.filter(acao__ticker=acao).order_by('-data')
-            data_formatada = ''
-            if valor_diario_mais_recente and valor_diario_mais_recente[0].data_hora.date() >= historico_mais_recente[0].data:
-                patrimonio += (valor_diario_mais_recente[0].preco_unitario * acoes[acao])
+            if ValorDiarioAcao.objects.filter(data_hora__date=datetime.date.today(), acao__ticker=acao).exists():
+                patrimonio += (ValorDiarioAcao.objects.filter(acao__ticker=acao).order_by('-data_hora')[0].preco_unitario * acoes[acao])
             else:
-                patrimonio += (historico_mais_recente[0].preco_unitario * acoes[acao])
+                patrimonio += (HistoricoAcao.objects.filter(acao__ticker=acao).order_by('-data')[0].preco_unitario * acoes[acao])
+                
     data_formatada = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
     # Verifica se altera ultima posicao do grafico ou adiciona novo registro
     if not(len(graf_total_gasto) > 0 and graf_total_gasto[-1][0] == data_formatada):
@@ -575,7 +468,7 @@ def historico(request):
     dados['lucro_percentual'] = (patrimonio + total_gasto) / -total_gasto * 100
     dados['dividendos_mensal'] = graf_dividendos_mensal[-1][1]
     dados['jscp_mensal'] = graf_jscp_mensal[-1][1]
-    dados['saldo_geral'] = calcular_saldo_geral_acoes_bh()
+#     dados['saldo_geral'] = calcular_saldo_geral_acoes_bh()
     
     # Remover taxas de custódia da lista conjunta de operações e proventos
     lista_conjunta = [value for value in lista_conjunta if not isinstance(value, Object)]
@@ -591,7 +484,7 @@ def inserir_operacao_acao(request):
     investidor = request.user.investidor
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'), can_delete=False,
@@ -664,7 +557,7 @@ def inserir_taxa_custodia_acao(request):
             taxa_custodia = form.save(commit=False)
             taxa_custodia.investidor = investidor
             taxa_custodia.save()
-            return HttpResponseRedirect(reverse('acoes:ver_taxas_custodia_acao'))
+            return HttpResponseRedirect(reverse('acoes:bh:listar_taxas_custodia_acao'))
     else:
         form = TaxaCustodiaAcaoForm()
             
@@ -675,12 +568,12 @@ def listar_taxas_custodia_acao(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'acoes/buyandhold/ver_taxas_custodia_acao.html', {'taxas_custodia': list()})
+        return TemplateResponse(request, 'acoes/buyandhold/listar_taxas_custodia_acao.html', {'taxas_custodia': list()})
     
     taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')
     for taxa in taxas_custodia:
         taxa.ano_vigencia = str(taxa.ano_vigencia).replace('.', '')
-    return TemplateResponse(request, 'acoes/buyandhold/ver_taxas_custodia_acao.html', {'taxas_custodia': taxas_custodia})
+    return TemplateResponse(request, 'acoes/buyandhold/listar_taxas_custodia_acao.html', {'taxas_custodia': taxas_custodia})
 
 @adiciona_titulo_descricao('Painel de Ações (Buy and Hold)', 'Posição atual do investidor em Ações para Buy and Hold')
 def painel(request):
@@ -704,10 +597,7 @@ def painel(request):
         if acoes[acao.ticker].quantidade == 0:
             del acoes[acao.ticker]
         else:
-            ultimo_dia_util = (datetime.date.today() + datetime.timedelta(days=-1))
-            while not HistoricoAcao.objects.filter(data=ultimo_dia_util, acao=acao):
-                ultimo_dia_util -= datetime.timedelta(days=1)
-            acoes[acao.ticker].valor_dia_anterior = HistoricoAcao.objects.get(acao=acao, data=ultimo_dia_util).preco_unitario
+            acoes[acao.ticker].valor_dia_anterior = HistoricoAcao.objects.filter(acao=acao, data__lt=datetime.date.today()).order_by('-data')[0].preco_unitario
                      
     # Pegar totais de ações  
     total_acoes = 0      
@@ -740,13 +630,10 @@ def painel(request):
         total_variacao_percentual = total_variacao / total_variacao_percentual * Decimal(100)
     
     # Adicionar dados sobre última atualização
-    # Histórico
-    historico_mais_recente = HistoricoAcao.objects.latest('data').data
-    # Valor diário
-    try:
+    if ValorDiarioAcao.objects.exists():
         valor_diario_mais_recente = ValorDiarioAcao.objects.latest('data_hora').data_hora
-    except:
-        valor_diario_mais_recente = 'N/A'
+    else:
+        valor_diario_mais_recente = HistoricoAcao.objects.latest('data').data
     
     # Gráfico de composição
     graf_composicao = [{'label': acao, 'data': float(acoes[acao].valor_total_percentual)} for acao in acoes.keys()]
@@ -757,7 +644,6 @@ def painel(request):
     dados['total_valor'] = total_valor
     dados['total_variacao'] = total_variacao
     dados['total_variacao_percentual'] = total_variacao_percentual
-    dados['historico_mais_recente'] = historico_mais_recente
     dados['valor_diario_mais_recente'] = valor_diario_mais_recente
 
     return TemplateResponse(request, 'acoes/buyandhold/painel.html', {'acoes': acoes, 'dados': dados, 'graf_composicao': json.dumps(graf_composicao)})
@@ -777,4 +663,4 @@ def remover_taxa_custodia_acao(request, taxa_id):
     except Exception as e:
         messages.error(request, e)
     
-    return HttpResponseRedirect(reverse('acoes:ver_taxas_custodia_acao'))
+    return HttpResponseRedirect(reverse('acoes:listar_taxas_custodia_acao'))

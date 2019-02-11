@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
-from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
+import datetime
 from decimal import Decimal
+
 from django.db import models
 from django.db.models.aggregates import Count, Sum
-import datetime
- 
+from django.urls.base import reverse
+
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
+from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
+
+
 class Acao (models.Model):
     TIPOS_ACAO_NUMERO = {3: u'ON',
                   4: u'PN',
                   5: u'PNA',
                   6: u'PNB',
                   7: u'PNC',
-                  8: u'PNC',
+                  8: u'PND',
                   11: u'UNT'
     }
     TIPOS_ACAO_DESCRICAO = {'ON': u'Ordinária',
@@ -160,11 +164,20 @@ class OperacaoAcao (models.Model):
         return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.acao.ticker + ' a R$' + str(self.preco_unitario) + ' em ' + str(self.data.strftime('%d/%m/%Y'))
 
     def qtd_proventos_utilizada(self):
-        qtd_total = UsoProventosOperacaoAcao.objects.filter(operacao=self).aggregate(qtd_total=Sum('qtd_utilizada'))['qtd_total'] or 0
+        qtd_total = sum([uso_proventos.qtd_utilizada for uso_proventos in self.usoproventosoperacaoacao_set.all()])
         return qtd_total
         
     def utilizou_proventos(self):
-        return UsoProventosOperacaoAcao.objects.filter(operacao=self).exists()
+#         return UsoProventosOperacaoAcao.objects.filter(operacao=self).exists()
+        return self.usoproventosoperacaoacao_set.exists()
+    
+    @property
+    def link(self):
+        if self.destinacao == 'B':
+            return reverse('acoes:bh:editar_operacao_bh', kwargs={'id_operacao': self.id})
+        else:
+            return reverse('acoes:trading:editar_operacao_acao_t', kwargs={'id_operacao': self.id})
+            
 
 class UsoProventosOperacaoAcao (models.Model):
     operacao = models.ForeignKey('OperacaoAcao', verbose_name='Operação')

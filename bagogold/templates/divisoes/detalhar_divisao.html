@@ -22,6 +22,29 @@
 <div class="portlet-body">
 	<div class="row">
 		<div class="col-md-12">
+			<div class="portlet box yellow-crusta">
+				<div class="portlet-title">
+					<div class="caption">
+						<i class="fa fa-cubes"></i> Divisão </div>
+					<div class="tools">
+						<a href="javascript:;" class="collapse"></a>
+					</div>
+				</div>
+				<div class="portlet-body">
+					<div class="m-grid m-grid-responsive-xs">
+						<div class="m-grid-row">
+                            <div class="m-grid-col m-grid-col-left"><strong>Nome:</strong></div>
+                            <div class="m-grid-col m-grid-col-md-2 m-grid-col-left">{{divisao.nome}}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Saldo:</strong></div>
+							<div class="m-grid-col m-grid-col-md-2 m-grid-col-left">R$ {{divisao.saldo|floatformat:"2"}}</div>
+							<div class="m-grid-col m-grid-col-left"><strong>Objetivo:</strong></div>
+							<div class="m-grid-col m-grid-col-md-2 m-grid-col-left">R$ {{divisao.valor_objetivo}}</div>
+                            <div class="m-grid-col m-grid-col-left"></div>
+                            <div class="m-grid-col m-grid-col-md-2 m-grid-col-left"></div>
+						</div>
+					</div>
+				</div>
+			</div>
 			<!-- BEGIN Portlet PORTLET-->
 			<div class="portlet box yellow-crusta">
 				<div class="portlet-title">
@@ -198,8 +221,8 @@
 <script src={% static "assets/global/plugins/datatables/plugins/bootstrap/datatables.bootstrap.js" %} type="text/javascript"></script>
 <script src={% static "assets/pages/scripts/table-datatables-fixedheader.min.js" %} type="text/javascript"></script>
 <script src={% static "assets/global/plugins/moment.min.js" %} type="text/javascript"></script>
-<script src="https://cdn.datatables.net/plug-ins/1.10.15/sorting/datetime-moment.js" type="text/javascript"></script>
-<script>
+<script src={% static "assets/global/plugins/datatables/plugins/datetime-moment.min.js" %} type="text/javascript"></script>
+<script type="text/javascript">
 $.fn.dataTable.moment( 'DD/MM/YYYY' );
 $(document).ready(function() {
     $('.check-composicao').change(function() {
@@ -326,9 +349,9 @@ function mostrarOperacoes(key, adicionar) {
 }
 
 $.fn.dataTable.ext.search.push( function( settings, data, dataIndex, oData ) {
-	if ($(settings.nTable).is('.mostrar-acoes, .mostrar-fii, .mostrar-lc, .mostrar-td, .mostrar-cdb-rdb, .mostrar-fundo-investimento, .mostrar-outros')) {
+	if ($(settings.nTable).is('.mostrar-acoes, .mostrar-fii, .mostrar-lci-lca, .mostrar-td, .mostrar-cdb-rdb, .mostrar-fundo-investimento, .mostrar-outros')) {
      var mostrar = (oData[0].match(/acoes\_/) != null && $(settings.nTable).hasClass('mostrar-acoes')) || (oData[0].match(/fii\_/) != null && $(settings.nTable).hasClass('mostrar-fii')) ||
-        (oData[0].match(/lc\_/) != null && $(settings.nTable).hasClass('mostrar-lc')) || (oData[0].match(/td\_/) != null && $(settings.nTable).hasClass('mostrar-td')) ||
+        (oData[0].match(/lci-lca\_/) != null && $(settings.nTable).hasClass('mostrar-lci-lca')) || (oData[0].match(/td\_/) != null && $(settings.nTable).hasClass('mostrar-td')) ||
         (oData[0].match(/cdb-rdb\_/) != null && $(settings.nTable).hasClass('mostrar-cdb-rdb')) || (oData[0].match(/outros\_/) != null && $(settings.nTable).hasClass('mostrar-outros')) ||
         (oData[0].match(/fundo-investimento\_/) != null && $(settings.nTable).hasClass('mostrar-fundo-investimento')) ;
         return mostrar;

@@ -974,7 +974,7 @@ var App = function() {
         },
 
         getGlobalImgPath: function() {
-            return assetsPath + globalImgPath;
+            return 'https://bagofgold.s3.amazonaws.com' + assetsPath + globalImgPath;
         },
 
         setGlobalPluginsPath: function(path) {
@@ -982,11 +982,11 @@ var App = function() {
         },
 
         getGlobalPluginsPath: function() {
-            return assetsPath + globalPluginsPath;
+            return 'https://bagofgold.s3.amazonaws.com' + assetsPath + globalPluginsPath;
         },
 
         getGlobalCssPath: function() {
-            return assetsPath + globalCssPath;
+            return 'https://bagofgold.s3.amazonaws.com' + assetsPath + globalCssPath;
         },
 
         // get layout color code by color name
