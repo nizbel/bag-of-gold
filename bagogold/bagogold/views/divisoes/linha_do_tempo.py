@@ -32,20 +32,22 @@ def linha_do_tempo(request, divisao_id):
         raise PermissionDenied
     
     if request.is_ajax():
-        if request.GET.get('investimento') == 'A':
+        if request.GET.get('investimento') == Divisao.INVESTIMENTO_LETRAS_CAMBIO_CODIGO:
             eventos = linha_do_tempo_lc(divisao)
-        elif request.GET.get('investimento') == 'C':
+        elif request.GET.get('investimento') == Divisao.INVESTIMENTO_CDB_RDB_CODIGO:
             eventos = linha_do_tempo_cdb_rdb(divisao)
-        elif request.GET.get('investimento') == 'L':
+        elif request.GET.get('investimento') == Divisao.INVESTIMENTO_LCI_LCA_CODIGO:
             eventos = linha_do_tempo_lci_lca(divisao)
-        elif request.GET.get('investimento') == 'M':
+        elif request.GET.get('investimento') == Divisao.INVESTIMENTO_LETRAS_CAMBIO_CODIGO:
             eventos = linha_do_tempo_criptomoedas(divisao)
+        elif request.GET.get('investimento') == Divisao.INVESTIMENTO_TESOURO_DIRETO_CODIGO:
+            eventos = linha_do_tempo_tesouro_direto(divisao)
             
         return HttpResponse(json.dumps({'sucesso': True, 'linha': render_to_string('divisoes/utils/linha_do_tempo.html', {'eventos': eventos})}), 
                                         content_type = "application/json")  
 
     # Preparar tipos de investimentos
-    investimentos = {'A': u'Letra de Câmbio', 'C': u'CDB/RDB', 'L': u'LCI/LCA', 'M': u'Criptomoeda'}
+    investimentos = Divisao.INVESTIMENTOS_DISPONIVEIS_TIMELINE
         
     return TemplateResponse(request, 'divisoes/linha_do_tempo.html', {'divisao': divisao, 'investimentos': investimentos})
 
