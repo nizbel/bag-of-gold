@@ -286,7 +286,7 @@ def listar_usuarios(request):
     # Verifica se taxa validações está maior que taxa de geração de documentos
     if estatisticas['validacoes_30_dias'] > estatisticas['total_ref_30_dias']:
         dias_para_validacao_completa = (estatisticas['total_documentos'] - estatisticas['total_validado'])/ \
-            (Decimal(estatisticas['validacoes_30_dias'] - estatisticas['total_ref_30_dias']) / 1)
+            (Decimal(estatisticas['validacoes_30_dias'] - estatisticas['total_ref_30_dias']) / 30)
         anos_validacao_completa = int(floor(dias_para_validacao_completa/365))
         dias_validacao_completa = int(floor(dias_para_validacao_completa % 365))
         horas_validacao_completa = int(floor((Decimal(dias_para_validacao_completa) - Decimal(floor(dias_para_validacao_completa))) * 24))
