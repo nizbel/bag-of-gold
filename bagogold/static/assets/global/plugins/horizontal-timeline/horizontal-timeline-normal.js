@@ -115,6 +115,19 @@ function timeline() {
 		//update navigation arrows visibility
 		(value == 0 ) ? timelineComponents['timelineNavigation'].find('.prev').addClass('inactive') : timelineComponents['timelineNavigation'].find('.prev').removeClass('inactive');
 		(value == totWidth ) ? timelineComponents['timelineNavigation'].find('.next').addClass('inactive') : timelineComponents['timelineNavigation'].find('.next').removeClass('inactive');
+		
+		// Search for visible events
+		var found = false;
+		for (var i = 0; i < timelineComponents['timelineEvents'].length; i++) {
+			var curEvent = timelineComponents['timelineEvents'][i];
+			
+			if (elementInViewport(curEvent) {
+				found = true;
+				
+				// TODO search data using AJAX
+			} else if (found) {
+				break;
+			}
 	}
 
 	function updateFilling(selectedEvent, filling, totWidth) {
