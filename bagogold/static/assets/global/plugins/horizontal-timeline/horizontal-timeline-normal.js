@@ -24,6 +24,8 @@ function timeline() {
 			var timelineTotWidth = setTimelineWidth(timelineComponents, eventsMinDistance);
 			//the timeline has been initialize - show it
 			timeline.addClass('loaded');
+			
+			fillVisibleEvents(timelineComponents);
 
 			//detect click on the next arrow
 			timelineComponents['timelineNavigation'].on('click', '.next', function(event){
@@ -116,6 +118,10 @@ function timeline() {
 		(value == 0 ) ? timelineComponents['timelineNavigation'].find('.prev').addClass('inactive') : timelineComponents['timelineNavigation'].find('.prev').removeClass('inactive');
 		(value == totWidth ) ? timelineComponents['timelineNavigation'].find('.next').addClass('inactive') : timelineComponents['timelineNavigation'].find('.next').removeClass('inactive');
 		
+		fillVisibleEvents(timelineComponents);
+	}
+	
+	function fillVisibleEvents(timelineComponents) {
 		// Search for visible events
 		var found = false;
 		for (var i = 0; i < timelineComponents['timelineEvents'].length; i++) {
@@ -125,9 +131,16 @@ function timeline() {
 				found = true;
 				
 				// TODO search data using AJAX
+				if (!curEvent.loadedData) {
+					// AJAX
+					
+					curEvent.loadedData = true;
+				}
+				
 			} else if (found) {
 				break;
 			}
+		}
 	}
 
 	function updateFilling(selectedEvent, filling, totWidth) {
