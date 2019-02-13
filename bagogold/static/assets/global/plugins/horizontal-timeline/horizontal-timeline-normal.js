@@ -142,7 +142,6 @@ function timeline() {
 				    });*/
 				    
 				    chosenArray.push($(curEvent).attr('data-date'));
-				    console.log(chosenArray);
 					curEvent.loadedData = true;
 					
 				
@@ -154,7 +153,6 @@ function timeline() {
 	}
 	
 	function search() {
-		console.log(chosenArray);
 		if (!searching && chosenArray.length > 0) {
 			searching = true;
 			var investimento = $('#id_investimento').val();
