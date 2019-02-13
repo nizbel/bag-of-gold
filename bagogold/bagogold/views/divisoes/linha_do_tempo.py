@@ -32,19 +32,32 @@ def linha_do_tempo(request, divisao_id):
         raise PermissionDenied
     
     if request.is_ajax():
-        if request.GET.get('investimento') == Divisao.INVESTIMENTO_LETRAS_CAMBIO_CODIGO:
-            eventos = linha_do_tempo_lc(divisao)
-        elif request.GET.get('investimento') == Divisao.INVESTIMENTO_CDB_RDB_CODIGO:
-            eventos = linha_do_tempo_cdb_rdb(divisao)
-        elif request.GET.get('investimento') == Divisao.INVESTIMENTO_LCI_LCA_CODIGO:
-            eventos = linha_do_tempo_lci_lca(divisao)
-        elif request.GET.get('investimento') == Divisao.INVESTIMENTO_LETRAS_CAMBIO_CODIGO:
-            eventos = linha_do_tempo_criptomoedas(divisao)
-        elif request.GET.get('investimento') == Divisao.INVESTIMENTO_TESOURO_DIRETO_CODIGO:
-            eventos = linha_do_tempo_tesouro_direto(divisao)
+        if 'evento' not in request.GET:
+            if request.GET.get('investimento') == Divisao.INVESTIMENTO_LETRAS_CAMBIO_CODIGO:
+                eventos = linha_do_tempo_lc(divisao)
+            elif request.GET.get('investimento') == Divisao.INVESTIMENTO_CDB_RDB_CODIGO:
+                eventos = linha_do_tempo_cdb_rdb(divisao)
+            elif request.GET.get('investimento') == Divisao.INVESTIMENTO_LCI_LCA_CODIGO:
+                eventos = linha_do_tempo_lci_lca(divisao)
+            elif request.GET.get('investimento') == Divisao.INVESTIMENTO_LETRAS_CAMBIO_CODIGO:
+                eventos = linha_do_tempo_criptomoedas(divisao)
+            elif request.GET.get('investimento') == Divisao.INVESTIMENTO_TESOURO_DIRETO_CODIGO:
+                eventos = linha_do_tempo_tesouro_direto(divisao)
+                
+            return HttpResponse(json.dumps({'sucesso': True, 'linha': render_to_string('divisoes/utils/linha_do_tempo.html', {'eventos': eventos})}), 
+                                            content_type = "application/json")
+        
+        else:
+            print request.GET.get('evento')
+            data_evento = datetime.datetime.strptime(request.GET.get('evento'), '%d/%m/%Y').date()
             
-        return HttpResponse(json.dumps({'sucesso': True, 'linha': render_to_string('divisoes/utils/linha_do_tempo.html', {'eventos': eventos})}), 
-                                        content_type = "application/json")  
+            if request.GET.get('investimento') == Divisao.INVESTIMENTO_CDB_RDB_CODIGO:
+                saldo = divisao.saldo_cdb_rdb(data_evento)
+                investido = sum(calcular_valor_cdb_rdb_ate_dia_por_divisao(data_evento, divisao.id).values())
+                return HttpResponse(json.dumps({'saldo': str(saldo), 'investido': str(investido), 'data': request.GET.get('evento').replace('/', ''),
+                                                'saldo_negativo': (saldo < 0)}), 
+                                            content_type = "application/json")
+              
 
     # Preparar tipos de investimentos
     investimentos = Divisao.INVESTIMENTOS_DISPONIVEIS_TIMELINE
@@ -101,9 +114,9 @@ def linha_do_tempo_cdb_rdb(divisao):
         evento.data = datetime.date.today()
         eventos.append(evento)        
     
-    for evento in eventos:
-        evento.saldo = divisao.saldo_cdb_rdb(evento.data)
-        evento.investido = sum(calcular_valor_cdb_rdb_ate_dia_por_divisao(evento.data, divisao.id).values())
+#     for evento in eventos:
+#         evento.saldo = divisao.saldo_cdb_rdb(evento.data)
+#         evento.investido = sum(calcular_valor_cdb_rdb_ate_dia_por_divisao(evento.data, divisao.id).values())
         
     return eventos
     

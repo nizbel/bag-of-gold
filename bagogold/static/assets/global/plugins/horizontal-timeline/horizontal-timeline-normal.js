@@ -1,6 +1,8 @@
 function timeline() {
 	var timelines = $('.cd-horizontal-timeline');
 	var eventsMinDistance;
+	var chosenArray = [];
+	var searching = false;
 
 	(timelines.length > 0) && initTimeline(timelines);
 
@@ -25,7 +27,7 @@ function timeline() {
 			//the timeline has been initialize - show it
 			timeline.addClass('loaded');
 			
-			fillVisibleEvents(timelineComponents);
+			fillVisibleEvents(timelineComponents, 0);
 
 			//detect click on the next arrow
 			timelineComponents['timelineNavigation'].on('click', '.next', function(event){
@@ -118,28 +120,75 @@ function timeline() {
 		(value == 0 ) ? timelineComponents['timelineNavigation'].find('.prev').addClass('inactive') : timelineComponents['timelineNavigation'].find('.prev').removeClass('inactive');
 		(value == totWidth ) ? timelineComponents['timelineNavigation'].find('.next').addClass('inactive') : timelineComponents['timelineNavigation'].find('.next').removeClass('inactive');
 		
-		fillVisibleEvents(timelineComponents);
+		fillVisibleEvents(timelineComponents, value);
 	}
 	
-	function fillVisibleEvents(timelineComponents) {
+	function fillVisibleEvents(timelineComponents, curPosition) {
 		// Search for visible events
 		var found = false;
 		for (var i = 0; i < timelineComponents['timelineEvents'].length; i++) {
 			var curEvent = timelineComponents['timelineEvents'][i];
 			
-			if (elementInViewport(curEvent) {
+			if (!curEvent.loadedData && eventInViewport(curEvent, curPosition)) {
 				found = true;
 				
 				// TODO search data using AJAX
-				if (!curEvent.loadedData) {
-					// AJAX
-					
+					/*
+					// Block
+					App.blockUI({
+				        target: $(curEvent),
+				        iconOnly: true,
+				        overlayColor: 'none'
+				    });*/
+				    
+				    chosenArray.push($(curEvent).attr('data-date'));
+				    console.log(chosenArray);
 					curEvent.loadedData = true;
-				}
+					
 				
 			} else if (found) {
 				break;
 			}
+		}
+		search();
+	}
+	
+	function search() {
+		console.log(chosenArray);
+		if (!searching && chosenArray.length > 0) {
+			searching = true;
+			var investimento = $('#id_investimento').val();
+			
+			// Get data
+		    $.ajax({
+		        url : '/divisoes/linha-do-tempo/' + divisao + '/',
+		        type : "GET",
+		        data : {investimento: investimento, evento: chosenArray[0]},
+		
+		        // handle a successful response
+		        success : function(resultado) {
+		        	$('.saldo-' + resultado.data).html('R$ ' + resultado.saldo);
+		        	if (resultado.saldo_negativo) {
+		        		$('.saldo-' + resultado.data).addClass('font-red-thunderbird');
+		        	} else {
+		        		$('.saldo-' + resultado.data).addClass('font-blue');
+		        	}
+		        	$('.investido-' + resultado.data).html('R$ ' + resultado.investido);
+		            //App.unblockUI($(curEvent));
+		            chosenArray.shift();
+					searching = false;
+		            search();
+		        },
+		
+		        // handle a non-successful response
+		        error : function(xhr,errmsg,err) {
+		            //App.unblockUI($(curEvent));
+		            chosenArray.shift();
+					searching = false;
+		            search();
+		            console.log(xhr.status + ": " + xhr.responseText);
+		        }
+		    });
 		}
 	}
 
@@ -269,6 +318,23 @@ function timeline() {
 		    top < (window.pageYOffset + window.innerHeight) &&
 		    left < (window.pageXOffset + window.innerWidth) &&
 		    (top + height) > window.pageYOffset &&
+		    (left + width) > window.pageXOffset
+		);
+	}
+	
+	function eventInViewport(el, curPosition) {
+		var left = el.offsetLeft;
+		var width = el.offsetWidth;
+
+		while(el.offsetParent) {
+		    el = el.offsetParent;
+		    left += el.offsetLeft;
+		}
+		
+		left += curPosition;
+		
+		return (
+		    left < (window.pageXOffset + window.innerWidth) &&
 		    (left + width) > window.pageXOffset
 		);
 	}
