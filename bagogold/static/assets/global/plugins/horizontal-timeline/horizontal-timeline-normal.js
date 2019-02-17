@@ -141,7 +141,7 @@ function timeline() {
 				        overlayColor: 'none'
 				    });*/
 				    
-				    chosenArray.push($(curEvent).attr('data-date'));
+				    chosenArray.unshift($(curEvent).attr('data-date'));
 					curEvent.loadedData = true;
 					
 				
@@ -156,12 +156,13 @@ function timeline() {
 		if (!searching && chosenArray.length > 0) {
 			searching = true;
 			var investimento = $('#id_investimento').val();
+			var eventoAtual = chosenArray.shift();
 			
 			// Get data
 		    $.ajax({
 		        url : '/divisoes/linha-do-tempo/' + divisao + '/',
 		        type : "GET",
-		        data : {investimento: investimento, evento: chosenArray[0]},
+		        data : {investimento: investimento, evento: eventoAtual},
 		
 		        // handle a successful response
 		        success : function(resultado) {
@@ -173,7 +174,6 @@ function timeline() {
 		        	}
 		        	$('.investido-' + resultado.data).html('R$ ' + resultado.investido);
 		            //App.unblockUI($(curEvent));
-		            chosenArray.shift();
 					searching = false;
 		            search();
 		        },
@@ -181,7 +181,6 @@ function timeline() {
 		        // handle a non-successful response
 		        error : function(xhr,errmsg,err) {
 		            //App.unblockUI($(curEvent));
-		            chosenArray.shift();
 					searching = false;
 		            search();
 		            console.log(xhr.status + ": " + xhr.responseText);
