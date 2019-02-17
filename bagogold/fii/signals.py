@@ -1,14 +1,18 @@
 # -*- coding: utf-8 -*-
+import datetime
+
+from django.db.models.signals import post_save, post_delete
+from django.dispatch.dispatcher import receiver
+
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoFII
 from bagogold.bagogold.models.investidores import Investidor
 from bagogold.fii.models import ProventoFII, OperacaoFII, CheckpointProventosFII, \
     CheckpointFII, EventoAgrupamentoFII, EventoDesdobramentoFII, \
-    EventoIncorporacaoFII
+    EventoIncorporacaoFII, UsoProventosOperacaoFII
 from bagogold.fii.utils import calcular_poupanca_prov_fii_ate_dia, \
     calcular_qtd_fiis_ate_dia_por_ticker, \
     calcular_preco_medio_fiis_ate_dia_por_ticker
-from django.db.models.signals import post_save, post_delete
-from django.dispatch.dispatcher import receiver
-import datetime
+
 
 # Preparar checkpoints para alterações em proventos de FII
 @receiver(post_save, sender=ProventoFII, dispatch_uid="proventofii_criado_alterado")
@@ -119,7 +123,12 @@ def preparar_checkpointfii(sender, instance, created, **kwargs):
                 
             # Alterar checkpoint de poupança de proventos
             gerar_checkpoint_proventos_fii(instance.investidor, prox_ano)
-            
+
+
+@receiver(post_save, sender=UsoProventosOperacaoFII, dispatch_uid="usoproventosoperacaofii_criada_alterada")
+def preparar_checkpointfii_usoproventos(sender, instance, created, **kwargs):
+    post_save.send(OperacaoFII, instance=instance.operacao, created=created)    
+    post_save.send(DivisaoOperacaoFII, instance=instance.divisao_operacao, created=created)    
     
 @receiver(post_delete, sender=OperacaoFII, dispatch_uid="operacaofii_apagada")
 def preparar_checkpointfii_delete(sender, instance, **kwargs):
@@ -154,7 +163,6 @@ def preparar_checkpointfii_delete(sender, instance, **kwargs):
             # Alterar checkpoint de poupança de proventos
             gerar_checkpoint_proventos_fii(instance.investidor, prox_ano)
 
-        
 # Preparar checkpoints para alterações em eventos de FII
 @receiver(post_save, sender=EventoAgrupamentoFII, dispatch_uid="evento_agrupamento_criado_alterado")
 @receiver(post_save, sender=EventoDesdobramentoFII, dispatch_uid="evento_desdobramento_criado_alterado")

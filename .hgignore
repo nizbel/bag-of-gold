@@ -5,20 +5,19 @@ syntax: regexp
 doc proventos/*
 backups/teste-*
 templates/teste/*
-static/node_modules/*
+apache-conf/*
+node_modules/*
 syntax: glob
 .project
 .pydevproject
 .settings/org.eclipse.core.resources.prefs
+.vscode*
 README.md
 *.pyc
 *.orig
 COTAHIST_A.tar.gz
-conf/*.py
-apache-conf/*
-.vscode/*
+conf/*
 *~
 backups.tar.gz
-bagogold/static/package.json
-bagogold/static/gulpfile.js
-bagogold/static/testcss.py
+output_pylint.txt
+output_test.txt

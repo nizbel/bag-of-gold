@@ -52,8 +52,8 @@ from bagogold.tesouro_direto.utils import \
 def criar_transferencias(request):
     investidor = request.user.investidor
     
-    if request.method == 'POST':
-        print 'POST'
+#     if request.method == 'POST':
+#         print 'POST'
     
     divisoes = Divisao.objects.filter(investidor=investidor)
     
@@ -61,7 +61,7 @@ def criar_transferencias(request):
     transferencias = list()
     
     for divisao in divisoes:
-        print divisao
+#         print divisao
         # Letra de crédito
         for divisao_operacao in DivisaoOperacaoLCI_LCA.objects.filter(divisao=divisao, operacao__tipo_operacao='C').order_by('operacao__data'):
             saldo_no_dia = divisao.saldo_lci_lca(divisao_operacao.operacao.data) + sum([transferencia.quantidade for transferencia in transferencias if transferencia.investimento_destino == 'L'])
@@ -71,7 +71,7 @@ def criar_transferencias(request):
             if saldo_no_dia < 0:
                 transferencia = TransferenciaEntreDivisoes(divisao_recebedora=divisao, investimento_destino='L', quantidade=-saldo_no_dia, data=divisao_operacao.operacao.data, descricao='Gerada automaticamente')
 #                 transferencia.save()
-                print transferencia
+#                 print transferencia
                 transferencias.append(transferencia)
                 
         # CDB / RDB
@@ -83,7 +83,7 @@ def criar_transferencias(request):
             if saldo_no_dia < 0:
                 transferencia = TransferenciaEntreDivisoes(divisao_recebedora=divisao, investimento_destino='C', quantidade=-saldo_no_dia, data=divisao_operacao.operacao.data, descricao='Gerada automaticamente')
 #                 transferencia.save()
-                print transferencia
+#                 print transferencia
                 transferencias.append(transferencia)
                 
         # Tesouro Direto
@@ -95,7 +95,7 @@ def criar_transferencias(request):
             if saldo_no_dia < 0:
                 transferencia = TransferenciaEntreDivisoes(divisao_recebedora=divisao, investimento_destino='T', quantidade=-saldo_no_dia, data=divisao_operacao.operacao.data, descricao='Gerada automaticamente')
 #                 transferencia.save()
-                print transferencia
+#                 print transferencia
                 transferencia.operacao = divisao_operacao.operacao
                 transferencias.append(transferencia)
         
@@ -303,20 +303,20 @@ def detalhar_divisao(request, divisao_id):
     composicao['outros'].composicao = {}
     # Pegar outros investimentos contidos na divisão
     qtd_outros_investimentos = calcular_valor_outros_investimentos_ate_data_por_divisao(divisao)
-    for investimento_id in qtd_outros_investimentos.keys():
-        investimento = Investimento.objects.get(id=investimento_id)
-        composicao['outros'].patrimonio += qtd_outros_investimentos[investimento_id]
-        composicao['outros'].composicao[investimento_id] = Object()
-        composicao['outros'].composicao[investimento_id].nome = investimento.nome
-        composicao['outros'].composicao[investimento_id].patrimonio = qtd_outros_investimentos[investimento_id]
-        composicao['outros'].composicao[investimento_id].composicao = {}
+    for id_investimento in qtd_outros_investimentos.keys():
+        investimento = Investimento.objects.get(id=id_investimento)
+        composicao['outros'].patrimonio += qtd_outros_investimentos[id_investimento]
+        composicao['outros'].composicao[id_investimento] = Object()
+        composicao['outros'].composicao[id_investimento].nome = investimento.nome
+        composicao['outros'].composicao[id_investimento].patrimonio = qtd_outros_investimentos[id_investimento]
+        composicao['outros'].composicao[id_investimento].composicao = {}
         # Pegar dados do investimento
-        composicao['outros'].composicao[investimento_id].composicao[investimento_id] = Object()
-        composicao['outros'].composicao[investimento_id].composicao[investimento_id].nome = investimento.nome
-        composicao['outros'].composicao[investimento_id].composicao[investimento_id].data = investimento.data
-        composicao['outros'].composicao[investimento_id].composicao[investimento_id].quantidade = qtd_outros_investimentos[investimento_id]
-        composicao['outros'].composicao[investimento_id].composicao[investimento_id].valor_unitario = qtd_outros_investimentos[investimento_id]
-        composicao['outros'].composicao[investimento_id].composicao[investimento_id].patrimonio = qtd_outros_investimentos[investimento_id]
+        composicao['outros'].composicao[id_investimento].composicao[id_investimento] = Object()
+        composicao['outros'].composicao[id_investimento].composicao[id_investimento].nome = investimento.nome
+        composicao['outros'].composicao[id_investimento].composicao[id_investimento].data = investimento.data
+        composicao['outros'].composicao[id_investimento].composicao[id_investimento].quantidade = qtd_outros_investimentos[id_investimento]
+        composicao['outros'].composicao[id_investimento].composicao[id_investimento].valor_unitario = qtd_outros_investimentos[id_investimento]
+        composicao['outros'].composicao[id_investimento].composicao[id_investimento].patrimonio = qtd_outros_investimentos[id_investimento]
     
     # Calcular valor total da divisão
     for key, item in composicao.items():

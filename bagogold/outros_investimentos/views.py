@@ -158,7 +158,7 @@ def editar_investimento(request, id_investimento):
                                             extra=1, formset=DivisaoInvestimentoFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -301,10 +301,10 @@ def editar_rendimento(request, id_rendimento):
                 
         elif request.POST.get("delete"):
             # Pegar investimento para o redirecionamento no caso de exclusão
-            investimento_id = rendimento.investimento.id
+            id_investimento = rendimento.investimento.id
             rendimento.delete()
             messages.success(request, 'Rendimento excluído com sucesso')
-            return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': investimento_id}))
+            return HttpResponseRedirect(reverse('outros_investimentos:detalhar_investimento', kwargs={'id_investimento': id_investimento}))
   
     else:
         form_rendimento = RendimentoForm(instance=rendimento, investimento=rendimento.investimento, investidor=investidor,
@@ -536,7 +536,7 @@ def inserir_investimento(request):
                                             extra=1, formset=DivisaoInvestimentoFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         form_outros_invest = InvestimentoForm(request.POST, investidor=investidor)

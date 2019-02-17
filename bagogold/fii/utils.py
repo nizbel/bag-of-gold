@@ -13,7 +13,7 @@ from itertools import chain
 from operator import attrgetter
 import datetime
 
-def calcular_poupanca_prov_fii_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_poupanca_prov_fii_ate_dia(investidor, dia=None):
     """
     Calcula a quantidade de proventos provisionada até dia determinado para FII
     
@@ -21,8 +21,13 @@ def calcular_poupanca_prov_fii_ate_dia(investidor, dia=datetime.date.today()):
                 Dia da posição de proventos
     Retorno: Quantidade provisionada no dia
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     fiis = dict(CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1).values_list('fii__ticker', 'quantidade'))
-    operacoes = OperacaoFII.objects.filter(investidor=investidor, data__range=[dia.replace(month=1).replace(day=1), dia]).order_by('data').annotate(fii_ticker=F('fii__ticker'))
+    operacoes = OperacaoFII.objects.filter(investidor=investidor, data__range=[dia.replace(month=1).replace(day=1), dia]).order_by('data').annotate(fii_ticker=F('fii__ticker')) \
+        .prefetch_related('usoproventosoperacaofii_set')
     
     # Remover valores repetidos
     fiis_proventos = list(set(fiis.keys() + list(operacoes.values_list('fii__ticker', flat=True))))
@@ -91,7 +96,7 @@ def calcular_poupanca_prov_fii_ate_dia(investidor, dia=datetime.date.today()):
            
     return total_proventos.quantize(Decimal('0.01'))
 
-def calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, dia=datetime.date.today()):
+def calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, dia=None):
     """
     Calcula a quantidade de proventos provisionada até dia determinado para uma divisão para FII
     
@@ -99,6 +104,10 @@ def calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, dia=datetime.date.to
                 Divisão escolhida
     Retorno: Quantidade provisionada no dia
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     fiis = dict(CheckpointDivisaoFII.objects.filter(divisao=divisao, ano=dia.year-1).values_list('fii', 'quantidade'))
     operacoes = DivisaoOperacaoFII.objects.filter(divisao=divisao, operacao__data__range=[dia.replace(month=1).replace(day=1), dia]) \
         .annotate(data=F('operacao__data')).annotate(fii_ticker=F('operacao__fii__ticker')).order_by('operacao__data')
@@ -168,7 +177,7 @@ def calcular_poupanca_prov_fii_ate_dia_por_divisao(divisao, dia=datetime.date.to
                                
     return total_proventos.quantize(Decimal('0.01'))
 
-def calcular_qtd_fiis_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_qtd_fiis_ate_dia(investidor, dia=None):
     """ 
     Calcula a quantidade de FIIs até dia determinado
     
@@ -176,31 +185,38 @@ def calcular_qtd_fiis_ate_dia(investidor, dia=datetime.date.today()):
                 Dia final
     Retorno: Quantidade de FIIs {ticker: qtd}
     """
-    if not any([verificar_se_existe_evento_para_fii_periodo(fii_ticker, dia.replace(month=1).replace(day=1), dia) for fii_ticker in \
-                OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
-                                   .order_by('fii__id').distinct('fii__id').values_list('fii__ticker', flat=True)]):
-        posicao_anterior = dict(CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1, quantidade__gt=0).values_list('fii__ticker', 'quantidade'))
-        novas_operacoes = dict(OperacaoFII.objects.filter(investidor=investidor, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(ticker=F('fii__ticker')).values('ticker') \
-            .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
-                                When(tipo_operacao='V', then=F('quantidade')*-1),
-                                output_field=DecimalField()))).values_list('ticker', 'total').exclude(total=0))
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
         
-        qtd_fii = { k: posicao_anterior.get(k, 0) + novas_operacoes.get(k, 0) for k in set(posicao_anterior) | set(novas_operacoes) \
-                   if posicao_anterior.get(k, 0) + novas_operacoes.get(k, 0) != 0}
-    
-    else:
-        qtd_fii = {}
-        fiis_operacoes = list(OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).order_by('fii__id').distinct('fii__id').values_list('fii__ticker', flat=True))
-        fiis_incorporados = list(EventoIncorporacaoFII.objects.filter(fii__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
-                                    .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
-                                        .order_by('novo_fii__id').distinct('novo_fii__id').values_list('novo_fii__ticker', flat=True))
-        for ticker in list(set(fiis_operacoes + fiis_incorporados)):
-            qtd_fii_na_data = calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker)
-            if qtd_fii_na_data > 0:
-                qtd_fii[ticker] = qtd_fii_na_data
+    fiis_operacoes = list(OperacaoFII.objects.filter(investidor=investidor, data__lte=dia).order_by('fii__id').distinct('fii__id').values_list('fii__ticker', flat=True))
+    fiis_incorporados = list(EventoIncorporacaoFII.objects.filter(fii__in=OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
+                                .order_by('fii__id').distinct('fii__id').values_list('fii', flat=True)) \
+                                    .order_by('novo_fii__id').distinct('novo_fii__id').values_list('novo_fii__ticker', flat=True))
+    tickers_sem_evento = list(set(fiis_operacoes + fiis_incorporados))
+    tickers_com_evento = listar_fiis_com_evento_periodo(tickers_sem_evento, dia.replace(month=1).replace(day=1), dia)
+    for ticker_com_evento in tickers_com_evento:
+        tickers_sem_evento.remove(ticker_com_evento)
+     
+    posicao_anterior = dict(CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1, quantidade__gt=0, 
+                                                         fii__ticker__in=tickers_sem_evento).values_list('fii__ticker', 'quantidade'))
+    novas_operacoes = dict(OperacaoFII.objects.filter(investidor=investidor, data__range=[dia.replace(month=1).replace(day=1), dia], 
+                                                      fii__ticker__in=tickers_sem_evento).annotate(ticker=F('fii__ticker')).values('ticker') \
+        .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+                            When(tipo_operacao='V', then=F('quantidade')*-1),
+                            output_field=DecimalField()))).values_list('ticker', 'total').exclude(total=0))
+       
+    qtd_fii = { k: posicao_anterior.get(k, 0) + novas_operacoes.get(k, 0) for k in set(posicao_anterior) | set(novas_operacoes) \
+               if posicao_anterior.get(k, 0) + novas_operacoes.get(k, 0) != 0}
+      
+    for ticker in tickers_com_evento:
+        qtd_fii_na_data = calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, None, False)
+        if qtd_fii_na_data > 0:
+            qtd_fii[ticker] = qtd_fii_na_data
+             
     return qtd_fii
 
-def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignorar_incorporacao_id=None):
+def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignorar_incorporacao_id=None, verificar_evento=True):
     """ 
     Calcula a quantidade de FIIs até dia determinado para um ticker determinado
     
@@ -210,7 +226,7 @@ def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignorar_incorp
                 Id da incorporação a ser ignorada
     Retorno: Quantidade de FIIs para o ticker determinado
     """
-    if not verificar_se_existe_evento_para_fii_periodo(ticker, dia.replace(month=1).replace(day=1), dia):
+    if verificar_evento and not verificar_se_existe_evento_para_fii_periodo(ticker, dia.replace(month=1).replace(day=1), dia):
         if CheckpointFII.objects.filter(investidor=investidor, ano=dia.year-1, fii__ticker=ticker, quantidade__gt=0).exists():
             qtd_fii = CheckpointFII.objects.get(investidor=investidor, ano=dia.year-1, fii__ticker=ticker, quantidade__gt=0).quantidade
         else:
@@ -227,16 +243,18 @@ def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignorar_incorp
         operacoes = OperacaoFII.objects.filter(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor).exclude(data__isnull=True) \
             .annotate(qtd_final=(Case(When(tipo_operacao='C', then=F('quantidade')),
                                       When(tipo_operacao='V', then=F('quantidade')*-1),
-                                      output_field=DecimalField()))).annotate(tipo=Value(u'Operação', output_field=CharField()))
+                                      output_field=DecimalField()))).annotate(tipo=Value(u'Operação', output_field=CharField())).select_related('fii')
                                       
                                       
         # Verificar agrupamentos e desdobramentos
-        agrupamentos = EventoAgrupamentoFII.objects.filter(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(tipo=Value(u'Agrupamento', output_field=CharField()))
+        agrupamentos = EventoAgrupamentoFII.objects.filter(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(tipo=Value(u'Agrupamento', output_field=CharField())) \
+            .select_related('fii')
 
-        desdobramentos = EventoDesdobramentoFII.objects.filter(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(tipo=Value(u'Desdobramento', output_field=CharField()))
+        desdobramentos = EventoDesdobramentoFII.objects.filter(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(tipo=Value(u'Desdobramento', output_field=CharField())) \
+            .select_related('fii')
         
         incorporacoes = EventoIncorporacaoFII.objects.filter(Q(fii__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]) | Q(novo_fii__ticker=ticker, data__lte=dia)).exclude(id=ignorar_incorporacao_id) \
-            .annotate(tipo=Value(u'Incorporação', output_field=CharField()))
+            .annotate(tipo=Value(u'Incorporação', output_field=CharField())).select_related('fii', 'novo_fii')
         
         lista_conjunta = sorted(chain(agrupamentos, desdobramentos, incorporacoes, operacoes), key=attrgetter('data'))
         
@@ -340,7 +358,7 @@ def calcular_qtd_fiis_ate_dia_por_ticker_por_divisao(dia, divisao_id, ticker, ig
         
     return qtd_fii
 
-def calcular_preco_medio_fiis_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_preco_medio_fiis_ate_dia(investidor, dia=None):
     """
     Calcula o preço médio dos FIIs do investidor em dia determinado
     
@@ -351,6 +369,11 @@ def calcular_preco_medio_fiis_ate_dia(investidor, dia=datetime.date.today()):
     # Usado para criar objetos vazios
     class Object(object):
         pass
+    
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     
     if not any([verificar_se_existe_evento_para_fii_periodo(fii_ticker, dia.replace(month=1).replace(day=1), dia) for fii_ticker in \
                 OperacaoFII.objects.filter(investidor=investidor, data__lte=dia) \
@@ -482,7 +505,7 @@ def calcular_preco_medio_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignora
         
     return preco_medio_fii
 
-def calcular_preco_medio_fiis_ate_dia_por_divisao(divisao, dia=datetime.date.today()):
+def calcular_preco_medio_fiis_ate_dia_por_divisao(divisao, dia=None):
     """
     Calcula o preço médio dos FIIs da divisão em dia determinado
     
@@ -493,6 +516,10 @@ def calcular_preco_medio_fiis_ate_dia_por_divisao(divisao, dia=datetime.date.tod
     # Usado para criar objetos vazios
     class Object(object):
         pass
+    
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
     
     if not any([verificar_se_existe_evento_para_fii_periodo(fii_ticker, dia.replace(month=1).replace(day=1), dia) for fii_ticker in \
                 DivisaoOperacaoFII.objects.filter(divisao=divisao, operacao__data__lte=dia) \
@@ -642,7 +669,7 @@ def calcular_rendimento_proventos_fii_12_meses(fii):
     data_1_ano_atras = datetime.date.today() - datetime.timedelta(days=365)
     # Calcular media de proventos dos ultimos 6 recebimentos
     proventos = ProventoFII.objects.filter(fii=fii, data_ex__gt=data_1_ano_atras).order_by('data_ex')
-    if len(proventos) == 0:
+    if not proventos:
         return Decimal(0)
     for provento in proventos:
         total_proventos += provento.valor_unitario
@@ -679,15 +706,18 @@ def calcular_variacao_percentual_fii_por_periodo(fii, periodo_inicio, periodo_fi
                 Data final do período
     Retorno: Variação percentual
     """
+    if periodo_fim <= periodo_inicio:
+        raise ValueError('Data final do período deve ser maior que data inicial')
+    
     try:
         valor_inicial = HistoricoFII.objects.filter(fii=fii, data__lte=periodo_inicio).order_by('-data')[0].preco_unitario
         valor_final = HistoricoFII.objects.filter(fii=fii, data__lte=periodo_fim).order_by('-data')[0].preco_unitario
     except:
         return 0
     
-    return (valor_final - valor_inicial) / valor_final * 100
+    return (valor_final - valor_inicial) / valor_inicial * 100
 
-def calcular_valor_fii_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_valor_fii_ate_dia(investidor, dia=None):
     """ 
     Calcula o valor das cotas do investidor até dia determinado
     
@@ -695,6 +725,9 @@ def calcular_valor_fii_ate_dia(investidor, dia=datetime.date.today()):
                 Dia final
     Retorno: Valor das cotas {ticker: valor_da_data}
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
     
     qtd_fii = calcular_qtd_fiis_ate_dia(investidor, dia)
     
@@ -706,7 +739,7 @@ def calcular_valor_fii_ate_dia(investidor, dia=datetime.date.today()):
         
     return qtd_fii
 
-def verificar_se_existe_evento_para_fii(fii_ticker, data_limite=datetime.date.today()):
+def verificar_se_existe_evento_para_fii(fii_ticker, data_limite=None):
     """
     Verifica se existe evento para fii até data (data inclusive)
     
@@ -714,6 +747,10 @@ def verificar_se_existe_evento_para_fii(fii_ticker, data_limite=datetime.date.to
                 Data
     Retorno: True caso exista, senão False
     """
+    # Preparar data
+    if data_limite == None:
+        data_limite = datetime.date.today()
+        
     # Verificar se há evento ou se outro FII foi incorporado a este
     return any([classe.objects.filter(fii__ticker=fii_ticker, data__lte=data_limite).exists() for classe in EventoFII.__subclasses__()]) \
         or EventoIncorporacaoFII.objects.filter(novo_fii__ticker=fii_ticker, data__lte=data_limite).exists()
@@ -728,5 +765,43 @@ def verificar_se_existe_evento_para_fii_periodo(fii_ticker, data_inicio, data_fi
     Retorno: True caso exista, senão False
     """
     # Verificar se há evento ou se outro FII foi incorporado a este
-    return any([classe.objects.filter(fii__ticker=fii_ticker, data__range=[data_inicio, data_fim]).exists() for classe in EventoFII.__subclasses__()]) \
-        or EventoIncorporacaoFII.objects.filter(novo_fii__ticker=fii_ticker, data__range=[data_inicio, data_fim]).exists()
+#     return any([classe.objects.filter(fii__ticker=fii_ticker, data__range=[data_inicio, data_fim]).exists() for classe in EventoFII.__subclasses__()]) \
+#         or EventoIncorporacaoFII.objects.filter(novo_fii__ticker=fii_ticker, data__range=[data_inicio, data_fim]).exists()
+    for classe in EventoFII.__subclasses__():
+        if classe.objects.filter(fii__ticker=fii_ticker, data__range=[data_inicio, data_fim]).exists():
+            return True
+    return EventoIncorporacaoFII.objects.filter(novo_fii__ticker=fii_ticker, data__range=[data_inicio, data_fim]).exists()
+        
+def verificar_se_existe_evento_para_fiis_periodo(fii_tickers, data_inicio, data_fim):
+    """
+    Verifica se existe evento para fiis no período (datas inclusive)
+    
+    Parâmetros: Lista de tickers de FIIs
+                Data de início
+                Data de fim
+    Retorno: True caso exista, senão False
+    """
+    # Verificar se há evento ou se outro FII foi incorporado a este
+#     return any([classe.objects.filter(fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists() for classe in EventoFII.__subclasses__()]) \
+#         or EventoIncorporacaoFII.objects.filter(novo_fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists()
+    for classe in EventoFII.__subclasses__():
+        if classe.objects.filter(fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists():
+            return True
+    return EventoIncorporacaoFII.objects.filter(novo_fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists()
+
+def listar_fiis_com_evento_periodo(fii_tickers, data_inicio, data_fim):
+    """
+    Lista os tickers de FIIs que possuem algum evento no período informado
+    
+    Parâmetros: Lista de tickers de FIIs
+                Data de início
+                Data de fim
+    Retorno: Lista com os tickers de FIIs
+    """
+    lista_tickers = list()
+    for classe in EventoFII.__subclasses__():
+        lista_tickers.extend(classe.objects.filter(fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).values_list('fii__ticker', flat=True))
+    # Adicionar recebimentos por incorporação
+    lista_tickers.extend(EventoIncorporacaoFII.objects.filter(novo_fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).values_list('novo_fii__ticker', flat=True))
+    return list(set(lista_tickers))
+        

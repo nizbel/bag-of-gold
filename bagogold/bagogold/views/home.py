@@ -2,42 +2,42 @@
 import calendar
 import datetime
 from decimal import Decimal, ROUND_DOWN
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.core.mail import send_mail
-from django.db.models.expressions import F, Case, When
-from django.template import loader
-from django.template.loader import render_to_string
 from itertools import chain
 import json
 import math
 from operator import attrgetter
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.mail import send_mail
 from django.db.models import Count
 from django.db.models.aggregates import Sum
+from django.db.models.expressions import F, Case, When
 from django.db.models.fields import DecimalField
 from django.http.response import HttpResponse
+from django.template import loader
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
+from django.urls.base import reverse
 
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.misc import ContatoForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, Provento, \
     ValorDiarioAcao
-from bagogold.debentures.models import OperacaoDebenture, \
-    HistoricoValorDebenture
 from bagogold.bagogold.models.divisoes import TransferenciaEntreDivisoes, \
     Divisao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaDI
-from bagogold.debentures.utils import calcular_valor_debentures_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_ultimas_operacoes, \
     buscar_totais_atuais_investimentos, buscar_proventos_a_receber, \
     buscar_proventos_a_receber_data_ex_futura, buscar_operacoes_no_periodo
 from bagogold.bagogold.utils.misc import calcular_rendimentos_ate_data, \
-    verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais
+    verificar_feriado_bovespa, formatar_zeros_a_direita_apos_2_casas_decimais, \
+    qtd_dias_uteis_no_periodo
 from bagogold.bagogold.utils.taxas_indexacao import \
-    calcular_valor_atualizado_com_taxas_di
+    calcular_valor_atualizado_com_taxas_di, \
+    calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.blog.models import Post
-from bagogold.cdb_rdb.models import OperacaoCDB_RDB
+from bagogold.cdb_rdb.models import OperacaoCDB_RDB, CDB_RDB
 from bagogold.cdb_rdb.utils import calcular_valor_atualizado_operacao_ate_dia \
     as calcular_valor_atualizado_operacao_ate_dia_cdb_rdb, \
     buscar_operacoes_vigentes_ate_data as buscar_operacoes_vigentes_ate_data_cdb_rdb, \
@@ -49,14 +49,20 @@ from bagogold.cri_cra.utils.utils import calcular_valor_cri_cra_ate_dia, \
 from bagogold.cri_cra.utils.valorizacao import calcular_valor_um_cri_cra_na_data
 from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
     TransferenciaCriptomoeda, ValorDiarioCriptomoeda
+from bagogold.debentures.models import OperacaoDebenture, \
+    HistoricoValorDebenture
+from bagogold.debentures.utils import calcular_valor_debentures_ate_dia,\
+    simular_valor_na_data
 from bagogold.fii.models import OperacaoFII, HistoricoFII, ProventoFII, \
     ValorDiarioFII
 from bagogold.fundo_investimento.models import OperacaoFundoInvestimento, \
     HistoricoValorCotas
-from bagogold.lc.models import OperacaoLetraCambio
+from bagogold.lc.models import OperacaoLetraCambio, LetraCambio
 from bagogold.lc.utils import calcular_valor_lc_ate_dia, calcular_valor_venda_lc, \
-    calcular_valor_atualizado_operacao_ate_dia as calcular_valor_atualizado_operacao_ate_dia_lc
-from bagogold.lci_lca.models import OperacaoLetraCredito
+    calcular_valor_atualizado_operacao_ate_dia as calcular_valor_atualizado_operacao_ate_dia_lc, \
+    buscar_operacoes_vigentes_ate_data as buscar_operacoes_vigentes_ate_data_lc, \
+    calcular_valor_operacao_lc_ate_dia
+from bagogold.lci_lca.models import OperacaoLetraCredito, LetraCredito
 from bagogold.lci_lca.utils import calcular_valor_operacao_lci_lca_ate_dia, \
     buscar_operacoes_vigentes_ate_data as buscar_operacoes_vigentes_ate_data_lci_lca, \
     atualizar_operacoes_lci_lca_no_periodo
@@ -65,6 +71,7 @@ from bagogold.outros_investimentos.models import Rendimento, Amortizacao, \
 from bagogold.tesouro_direto.models import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
 from bagogold.tesouro_direto.utils import calcular_valor_td_ate_dia
+from django.shortcuts import resolve_url
 
 
 @adiciona_titulo_descricao('Cálculos de patrimônio e rendimento futuros', 'Permite calcular o patrimônio acumulado em um período, o rendimento alcançado e o ' \
@@ -92,29 +99,36 @@ def calendario(request):
         # Buscar eventos
         # Operações do investidor
         operacoes = buscar_operacoes_no_periodo(investidor, data_inicial, data_final)
-        calendario = [{'title': unicode(operacao), 'start': operacao.data.strftime('%Y-%m-%d')} for operacao in operacoes]
+        for operacao in operacoes:
+            operacao.url = operacao.link
+#             operacao.url = resolve_url('inicio:painel_geral')
+        calendario = [{'title': unicode(operacao), 'start': operacao.data.strftime('%Y-%m-%d'), 'url': operacao.url} for operacao in operacoes]
         
         # Proventos de ações
         # Busca ações que o investidor já tenha negociado
         lista_acoes_negociadas = OperacaoAcao.objects.filter(investidor=investidor).order_by('acao').values_list('acao', flat=True).distinct()
         proventos_acoes = Provento.objects.filter(data_ex__range=[data_inicial, data_final], tipo_provento__in=['D', 'J'], acao__in=lista_acoes_negociadas)
-        calendario.extend([{'title': u'Data EX para %s de %s, R$ %s por ação' % (provento.descricao_tipo_provento(), provento.acao.ticker, provento.valor_unitario), 
+        calendario.extend([{'title': u'Data EX para %s de %s, R$ %s por ação' % (provento.descricao_tipo_provento(), provento.acao.ticker, 
+                                                                                 formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario)), 
                             'start': provento.data_ex.strftime('%Y-%m-%d')} for provento in proventos_acoes])
         
         
         proventos_acoes = Provento.objects.filter(data_pagamento__range=[data_inicial, data_final], tipo_provento__in=['D', 'J'], acao__in=lista_acoes_negociadas)
-        calendario.extend([{'title': u'Data de pagamento para %s de %s, R$ %s por ação' % (provento.descricao_tipo_provento(), provento.acao.ticker, provento.valor_unitario), 
+        calendario.extend([{'title': u'Data de pagamento para %s de %s, R$ %s por ação' % (provento.descricao_tipo_provento(), provento.acao.ticker, 
+                                                                                           formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario)), 
                             'start': provento.data_pagamento.strftime('%Y-%m-%d')} for provento in proventos_acoes])
         
         # Proventos de FIIs
         # Busca fiis que o investidor já tenha negociado
         lista_fiis_negociadas = OperacaoFII.objects.filter(investidor=investidor).order_by('fii').values_list('fii', flat=True).distinct()
         proventos_fiis = ProventoFII.objects.filter(data_ex__range=[data_inicial, data_final], fii__in=lista_fiis_negociadas)
-        calendario.extend([{'title': u'Data EX para %s de %s, R$ %s por cota' % (provento.descricao_tipo_provento(), provento.fii.ticker, provento.valor_unitario), 
+        calendario.extend([{'title': u'Data EX para %s de %s, R$ %s por cota' % (provento.descricao_tipo_provento(), provento.fii.ticker, 
+                                                                                 formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario)), 
                             'start': provento.data_ex.strftime('%Y-%m-%d')} for provento in proventos_fiis])
         
         proventos_fiis = ProventoFII.objects.filter(data_pagamento__range=[data_inicial, data_final], fii__in=lista_fiis_negociadas)
-        calendario.extend([{'title': u'Data de pagamento para %s de %s, R$ %s por cota' % (provento.descricao_tipo_provento(), provento.fii.ticker, provento.valor_unitario), 
+        calendario.extend([{'title': u'Data de pagamento para %s de %s, R$ %s por cota' % (provento.descricao_tipo_provento(), provento.fii.ticker, 
+                                                                                           formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario)), 
                             'start': provento.data_pagamento.strftime('%Y-%m-%d')} for provento in proventos_fiis])
         
         # Carência e vencimento de CDB/RDB
@@ -140,18 +154,22 @@ def calendario(request):
                             'start': operacao.data_vencimento().strftime('%Y-%m-%d')} for operacao in vencimento_lc])
         
         # Carência de LCI/LCA
-        carencia_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor, data__lt=data_final, tipo_operacao='C')
+        operacoes_lci_lca = OperacaoLetraCredito.objects.filter(investidor=investidor, data__lt=data_final, tipo_operacao='C')
         # Buscar apenas operações com fim da carência no período especificado
-        carencia_lci_lca = [operacao for operacao in carencia_lci_lca if operacao.data_carencia() >= data_inicial and operacao.data_carencia() <= data_final]
+        carencia_lci_lca = [operacao for operacao in operacoes_lci_lca if operacao.data_carencia() >= data_inicial and operacao.data_carencia() <= data_final]
         calendario.extend([{'title': u'Carência de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.letra_credito.nome, operacao.data.strftime('%d/%m/%Y')), 
                             'start': operacao.data_carencia().strftime('%Y-%m-%d')} for operacao in carencia_lci_lca])
+        # Buscar apenas operações que vencem no período especificado
+        vencimento_lci_lca = [operacao for operacao in operacoes_lci_lca if operacao.data_vencimento() >= data_inicial and operacao.data_vencimento() <= data_final]
+        calendario.extend([{'title': u'Vencimento de operação de R$ %s em %s, feita em %s' % (operacao.quantidade, operacao.letra_credito.nome, operacao.data.strftime('%d/%m/%Y')), 
+                            'start': operacao.data_vencimento().strftime('%Y-%m-%d')} for operacao in vencimento_lci_lca])
         
         # Vencimento, amortizações e remunerações de CRI/CRA
         remuneracoes_cri_cra = DataRemuneracaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__range=[data_inicial, data_final])
-        calendario.extend([{'title': u'Pagamento de remuneração de R$ %s para %s' % (data_remuneracao.qtd_remuneracao(), data_remuneracao.cri_cra.nome), 
+        calendario.extend([{'title': u'Remuneração de R$ %s para %s' % (data_remuneracao.qtd_remuneracao(), data_remuneracao.cri_cra.nome), 
                             'start': data_remuneracao.data.strftime('%Y-%m-%d')} for data_remuneracao in remuneracoes_cri_cra])
         amortizacoes_cri_cra = DataAmortizacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, data__range=[data_inicial, data_final])
-        calendario.extend([{'title': u'Pagamento de amortização para %s' % (data_amortizacao.cri_cra.nome), 
+        calendario.extend([{'title': u'Amortização para %s' % (data_amortizacao.cri_cra.nome), 
                             'start': data_amortizacao.data.strftime('%Y-%m-%d')} for data_amortizacao in amortizacoes_cri_cra])
         vencimentos_cri_cra = CRI_CRA.objects.filter(investidor=investidor, data_vencimento__range=[data_inicial, data_final])
         calendario.extend([{'title': u'Vencimento de %s' % (cri_cra.nome), 
@@ -197,10 +215,9 @@ def detalhar_acumulados_mensais(request):
             
             qtd_meses = (data_atual.year - data_inicial.year) * 12 + (data_atual.month - data_inicial.month + 1)
             
-            if data_atual > datetime.datetime.now():
-                messages.error(request, 'Não é possível calcular o acumulado para meses futuros')
-            elif qtd_meses > 12 :
+            if qtd_meses > 12 :
                 messages.error(request, 'Insira um período de até 12 meses')
+                filtros = {'mes_inicial': '', 'mes_final': ''}
         except:
             messages.error(request, 'Filtros de data inválidos')
             filtros = {'mes_inicial': '', 'mes_final': ''}
@@ -212,7 +229,10 @@ def detalhar_acumulados_mensais(request):
         for _ in range(qtd_meses-1):
             data_inicial = (data_inicial - datetime.timedelta(days=1)).replace(day=1)
         filtros = {'mes_inicial': data_inicial.strftime('%m/%Y'), 'mes_final': data_atual.strftime('%m/%Y')}
-        
+    
+    # Guardar data final do período para o cálculo das taxas
+    data_fim_periodo = data_atual.date()
+    
     acumulados_mensais = list()
     acumulados_mensais.append([data_atual.date(), calcular_rendimentos_ate_data(investidor, data_atual.date())])
     
@@ -243,7 +263,7 @@ def detalhar_acumulados_mensais(request):
     graf_acumulados.reverse()
     
     taxas = {}
-    taxas['taxa_media_12_meses'] = sum([acumulado for _, _, acumulado in acumulados_mensais]) / (datetime.date.today() - data_atual.date()).days / 24 / 3600
+    taxas['taxa_media_12_meses'] = sum([acumulado for _, _, acumulado in acumulados_mensais]) / (data_fim_periodo - data_atual.date()).days / 24 / 3600
     
     if taxas['taxa_media_12_meses'] != 0:
         indice_primeiro_numero_valido = int(('%e' % taxas['taxa_media_12_meses']).partition('-')[2])
@@ -389,7 +409,7 @@ def detalhamento_investimentos(request):
                                    transferencias_criptomoedas, outros_investimentos, amort_outros_investimentos),
                             key=attrgetter('data'))
 
-	# Se não houver operações, retornar vazio
+    # Se não houver operações, retornar vazio
     if not lista_operacoes:
         data_anterior = str(calendar.timegm((datetime.date.today() - datetime.timedelta(days=365)).timetuple()) * 1000)
         data_atual = str(calendar.timegm(datetime.date.today().timetuple()) * 1000)
@@ -991,7 +1011,7 @@ def detalhamento_investimentos(request):
 
 @adiciona_titulo_descricao('', 'O Bag of Gold permite que o usuário acompanhe seus investimentos em um único lugar')
 def inicio(request):
-    posts = Post.objects.all().order_by('-data')[:6]
+    posts = Post.objects.all().order_by('-data').prefetch_related('tagpost_set__tag')[:6]
     
     return TemplateResponse(request, 'inicio.html', {'posts': posts})
 
@@ -1155,7 +1175,7 @@ def grafico_renda_fixa_painel_geral(request):
         investidor = request.user.investidor
         data_atual = datetime.datetime.now()
         
-        qtd_ultimos_dias = 22
+        qtd_ultimos_dias = 15
         # Guardar valores totais
         diario_cdb_rdb = {}
         diario_cri_cra = {}
@@ -1320,6 +1340,171 @@ def grafico_renda_fixa_painel_geral(request):
                                         'graf_rendimentos_mensal_lc': graf_rendimentos_mensal_lc}), content_type = "application/json")   
 
     return HttpResponse(json.dumps({'sucesso': False}), content_type = "application/json")   
+
+@login_required
+def prox_vencimentos_painel_geral(request):
+    if request.is_ajax():
+        investidor = request.user.investidor
+        data_atual = datetime.date.today()
+#         data_30_dias = data_atual + datetime.timedelta(days=3000)
+        
+        # Verificar próximos vencimentos de renda fixa
+        prox_vencimentos = list()
+        
+        limite_vencimentos = 10
+        
+        # Taxa DI final
+        data_final, taxa_final = HistoricoTaxaDI.objects.all().values_list('data', 'taxa').order_by('-data')[0]
+        
+        # CDB/RDB
+        # Buscar cdbs vigentes
+        operacoes_atuais = buscar_operacoes_vigentes_ate_data_cdb_rdb(investidor)
+        for operacao in operacoes_atuais[:limite_vencimentos]:
+#             if operacao.data_vencimento() >= data_atual and operacao.data_vencimento() <= data_30_dias:
+            if operacao.data_vencimento() >= data_atual:
+                operacao.tipo_investimento = u'CDB/RDB'
+                operacao.nome = operacao.cdb_rdb.nome
+                
+                # Valor inicial
+                operacao.valor_inicial = operacao.qtd_disponivel_venda 
+                 
+                # Valor vencimento
+                operacao.quantidade = operacao.valor_inicial
+                operacao.taxa = operacao.porcentagem()
+                operacao.atual = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, data_atual)
+                qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
+                # Se prefixado apenas pegar rendimento de 1 dia
+                if operacao.cdb_rdb.eh_prefixado():
+                    operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
+                elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+                    # Considerar rendimento do dia anterior
+                    operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({taxa_final: qtd_dias_uteis_ate_vencimento},
+                                                         operacao.atual, operacao.taxa)
+                str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
+                operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                 
+                prox_vencimentos.append(operacao)
+                
+        # CRI/CRA
+#         for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, cri_cra__data_vencimento__range=[data_atual, data_30_dias]) \
+        for operacao in OperacaoCRI_CRA.objects.filter(cri_cra__investidor=investidor, cri_cra__data_vencimento__gte=data_atual, tipo_operacao='C') \
+        .select_related('cri_cra').order_by('data')[:limite_vencimentos]:
+            operacao.tipo_investimento = u'CRI/CRA'
+            operacao.nome = operacao.cri_cra.nome
+            
+            # Valor inicial
+            operacao.valor_inicial = operacao.quantidade * operacao.preco_unitario
+            
+            # Valor vencimento
+            operacao.valor_vencimento = operacao.quantidade * calcular_valor_um_cri_cra_na_data(operacao.cri_cra, operacao.cri_cra.data_vencimento, True)
+            
+            prox_vencimentos.append(operacao)
+                
+        # Debênture
+#         for operacao in OperacaoDebenture.objects.filter(investidor=investidor, debenture__data_vencimento__range=[data_atual, data_30_dias]) \
+        for operacao in OperacaoDebenture.objects.filter(investidor=investidor, debenture__data_vencimento__gte=data_atual, tipo_operacao='C') \
+        .select_related('debenture').order_by('data')[:limite_vencimentos]:
+            operacao.tipo_investimento = u'Debênture'
+            operacao.nome = operacao.debenture.codigo
+            
+            # Valor inicial
+            operacao.valor_inicial = operacao.quantidade * operacao.preco_unitario
+            
+            # TODO Valor vencimento
+            operacao.valor_vencimento = simular_valor_na_data(operacao.debenture_id, operacao.debenture.data_vencimento)
+            
+            prox_vencimentos.append(operacao)
+                
+        # LC
+        # Buscar lcs vigentes
+        operacoes_atuais = buscar_operacoes_vigentes_ate_data_lc(investidor)
+        # Verificar datas de vencimento, pegar nos próximos 30 dias
+        for operacao in operacoes_atuais[:limite_vencimentos]:
+#             if operacao.data_vencimento() >= data_atual and operacao.data_vencimento() <= data_30_dias:
+            if operacao.data_vencimento() >= data_atual:
+                operacao.tipo_investimento = u'Letra de Câmbio'
+                operacao.nome = operacao.lc.nome
+                
+                # Valor inicial
+                operacao.valor_inicial = operacao.qtd_disponivel_venda 
+                
+                # Calcular valor vencimento
+                operacao.quantidade = operacao.valor_inicial
+                operacao.taxa = operacao.porcentagem()
+                operacao.atual = calcular_valor_operacao_lc_ate_dia(operacao, data_atual)
+                qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
+                # Se prefixado apenas pegar rendimento de 1 dia
+                if operacao.lc.eh_prefixado():
+                    operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
+                elif operacao.lc.tipo_rendimento == LetraCambio.LC_DI:
+                    # Considerar rendimento do dia anterior
+                    operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({taxa_final: qtd_dias_uteis_ate_vencimento},
+                                                         operacao.atual, operacao.taxa)
+                str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
+                operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                
+                prox_vencimentos.append(operacao)
+                
+        # LCI/LCA
+        # Buscar lcis vigentes
+        operacoes_atuais = buscar_operacoes_vigentes_ate_data_lci_lca(investidor)
+        # Verificar datas de vencimento, pegar nos próximos 30 dias
+        for operacao in operacoes_atuais[:limite_vencimentos]:
+#             if operacao.data_vencimento() >= data_atual and operacao.data_vencimento() <= data_30_dias:
+            if operacao.data_vencimento() >= data_atual:
+                operacao.tipo_investimento = u'LCI/LCA'
+                operacao.nome = operacao.letra_credito.nome
+                
+                # Valor inicial
+                operacao.valor_inicial = operacao.qtd_disponivel_venda 
+                
+                # Calcular valor vencimento
+                operacao.quantidade = operacao.valor_inicial
+                operacao.taxa = operacao.porcentagem()
+                operacao.atual = calcular_valor_operacao_lci_lca_ate_dia(operacao, data_atual)
+                qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
+                # Se prefixado apenas pegar rendimento de 1 dia
+                if operacao.letra_credito.tipo_rendimento == LetraCredito.LCI_LCA_PREFIXADO:
+                    operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
+                elif operacao.letra_credito.tipo_rendimento == LetraCredito.LCI_LCA_DI:
+                    # Considerar rendimento do dia anterior
+                    operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({taxa_final: qtd_dias_uteis_ate_vencimento},
+                                                         operacao.atual, operacao.taxa)
+                str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
+                operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
+                
+                prox_vencimentos.append(operacao)
+                
+        # Título
+#         for operacao in OperacaoTitulo.objects.filter(investidor=investidor, titulo__data_vencimento__range=[data_atual, data_30_dias]) \
+        for operacao in OperacaoTitulo.objects.filter(investidor=investidor, titulo__data_vencimento__gte=data_atual, tipo_operacao='C') \
+        .select_related('titulo').order_by('data')[:limite_vencimentos]:
+            operacao.tipo_investimento = u'Tesouro Direto'
+            operacao.nome = operacao.titulo.nome()
+            
+            # Valor inicial
+            operacao.valor_inicial = operacao.quantidade * operacao.preco_unitario
+            
+            # Valor vencimento
+            operacao.valor_vencimento = operacao.titulo.valor_vencimento()
+            
+            prox_vencimentos.append(operacao)
+                
+        # Ordenar pela data de vencimento
+        prox_vencimentos.sort(key=lambda x: x.data_vencimento())
+        
+        # Filtrar apenas os 10 próximos
+        prox_vencimentos = prox_vencimentos[:limite_vencimentos]
+
+        # Preencher dados gerais para operações a serem mostradas        
+        for operacao in prox_vencimentos:
+            operacao.decorrido_percentual = (float((data_atual - operacao.data).days) / (operacao.data_vencimento() - operacao.data).days) * 100
+        
+        return HttpResponse(json.dumps(render_to_string('utils/prox_vencimentos_rf_painel_geral.html', {'prox_vencimentos': prox_vencimentos})), 
+                            content_type = "application/json")   
+    else:
+        return HttpResponse(json.dumps({}), content_type = "application/json")  
+        
 
 @login_required
 def rendimento_medio_painel_geral(request):

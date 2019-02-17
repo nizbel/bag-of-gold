@@ -60,9 +60,9 @@ def estatisticas_acao(request, ticker=None):
         
     graf_historico = list()
     # Preparar gráfico com os valores históricos da acao
-    for item in historico:
-        data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
-        graf_historico += [[data_formatada, float(item.preco_unitario)]]
+    for dia_historico in historico:
+        data_formatada = str(calendar.timegm(dia_historico.data.timetuple()) * 1000)
+        graf_historico += [[data_formatada, float(dia_historico.preco_unitario)]]
     
     if not request.user.is_authenticated():
         return TemplateResponse(request, 'acoes/estatisticas_acao.html', {'graf_preco_medio': list(), 'graf_preco_medio_valor_acao': list(),
@@ -155,7 +155,11 @@ def estatisticas_acao(request, ticker=None):
                     
                                 
         data_formatada = str(calendar.timegm(item.data.timetuple()) * 1000)
-        ultimo_dia_util = historico.filter(data__lte=item.data).order_by('-data')[0].data
+        for dia_historico in reversed(list(historico)):
+            if dia_historico.data <= item.data:
+                preco_hist_ultimo_dia_util = dia_historico.preco_unitario
+                break
+        
         # Preço médio corrente
         try:
             preco_medio_corrente = float(-float(total_gasto)/qtd_acoes)
@@ -164,10 +168,10 @@ def estatisticas_acao(request, ticker=None):
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
         if len(graf_preco_medio) > 0 and graf_preco_medio[len(graf_preco_medio)-1][0] == data_formatada:
             graf_preco_medio[len(graf_preco_medio)-1][1] = preco_medio_corrente
-            graf_preco_medio_valor_acao[len(graf_preco_medio_valor_acao)-1][1] = float(historico.filter(data=ultimo_dia_util)[0].preco_unitario)
+            graf_preco_medio_valor_acao[len(graf_preco_medio_valor_acao)-1][1] = float(preco_hist_ultimo_dia_util)
         else:
             graf_preco_medio += [[data_formatada, preco_medio_corrente]]
-            graf_preco_medio_valor_acao += [[data_formatada, float(historico.filter(data=ultimo_dia_util)[0].preco_unitario)]]
+            graf_preco_medio_valor_acao += [[data_formatada, float(preco_hist_ultimo_dia_util)]]
                 
     
     # Adicionar data atual
@@ -270,7 +274,7 @@ def listar_proventos(request):
             except:
                 filtros['fim_data_pagamento'] = ''
                 
-        proventos = list(query_proventos)
+        proventos = list(query_proventos.select_related('atualizacaoselicprovento'))
         return HttpResponse(json.dumps(render_to_string('acoes/utils/lista_proventos.html', {'proventos': proventos})), content_type = "application/json")  
     else:
         filtros = {'tipo_provento': 'T', 'inicio_data_ex': '', 'fim_data_ex': '', 'inicio_data_pagamento': '', 'fim_data_pagamento': '', 'acoes': ''}
@@ -278,7 +282,7 @@ def listar_proventos(request):
     # Buscar últimas atualizações
     ultimas_validacoes = InvestidorValidacaoDocumento.objects.filter(documento__tipo='A').order_by('-data_validacao')[:10] \
         .annotate(provento=F('documento__proventoacaodocumento__provento')).values('provento', 'data_validacao')
-    ultimas_atualizacoes = Provento.objects.filter(id__in=[validacao['provento'] for validacao in ultimas_validacoes]).select_related('acao')
+    ultimas_atualizacoes = Provento.objects.filter(id__in=[validacao['provento'] for validacao in ultimas_validacoes]).select_related('acao').select_related('atualizacaoselicprovento')
     for atualizacao in ultimas_atualizacoes:
         atualizacao.data_insercao = next(validacao['data_validacao'].date() for validacao in ultimas_validacoes if validacao['provento'] == atualizacao.id)
     

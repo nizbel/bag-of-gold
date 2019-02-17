@@ -47,7 +47,7 @@
                                 {% if not divisao.objetivo_indefinido %}
                                 <div class="col-md-8">
                                     <div class="progress progress-striped active" style="background: rgba(68, 77, 88, 1); height: 10px; width: 100%; margin-bottom: 0px; margin-top: 5px;">
-                                        <div id="progresso_{{divisao.id}}"class="progress-bar" role="progressbar" aria-valuenow="{{divisao.quantidade_percentual|stringformat:'s'}}"
+                                        <div id="progresso_{{divisao.id}}" class="progress-bar" role="progressbar" aria-valuenow="{{divisao.quantidade_percentual|stringformat:'s'}}"
                                         aria-valuemin="0" aria-valuemax="100" style="width: 0%; background-color: {% if divisao.quantidade_percentual >= 100 %}#f3c200{% else %}#cc8718{% endif %};">
                                         </div>
                                     </div>

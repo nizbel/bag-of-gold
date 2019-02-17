@@ -13,10 +13,10 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoCriptomoeda, \
     DivisaoTransferenciaCriptomoeda, Divisao, DivisaoForkCriptomoeda
 from bagogold.criptomoeda.models import OperacaoCriptomoeda, \
     TransferenciaCriptomoeda, Criptomoeda, OperacaoCriptomoedaTaxa, \
-    OperacaoCriptomoedaMoeda, Fork
+    OperacaoCriptomoedaMoeda, Fork, ValorDiarioCriptomoeda
 
 
-def calcular_qtd_moedas_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_qtd_moedas_ate_dia(investidor, dia=None):
     """ 
     Calcula a quantidade de moedas até dia determinado
     
@@ -24,6 +24,10 @@ def calcular_qtd_moedas_ate_dia(investidor, dia=datetime.date.today()):
                 Dia final
     Retorno: Quantidade de moedas por fundo {moeda_id: qtd}
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     # Pega primeiro moedas operadas
     qtd_moedas1 = dict(OperacaoCriptomoeda.objects.filter(investidor=investidor, data__lte=dia).values('criptomoeda') \
         .annotate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
@@ -70,7 +74,7 @@ def calcular_qtd_moedas_ate_dia(investidor, dia=datetime.date.today()):
     
     return qtd_moedas
 
-def calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, moeda_id, dia=datetime.date.today()):
+def calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, moeda_id, dia=None):
     """ 
     Calcula a quantidade de moedas até dia determinado para uma criptomoeda
     
@@ -79,6 +83,10 @@ def calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, moeda_id, dia=dateti
                 Dia final
     Retorno: Quantidade de moedas para a criptomoeda determinada
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     # Pega primeiro moedas operadas
     qtd_moedas = OperacaoCriptomoeda.objects.filter(investidor=investidor, data__lte=dia, criptomoeda__id=moeda_id) \
         .aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
@@ -118,7 +126,7 @@ def calcular_qtd_moedas_ate_dia_por_criptomoeda(investidor, moeda_id, dia=dateti
     
     return qtd_moedas
 
-def calcular_qtd_moedas_ate_dia_por_divisao(divisao_id, dia=datetime.date.today()):
+def calcular_qtd_moedas_ate_dia_por_divisao(divisao_id, dia=None):
     """ 
     Calcula a quantidade de moedas até dia determinado para uma divisão
     
@@ -126,6 +134,10 @@ def calcular_qtd_moedas_ate_dia_por_divisao(divisao_id, dia=datetime.date.today(
                 Dia final
     Retorno: Quantidade de moedas {moeda_id: qtd}
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     # Pega primeiro moedas operadas
     qtd_moedas1 = dict(DivisaoOperacaoCriptomoeda.objects.filter(divisao__id=divisao_id, operacao__data__lte=dia) \
                        .values('operacao__criptomoeda') \
@@ -174,6 +186,27 @@ def calcular_qtd_moedas_ate_dia_por_divisao(divisao_id, dia=datetime.date.today(
                    for k in set(qtd_moedas1) | set(qtd_moedas2) | set(qtd_moedas3) | set(qtd_moedas4) | set(qtd_moedas5) }
 
     return qtd_moedas
+
+def calcular_valor_moedas_ate_dia_por_divisao(divisao_id, dia=None):
+    """
+    Calcula o valor das criptomoedas da divisão até data definida
+    
+    Parâmetros: ID da divisão
+                Data do valor
+    Retorno: Valor das moedas {id_moeda: valor em reais}
+    """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
+    qtd_moedas = calcular_qtd_moedas_ate_dia_por_divisao(divisao_id, dia)
+    
+    valor_moedas = {}
+    # TODO achar uma forma de usar o histórico
+    for moeda_id, qtd in qtd_moedas.items():
+        valor_moedas[moeda_id] = qtd * ValorDiarioCriptomoeda.objects.get(moeda='BRL', criptomoeda__id=moeda_id).valor
+    
+    return valor_moedas
 
 def buscar_valor_criptomoeda_atual(criptomoeda_ticker):
     """ 

@@ -15,6 +15,7 @@
 30 21 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_proventos_fii
 0 3 * * 6 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_debentures
 0 4 * * 1-5 /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py preencher_historico_debenture 0
+
 # Fundos de investimento
 40 23 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_fundos_investimento --aleatorio
 50 23 * * * /home/nizbel/.virtualenvs/bagogold/bin/python /home/nizbel/bagogold/manage.py buscar_fundos_investimento

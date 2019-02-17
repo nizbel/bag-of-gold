@@ -1,49 +1,50 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.tfs import ler_serie_historica_anual_bovespa
+import traceback
+
+import boto3
 from django.core.management.base import BaseCommand
-from threading import Thread
-import datetime
+from django.db import transaction
 
-class BuscaHistoricoBovespaThread(Thread):
-    def __init__(self, ano):
-        self.ano = ano 
-        super(BuscaHistoricoBovespaThread, self).__init__()
-
-    def run(self):
-        try:
-            ler_serie_historica_anual_bovespa('COTAHIST_A%s.TXT' % (self.ano))
-        except Exception as e:
-#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
-#             message = template.format(type(e).__name__, e.args)
-#             print self.ano, "Thread:", message
-            pass
+from bagogold.bagogold.utils.bovespa import ler_serie_historica_anual_bovespa
+from bagogold.settings import CAMINHO_HISTORICO_ACOES_FIIS
+from conf.settings_local import AWS_STORAGE_BUCKET_NAME
+from bagogold.bagogold.models.acoes import HistoricoAcao
+from bagogold.fii.models import HistoricoFII
 
 class Command(BaseCommand):
     help = 'Preenche histórico para ações e FIIs com dados da bovespa'
 
     def handle(self, *args, **options):
-#         historicos_repetidos = list()
-#         for fii_id in HistoricoFII.objects.all().values_list('fii', flat=True).distinct():
-#             historicos_repetidos = HistoricoFII.objects.filter(fii__id=fii_id).values('data').annotate(num_datas=Count('id')).filter(num_datas__gt=1)
-#             for data_repetida in historicos_repetidos:
-#                 print FII.objects.get(id=fii_id), historicos_repetidos
-#                 historicos_apagar = HistoricoFII.objects.filter(fii__id=fii_id, data=data_repetida['data'])
-#                 for indice in range(1, data_repetida['num_datas']):
-#                     print 'apagar', historicos_apagar[0]
-#                     historicos_apagar[0].delete()
-                    
-        # O incremento mostra quantas threads correrão por vez
-        incremento = 1
-        anos = range(2002, datetime.date.today().year+1)
-        contador = 0
-        while contador <= len(anos):
-            threads = []
-            for ano in anos[contador : min(contador+incremento,len(anos))]:
-                t = BuscaHistoricoBovespaThread(ano)
-                threads.append(t)
-                t.start()
-            for t in threads:
-                t.join()
-            contador += incremento
+        # Listar documentos no S3
+        nomes_documentos = listar_documentos_historico_acoes_fiis()
         
+        # Para cada documento, lançar um try atomic com a leitura de série histórica
+        for nome_documento in nomes_documentos:
+            processar_historico_acao_fii(nome_documento)
+        
+def listar_documentos_historico_acoes_fiis():
+    """Lista documentos de histórico de ações/FIIs da bovespa"""
+    resposta = boto3.client('s3').list_objects_v2(Bucket=AWS_STORAGE_BUCKET_NAME, Prefix=CAMINHO_HISTORICO_ACOES_FIIS)
+    if resposta['KeyCount'] > 0:
+        nomes = [content['Key'] for content in resposta['Contents']]
+        return nomes
+    
+    return []
+    
+def processar_historico_acao_fii(nome_documento, mostrar_log=True):
+    """
+    Processa um documento de histórico da Bovespa para ações e FIIs
+    
+    Parâmetros: Nome do documento no S3
+                Deve mostrar log?
+    """
+    try:
+        with transaction.atomic():
+            documento = boto3.client('s3').get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=nome_documento)
+            ler_serie_historica_anual_bovespa(documento['Body']._raw_stream, mostrar_log)
             
+        # Ao final, sem erro, apagar documento no S3
+        boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=nome_documento)
+    except:
+        print traceback.format_exc()
+    

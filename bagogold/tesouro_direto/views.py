@@ -1,40 +1,43 @@
 # -*- coding: utf-8 -*-
+import calendar
+from copy import deepcopy
+import datetime
+from decimal import Decimal, ROUND_DOWN
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.db.models.expressions import F
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
+import json
+import math
+
+from django.core.urlresolvers import reverse
+from django.db.models.aggregates import Count, Sum
+from django.forms import inlineformset_factory
+from django.http import HttpResponseRedirect, HttpResponsePermanentRedirect
+from django.http.response import HttpResponse
+from django.template.response import TemplateResponse
+
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.forms.divisoes import DivisaoOperacaoTDFormSet
-from bagogold.tesouro_direto.forms import OperacaoTituloForm
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD, Divisao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic, \
     HistoricoTaxaDI, HistoricoIPCA
+from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
 from bagogold.bagogold.utils.taxas_indexacao import \
     calcular_valor_atualizado_com_taxas_di
 from bagogold.fii.models import FII
 from bagogold.fii.utils import calcular_rendimento_proventos_fii_12_meses, \
     calcular_variacao_percentual_fii_por_periodo
 from bagogold.lci_lca.models import LetraCredito
+from bagogold.tesouro_direto.forms import OperacaoTituloForm
 from bagogold.tesouro_direto.models import OperacaoTitulo, HistoricoTitulo, \
     ValorDiarioTitulo, Titulo
 from bagogold.tesouro_direto.utils import calcular_imposto_venda_td, \
     buscar_data_valor_mais_recente, quantidade_titulos_ate_dia, \
     quantidade_titulos_ate_dia_por_titulo, calcular_valor_td_ate_dia
-from copy import deepcopy
-from decimal import Decimal, ROUND_DOWN
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
-from django.core.urlresolvers import reverse
-from django.db.models.aggregates import Count, Sum
-from django.db.models.expressions import F
-from django.forms import inlineformset_factory
-from django.http import HttpResponseRedirect
-from django.http.response import HttpResponse
-from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
-from django.template.response import TemplateResponse
-import calendar
-import datetime
-import json
-import math
-from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo
+
 
 @login_required
 def buscar_titulos_validos_na_data(request):
@@ -189,10 +192,16 @@ def acompanhamento_td(request):
     return TemplateResponse(request, 'td/acompanhamento.html', {'titulos': titulos, 'letras_credito': letras_credito, 'fiis': fiis})
 
 @adiciona_titulo_descricao('Detalhar título do Tesouro Direto', 'Informações sobre um título do Tesouro Direto')
-def detalhar_titulo_td(request, titulo_id):
+def detalhar_titulo_td_id(request, titulo_id):
     titulo = get_object_or_404(Titulo, id=titulo_id)
+    return HttpResponsePermanentRedirect(reverse('tesouro_direto:detalhar_titulo_td', kwargs={'titulo_tipo': Titulo.codificar_slug(titulo.tipo).upper(), 
+                                                                                              'titulo_data': titulo.data_vencimento.strftime('%d-%m-%Y')}))
+
+@adiciona_titulo_descricao('Detalhar título do Tesouro Direto', 'Informações sobre um título do Tesouro Direto')
+def detalhar_titulo_td(request, titulo_tipo, titulo_data):
+    titulo = get_object_or_404(Titulo, tipo=Titulo.decodificar_slug(titulo_tipo.upper()), data_vencimento=datetime.datetime.strptime(titulo_data, '%d-%m-%Y'))
     
-    print titulo.valor_vencimento()
+#     print titulo.valor_vencimento()
 #     print titulo.valor_vencimento() / ((1 + Decimal('0.0466'))**(Decimal(qtd_dias_uteis_no_periodo(datetime.date.today()+datetime.timedelta(days=1), titulo.data_vencimento))/252))
 #     print qtd_dias_uteis_no_periodo(datetime.date(2018, 1, 1), datetime.date(2018, 12, 31))
 
@@ -213,7 +222,7 @@ def detalhar_titulo_td(request, titulo_id):
             titulo.preco_venda = ultimo_valor_historico.preco_venda
             titulo.taxa_venda = ultimo_valor_historico.taxa_venda
     
-    data_final = datetime.date.today() if titulo.data_vencimento > datetime.date.today() else titulo.data_vencimento
+    data_final = min(datetime.date.today(), titulo.data_vencimento)
     historico = HistoricoTitulo.objects.filter(titulo=titulo, data__gte=data_final.replace(year=data_final.year-1)).order_by('-data')
     # Pegar datas inicial e final do historico
     historico_data_inicial = historico[len(historico)-1].data
@@ -240,10 +249,10 @@ def detalhar_titulo_td(request, titulo_id):
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Tesouro Direto', 'Editar valores de uma operação de compra/venda em Tesouro Direto')
-def editar_operacao_td(request, operacao_id):
+def editar_operacao_td(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_td = get_object_or_404(OperacaoTitulo, id=operacao_id)
+    operacao_td = get_object_or_404(OperacaoTitulo, id=id_operacao)
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_td.investidor != investidor:
         raise PermissionDenied
@@ -253,7 +262,7 @@ def editar_operacao_td(request, operacao_id):
                                             extra=1, formset=DivisaoOperacaoTDFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -455,7 +464,7 @@ def inserir_operacao_td(request):
                                             extra=1, formset=DivisaoOperacaoTDFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         form_operacao_td = OperacaoTituloForm(request.POST, investidor=investidor)
@@ -515,7 +524,7 @@ def listar_historico_titulo(request, titulo_id):
     return HttpResponse(json.dumps({'sucesso': True, 'dados': render_to_string('td/utils/listar_historico_titulo.html', {'historico': historico})}), content_type = "application/json")     
 
 @adiciona_titulo_descricao('Listar títulos do Tesouro Direto', 'Lista títulos que já foram, ou são, negociados no Tesouro Direto')
-def listar_titulos_td(request):
+def listar_titulos(request):
     # TODO preparar filtros
     titulos = Titulo.objects.all()
     
@@ -533,6 +542,9 @@ def listar_titulos_td(request):
                 titulo.taxa_compra = ultimo_valor_historico.taxa_compra
                 titulo.preco_venda = ultimo_valor_historico.preco_venda
                 titulo.taxa_venda = ultimo_valor_historico.taxa_venda
+        # Preencher slug para url
+        titulo.slug_detalhar_tipo = Titulo.codificar_slug(titulo.tipo)
+        titulo.slug_detalhar_data = titulo.data_vencimento.strftime('%d-%m-%Y')
 
     return TemplateResponse(request, 'td/listar_titulos.html', {'titulos': titulos})
 

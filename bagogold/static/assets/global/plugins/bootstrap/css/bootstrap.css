@@ -4687,7 +4687,7 @@ button.list-group-item-danger {
   margin-bottom: 0;
   line-height: 1.3; }
 
-/*.panel {
+.panel {
   margin-bottom: 20px;
   background-color: #fff;
   border: 1px solid transparent;
@@ -4987,7 +4987,7 @@ button.list-group-item-danger {
       color: #fbe1e3;
       background-color: #e73d4a; }
   .panel-danger > .panel-footer + .panel-collapse > .panel-body {
-    border-bottom-color: #fbe1e3; } */
+    border-bottom-color: #fbe1e3; } 
 
 .embed-responsive {
   position: relative;

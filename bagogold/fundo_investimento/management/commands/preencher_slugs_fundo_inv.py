@@ -12,6 +12,12 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         try:
             with transaction.atomic():
+                # Reiniciar slugs
+                for fundo in FundoInvestimento.objects.all():
+                    fundo.slug = str(fundo.id)
+                    fundo.save()
+
+                # Preencher slugs
                 for fundo in FundoInvestimento.objects.all():
                     fundo.slug = criar_slug_fundo_investimento_valido(fundo.nome)
                     fundo.save()

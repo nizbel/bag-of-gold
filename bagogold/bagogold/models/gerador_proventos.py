@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
-from bagogold import settings
-from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
 from decimal import Decimal
 from django.core.files import File
+from django.dispatch import receiver
+
+import boto3
+from botocore.exceptions import ClientError
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.db.models.signals import post_save
-from django.dispatch import receiver
-import os
+
+from bagogold.bagogold.testFII import baixar_demonstrativo_rendimentos
+from bagogold.storage_backends import MediaStorage
+from conf.settings_local import AWS_STORAGE_BUCKET_NAME, AWS_MEDIA_LOCATION
+
 
 def ticker_path(instance, filename):
     return 'doc proventos/{0}/{1}'.format(instance.ticker_empresa(), filename)
@@ -27,7 +32,7 @@ class DocumentoProventoBovespa (models.Model):
     Define se é provento de ação ou FII, A = Ação, F = FII
     """
     tipo = models.CharField(u'Tipo de investimento', max_length=1)
-    documento = models.FileField(upload_to=ticker_path, blank=True, null=True)
+    documento = models.FileField(upload_to=ticker_path, blank=True, null=True, storage=MediaStorage())
     data_referencia = models.DateField(u'Data de referência')
     tipo_documento = models.CharField(u'Tipo de documento', max_length=100)
     
@@ -39,24 +44,27 @@ class DocumentoProventoBovespa (models.Model):
         return u'%s-%s' % (self.empresa.ticker_empresa(), self.protocolo)
         
     def apagar_documento(self):
-        if os.path.isfile(self.documento.path):
+#         if os.path.isfile(self.documento.path):
+        if self.documento.name != '' and self.verificar_se_doc_existe():
             self.documento.delete()
                 
     def baixar_e_salvar_documento(self):
         # Verificar se documento já não foi baixado
-        documento_existe = False
+#         documento_existe = False
         # Extensão padrão é PDF
         extensao = 'pdf'
-        diretorio_path = '{0}doc proventos/{1}/'.format(settings.MEDIA_ROOT, self.ticker_empresa())
-        for (_, _, nomes_arquivo) in os.walk(diretorio_path):
-            for indice, nome_arquivo in enumerate(nomes_arquivo):
-                if '%s-%s' % (self.ticker_empresa(), self.protocolo) == nome_arquivo.split('.')[0]:
-                    extensao = nomes_arquivo[indice].split('.')[1]
-                    documento_existe = True
-                    break
-        if documento_existe:
+#         diretorio_path = '{0}doc proventos/{1}/'.format(settings.MEDIA_ROOT, self.ticker_empresa())
+#         for (_, _, nomes_arquivo) in os.walk(diretorio_path):
+#             for indice, nome_arquivo in enumerate(nomes_arquivo):
+#                 if '%s-%s' % (self.ticker_empresa(), self.protocolo) in nome_arquivo.split('.')[0]:
+#                     extensao = nomes_arquivo[indice].split('.')[1]
+#                     documento_existe = True
+#                     break
+        if self.verificar_se_doc_existe():
+#         if documento_existe:
             baixou_arquivo = False
-            self.documento.name = 'doc proventos/{0}/{1}'.format(self.ticker_empresa(), '%s-%s.%s' % (self.ticker_empresa(), self.protocolo, extensao))
+            self.documento.name = 'doc proventos/{0}/{1}'.format(self.ticker_empresa(), '%s-%s.%s' % (self.ticker_empresa(), self.protocolo,
+                                                                                                      self.extensao_documento()))
             self.save()
         else:
             baixou_arquivo = True
@@ -67,7 +75,18 @@ class DocumentoProventoBovespa (models.Model):
         return baixou_arquivo
     
     def extensao_documento(self):
-        _, extensao = os.path.splitext(self.documento.name)
+#         _, extensao = os.path.splitext(self.documento.name)
+        if self.documento.name:
+            extensao = self.documento.name.split('.')[-1]
+        else:
+            # Verificar se há documento na pasta com nome TICKER-PROTOCOLO
+            nome_documento = '%s/doc proventos/%s/%s-%s' % (AWS_MEDIA_LOCATION, self.ticker_empresa(), self.ticker_empresa(), self.protocolo)
+            resposta = boto3.client('s3').list_objects_v2(Bucket=AWS_STORAGE_BUCKET_NAME, Prefix=nome_documento)
+            if resposta.get('KeyCount', 0) > 0:
+                # Se há documentos com esse nome, trazer o primeiro e buscar a extensão
+                extensao = resposta.get('Contents')[0]['Key'].split('.')[-1]
+            else:
+                raise ValueError('Documento não existe na pasta')
         return extensao
     
     def ticker_empresa(self):
@@ -75,10 +94,11 @@ class DocumentoProventoBovespa (models.Model):
         return self.empresa.ticker_empresa()
     
     def pendente(self):
-        return PendenciaDocumentoProvento.objects.filter(documento=self).exists()
+        return self.pendenciadocumentoprovento_set.exists()
     
     def pendencias(self):
-        return PendenciaDocumentoProvento.objects.filter(documento=self)
+#         return PendenciaDocumentoProvento.objects.filter(documento=self)
+        return self.pendenciadocumentoprovento_set.all()
     
     def responsavel_leitura(self):
         if hasattr(self, 'investidorleituradocumento'):
@@ -95,21 +115,55 @@ class DocumentoProventoBovespa (models.Model):
             return 'Ação'
         elif self.tipo == 'F':
             return 'FII'
-        else:
-            return 'Tipo indefinido'
+        return 'Tipo indefinido'
+    
+    def tamanho_arquivo(self):
+        try:
+            nome_documento = '%s/%s' % (AWS_MEDIA_LOCATION, self.documento.name)
+            resposta = boto3.client('s3').head_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=nome_documento)
+            return resposta['ContentLength']
+        except ClientError as exc:
+            if exc.response['Error']['Code'] != '404':
+                raise
+            else:
+                raise ValueError('Documento não encontrado')
+        
+#         s3 = boto3.client('s3')
+#         response = s3.head_object(Bucket='bucketname', Key='keyname')
+#         size = response['ContentLength']
     
     def ultima_recusa(self):
         if InvestidorRecusaDocumento.objects.filter(documento=self).exists():
             return InvestidorRecusaDocumento.objects.filter(documento=self).order_by('-data_recusa')[0]
         return None
+    
+    def verificar_se_doc_existe(self):
+        # Se documento possui nome, buscar por ele
+        if self.documento.name:
+            try:
+                nome_documento = '%s/%s' % (AWS_MEDIA_LOCATION, self.documento.name)
+                resposta = boto3.client('s3').head_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=nome_documento)
+                return True
+            except ClientError as exc:
+                if exc.response['Error']['Code'] != '404':
+                    raise
+                else:
+                    return False
+        # Caso não possua, listar de diretório para verificar se existe documento na pasta com NOME-PROTOCOLO
+        else:
+            nome_documento = '%s/doc proventos/%s/%s-%s' % (AWS_MEDIA_LOCATION, self.ticker_empresa(), self.ticker_empresa(), self.protocolo)
+            resposta = boto3.client('s3').list_objects_v2(Bucket=AWS_STORAGE_BUCKET_NAME, Prefix=nome_documento)
+            return (resposta.get('KeyCount', 0) > 0)
+                
+            
 
-    def verificar_arquivo_existe(self):
-        diretorio_path = '{0}doc proventos/{1}/'.format(settings.MEDIA_ROOT, self.ticker_empresa())
-        for (_, _, nomes_arquivo) in os.walk(diretorio_path):
-            for _, nome_arquivo in enumerate(nomes_arquivo):
-                if '%s-%s' % (self.ticker_empresa(), self.protocolo) == nome_arquivo.split('.')[0]:
-                    return True
-        return False
+#     def verificar_arquivo_existe(self):
+#         diretorio_path = '{0}doc proventos/{1}/'.format(settings.MEDIA_ROOT, self.ticker_empresa())
+#         for (_, _, nomes_arquivo) in os.walk(diretorio_path):
+#             for _, nome_arquivo in enumerate(nomes_arquivo):
+#                 if '%s-%s' % (self.ticker_empresa(), self.protocolo) == nome_arquivo.split('.')[0]:
+#                     return True
+#         return False
     
 @receiver(post_save, sender=DocumentoProventoBovespa, dispatch_uid="documento_provento_bovespa_criado")
 def criar_pendencia_on_save(sender, instance, created, **kwargs):
@@ -117,7 +171,7 @@ def criar_pendencia_on_save(sender, instance, created, **kwargs):
         """
         Cria pendência
         """
-        pendencia, criada = PendenciaDocumentoProvento.objects.get_or_create(documento=instance)
+        _, criada = PendenciaDocumentoProvento.objects.get_or_create(documento=instance)
         if not criada:
             instance.delete()
 
@@ -127,8 +181,9 @@ def apagar_documento_on_delete(sender, instance, **kwargs):
     Apaga o documento no disco quando o arquivo é deletado da base
     """
     if instance.documento:
-        if os.path.isfile(instance.documento.path):
-            os.remove(instance.documento.path)
+        if instance.verificar_se_doc_existe():
+            caminho = '%s/%s' % (AWS_MEDIA_LOCATION, instance.documento.name)
+            boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho)
 
 class InvestidorLeituraDocumento (models.Model):
     documento = models.OneToOneField('DocumentoProventoBovespa')
@@ -330,6 +385,10 @@ class ProventoFIIDescritoDocumentoBovespa (models.Model):
             
 class PagamentoLeitura (models.Model):
     VALOR_HORA = Decimal(25)
+    
+    TEMPO_EXCLUSAO_DOCUMENTO = Decimal('51.43')
+    TEMPO_LEITURA_PROVENTO_ACAO = Decimal('122.07')
+    TEMPO_LEITURA_PROVENTO_FII = Decimal('79.4')
 
     investidor = models.ForeignKey('Investidor')
     data = models.DateField(u'Data do pagamento')

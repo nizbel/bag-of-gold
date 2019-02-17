@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
-from django.db import models
 import datetime
- 
+
+from django.db import models
+from django.urls.base import reverse
+
+
 class Titulo (models.Model):
     TIPO_OFICIAL_LETRA_TESOURO = 'LTN'
     TIPO_OFICIAL_SELIC = 'LFT'
@@ -90,6 +93,36 @@ class Titulo (models.Model):
         # Se não encontrou
         return 0
     
+    @staticmethod
+    def codificar_slug(tipo):
+        if tipo in Titulo.TIPO_LETRA_TESOURO:
+            return 'LTN'
+        elif tipo in Titulo.TIPO_SELIC:
+            return 'LFT'
+        elif tipo in Titulo.TIPO_IPCA_COM_JUROS:
+            return 'NTNB'
+        elif tipo in Titulo.TIPO_IPCA:
+            return 'NTNBP'
+        elif tipo in Titulo.TIPO_PREFIXADO_COM_JUROS:
+            return 'NTNF'
+        elif tipo in Titulo.TIPO_IGPM:
+            return 'NTNC'
+    
+    @staticmethod
+    def decodificar_slug(slug):
+        if slug == 'LTN':
+            return Titulo.TIPO_OFICIAL_LETRA_TESOURO
+        elif slug == 'LFT':
+            return Titulo.TIPO_OFICIAL_SELIC
+        elif slug == 'NTNB':
+            return Titulo.TIPO_OFICIAL_IPCA_COM_JUROS
+        elif slug == 'NTNBP':
+            return Titulo.TIPO_OFICIAL_IPCA
+        elif slug == 'NTNF':
+            return Titulo.TIPO_OFICIAL_PREFIXADO_COM_JUROS
+        elif slug == 'NTNC':
+            return Titulo.TIPO_OFICIAL_IGPM
+    
 class OperacaoTitulo (models.Model):
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
     quantidade = models.DecimalField(u'Quantidade', max_digits=7, decimal_places=2) 
@@ -103,6 +136,13 @@ class OperacaoTitulo (models.Model):
     
     def __unicode__(self):
         return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.titulo.tipo + ' a R$' + str(self.preco_unitario)
+    
+    def data_vencimento(self):
+        return self.titulo.data_vencimento
+    
+    @property
+    def link(self):
+        return reverse('tesouro_direto:editar_operacao_td', kwargs={'id_operacao': self.id})
     
 class HistoricoTitulo (models.Model):
     titulo = models.ForeignKey('Titulo', unique_for_date='data')
@@ -132,8 +172,4 @@ class ValorDiarioTitulo (models.Model):
         
     def __unicode__(self):
         return u'%s, C/V: R$ %s (%s%%) / R$ %s (%s%%)' % (self.titulo, self.preco_compra, self.taxa_compra, self.preco_venda, self.taxa_venda)
-    
-    def save(self, *args, **kw):
-        if not ValorDiarioTitulo.objects.filter(titulo=self.titulo, data_hora=self.data_hora).exists():
-            super(ValorDiarioTitulo, self).save(*args, **kw)
         

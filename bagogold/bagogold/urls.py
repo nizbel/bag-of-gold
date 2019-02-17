@@ -9,7 +9,7 @@ from django.contrib.auth.views import PasswordChangeView, PasswordChangeDoneView
 from django.views.generic.base import RedirectView, TemplateView
 from registration import validators
 from registration.backends.hmac import views as registration_views
-import views
+import bagogold.bagogold.views as views
 
 # Altera valor para constante de email duplicado no Django-registration
 validators.DUPLICATE_EMAIL = 'Já existe um usuário cadastrado com esse email'
@@ -27,10 +27,12 @@ inicio_patterns = [
     url(r'^renda-fixa/$', views.home.grafico_renda_fixa_painel_geral, name='grafico_renda_fixa_painel_geral'),
     url(r'^rendimento-medio/$', views.home.rendimento_medio_painel_geral, name='rendimento_medio_painel_geral'),
     url(r'^painel-geral/$', views.home.painel_geral, name='painel_geral'),
+    url(r'^proximos-vencimentos/$', views.home.prox_vencimentos_painel_geral, name='proximos_vencimentos'),
     url(r'^sobre/$', views.home.sobre, name='sobre'),
     ]
 
 acoes_geral_patterns = [
+    url(r'^detalhar-acao/(?P<ticker>\w+)/$', views.acoes.acoes.estatisticas_acao, name='detalhar_acao'),
     url(r'^detalhar-provento/(?P<provento_id>\d+)/$', views.acoes.acoes.detalhar_provento, name='detalhar_provento_acao'),
     url(r'^estatisticas-acao/(?P<ticker>\w+)/$', views.acoes.acoes.estatisticas_acao, name='estatisticas_acao_bh'),
     # Redirecionamento
@@ -49,7 +51,7 @@ acoes_geral_patterns = [
 
 acoes_bh_patterns = [
     url(r'^calcular-poupanca-proventos-na-data/$', views.acoes.buyandhold.calcular_poupanca_proventos_na_data, name='calcular_poupanca_proventos_na_data'),
-    url(r'^editar-operacao-acao/(?P<operacao_id>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
+    url(r'^editar-operacao-acao/(?P<id_operacao>\d+)/$', views.acoes.buyandhold.editar_operacao_acao, name='editar_operacao_bh'),
     url(r'^evolucao-posicao/$', views.acoes.buyandhold.evolucao_posicao, name='evolucao_posicao_bh'),
     url(r'^historico/$', views.acoes.buyandhold.historico, name='historico_bh'),
     url(r'^inserir-operacao-acao/$', views.acoes.buyandhold.inserir_operacao_acao, name='inserir_operacao_bh'),
@@ -63,8 +65,8 @@ acoes_trading_patterns = [
     url(r'^acompanhamento-mensal/$', views.acoes.trade.acompanhamento_mensal, name='acompanhamento_mensal'),
     # Redirecionamento
     url(r'^acompanhamento_mensal/$',  RedirectView.as_view(pattern_name='acoes:trading:acompanhamento_mensal', permanent=True)),
-    url(r'^editar-operacao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao, name='editar_operacao_t'),
-    url(r'^editar-operacao-acao/(?P<operacao_id>\d+)/$', views.acoes.trade.editar_operacao_acao, name='editar_operacao_acao_t'),
+    url(r'^editar-operacao/(?P<id_operacao>\d+)/$', views.acoes.trade.editar_operacao, name='editar_operacao_t'),
+    url(r'^editar-operacao-acao/(?P<id_operacao>\d+)/$', views.acoes.trade.editar_operacao_acao, name='editar_operacao_acao_t'),
     url(r'^historico-operacoes/$', views.acoes.trade.historico_operacoes, name='historico_operacoes'),
     # Redirecionamento
     url(r'^historico_operacoes/$',  RedirectView.as_view(pattern_name='acoes:trading:historico_operacoes', permanent=True)),
@@ -84,7 +86,7 @@ acoes_patterns = [
 # Redirecionamento
 debentures_patterns = [
     url(r'^detalhar_debenture/(?P<debenture_id>\d+)/$', RedirectView.as_view(pattern_name='debentures:detalhar_debenture', permanent=True)),
-    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='debentures:editar_operacao_debenture', permanent=True)),
+    url(r'^editar_operacao/(?P<id_operacao>\d+)/$', RedirectView.as_view(pattern_name='debentures:editar_operacao_debenture', permanent=True)),
 #     url(r'^historico/$', views.debentures.debentures.historico, name='historico_debenture'),
     url(r'^inserir_operacao_debenture/$', RedirectView.as_view(pattern_name='debentures:inserir_operacao_debenture', permanent=True)),
     url(r'^listar_debentures/$', RedirectView.as_view(pattern_name='debentures:listar_debentures', permanent=True)),
@@ -111,7 +113,7 @@ fiis_patterns = [
 #     url(r'^acompanhamento/$', views.fii.fii.acompanhamento_fii, name='acompanhamento_fii'),
     url(r'^calcular_resultado_corretagem/$', RedirectView.as_view(pattern_name='fii:calcular_resultado_corretagem', permanent=True)),
     url(r'^detalhar_provento/(?P<provento_id>\d+)/$', RedirectView.as_view(pattern_name='fii:detalhar_provento_fii', permanent=True)),
-    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='fii:editar_operacao_fii', permanent=True)),
+    url(r'^editar_operacao/(?P<id_operacao>\d+)/$', RedirectView.as_view(pattern_name='fii:editar_operacao_fii', permanent=True)),
 #     url(r'^historico/$', views.fii.fii.historico_fii, name='historico_fii'),
     url(r'^inserir_operacao_fii/$', RedirectView.as_view(pattern_name='fii:inserir_operacao_fii', permanent=True)),
     url(r'^listar_proventos/$', RedirectView.as_view(pattern_name='fii:listar_proventos_fii', permanent=True)),
@@ -122,7 +124,7 @@ fiis_patterns = [
 
 gerador_proventos_patterns = [
     url(r'^baixar-documento-provento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.baixar_documento_provento, name='baixar_documento_provento'),
-    url(r'^baixar-documento-provento-aws/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.baixar_documento_provento_aws, name='baixar_documento_provento-aws'),
+#     url(r'^central-pagamentos/(?P<id_usuario>\d+)/$', views.gerador_proventos.investidores.central_pagamentos, name='central_pagamentos'),
     url(r'^detalhar-documento/(?P<id_documento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_documento, name='detalhar_documento'),
     url(r'^detalhar-pendencias-usuario/(?P<id_usuario>\d+)/$', views.gerador_proventos.investidores.detalhar_pendencias_usuario, name='detalhar_pendencias_usuario'),
     url(r'^detalhar-provento-acao/(?P<id_provento>\d+)/$', views.gerador_proventos.gerador_proventos.detalhar_provento_acao, name='detalhar_provento_acao'),
@@ -171,8 +173,8 @@ td_patterns = [
     url(r'^buscar_titulos_validos_na_data/$', RedirectView.as_view(pattern_name='tesouro_direto:buscar_titulos_validos_na_data', permanent=True)),
     url(r'^detalhar-titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:detalhar_titulo_td', permanent=True)),
     url(r'^detalhar_titulo/(?P<titulo_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:detalhar_titulo_td', permanent=True)),
-    url(r'^editar-operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:editar_operacao_td', permanent=True)),
-    url(r'^editar_operacao/(?P<operacao_id>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:editar_operacao_td', permanent=True)),
+    url(r'^editar-operacao/(?P<id_operacao>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:editar_operacao_td', permanent=True)),
+    url(r'^editar_operacao/(?P<id_operacao>\d+)/$', RedirectView.as_view(pattern_name='tesouro_direto:editar_operacao_td', permanent=True)),
     url(r'^historico/$', RedirectView.as_view(pattern_name='tesouro_direto:historico_td', permanent=True)),
     url(r'^inserir-operacao-td/$', RedirectView.as_view(pattern_name='tesouro_direto:inserir_operacao_td', permanent=True)),
     url(r'^inserir_operacao_td/$', RedirectView.as_view(pattern_name='tesouro_direto:inserir_operacao_td', permanent=True)),

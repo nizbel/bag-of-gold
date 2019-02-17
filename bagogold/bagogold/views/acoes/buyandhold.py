@@ -46,10 +46,10 @@ def calcular_poupanca_proventos_na_data(request):
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Ações (Buy and Hold)', 'Altera valores de operação de compra/venda em Ações para Buy and Hold')
-def editar_operacao_acao(request, operacao_id):
+def editar_operacao_acao(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_acao = get_object_or_404(OperacaoAcao, pk=operacao_id, destinacao='B')
+    operacao_acao = get_object_or_404(OperacaoAcao, pk=id_operacao, destinacao='B')
     
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_acao.investidor != investidor:
@@ -63,7 +63,7 @@ def editar_operacao_acao(request, operacao_id):
                                             extra=1, formset=DivisaoOperacaoAcaoFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
 
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -208,10 +208,10 @@ def historico(request):
 
     proventos = Provento.objects.filter(acao__in=acoes).exclude(data_ex__isnull=True).exclude(data_ex__gt=datetime.date.today()).order_by('data_ex') \
         .annotate(data=F('data_ex')).annotate(acao_ticker=F('acao__ticker')).select_related('acao')
-    for acao_id in operacoes.values_list('acao', flat=True):
+    for acao_id in acoes:
         proventos = proventos.filter((Q(acao__id=acao_id) & Q(data_ex__gt=operacoes.filter(acao__id=acao_id)[0].data)) | ~Q(acao__id=acao_id))
      
-    taxas_custodia = TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia')
+    taxas_custodia = list(TaxaCustodiaAcao.objects.filter(investidor=investidor).order_by('ano_vigencia', 'mes_vigencia'))
 #     for taxa in taxas_custodia:
 #         taxa.data = datetime.date(taxa.ano_vigencia, taxa.mes_vigencia, 1)
     
@@ -231,7 +231,9 @@ def historico(request):
         for ano in range(ano_inicial, datetime.date.today().year+1):
             for mes_inicial in range(mes_inicial, 13):
                 # Verificar se há nova taxa de custodia vigente
-                taxa_custodia_atual = taxas_custodia.filter(Q(ano_vigencia__lt=ano) | Q(ano_vigencia=ano, mes_vigencia__lte=mes_inicial) ).order_by('-ano_vigencia', '-mes_vigencia')[0]
+#                 taxa_custodia_atual = taxas_custodia.filter(Q(ano_vigencia__lt=ano) | Q(ano_vigencia=ano, mes_vigencia__lte=mes_inicial) ).order_by('-ano_vigencia', '-mes_vigencia')[0]
+                taxa_custodia_atual = [taxa_custodia for taxa_custodia in taxas_custodia if taxa_custodia.ano_vigencia < ano or \
+                                       (taxa_custodia.ano_vigencia == ano and taxa_custodia.mes_vigencia <= mes_inicial)][-1]
                  
                 data_custodia = Object()
                 data_custodia.data = datetime.date(ano, mes_inicial, 1)
@@ -389,7 +391,7 @@ def historico(request):
                     
                 elif item_lista.tipo_provento == 'A':
 #                         print '%s %s' % (type(item_lista.tipo_provento), type(u'A'))
-                    item_lista.tipo = 'Ações'
+                    item_lista.tipo = u'Ações'
 #                         print item_lista.acaoprovento_set.all()[0]
                     provento_acao = item_lista.acaoprovento_set.all()[0]
                     if provento_acao.acao_recebida.ticker not in acoes.keys():
@@ -405,17 +407,18 @@ def historico(request):
                             
         # Verifica se é pagamento de custódia
         elif isinstance(item_lista, Object):
-            if taxas_custodia:
-                total_gasto -= item_lista.valor
-                total_custodia += item_lista.valor
+#             if taxas_custodia:
+            total_gasto -= item_lista.valor
+            total_custodia += item_lista.valor
                 
+        # Rodar calculo de patrimonio
         patrimonio = 0
         
-        # Rodar calculo de patrimonio
+        # Pegar último dia util com negociação da ação para calculo do patrimonio
+        historicos_na_data = {ticker: valor for ticker, valor in HistoricoAcao.objects.filter(acao__ticker__in=acoes.keys(), data__lte=item_lista.data).order_by('acao__ticker', '-data') \
+            .distinct('acao__ticker').values_list('acao__ticker', 'preco_unitario')}
         for acao in acoes.keys():
-            # Pegar último dia util com negociação da ação para calculo do patrimonio
-            valor_acao = HistoricoAcao.objects.filter(acao__ticker=acao, data__lte=item_lista.data).order_by('-data')[0].preco_unitario
-            patrimonio += (valor_acao * acoes[acao])
+            patrimonio += (historicos_na_data[acao] * acoes[acao])
         
         data_formatada = str(calendar.timegm(item_lista.data.timetuple()) * 1000)
         # Verifica se altera ultima posicao do grafico ou adiciona novo registro
@@ -481,7 +484,7 @@ def inserir_operacao_acao(request):
     investidor = request.user.investidor
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoAcao, DivisaoOperacaoAcao, fields=('divisao', 'quantidade'), can_delete=False,

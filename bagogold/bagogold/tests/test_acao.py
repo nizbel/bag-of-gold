@@ -1,8 +1,14 @@
 # -*- coding: utf-8 -*-
+import datetime
+from decimal import Decimal
+
+import boto3
+from django.db.models.aggregates import Count
+from django.test import TestCase
+
 from bagogold.bagogold.models.acoes import Acao, Provento, \
     AtualizacaoSelicProvento, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.fii.models import FII, HistoricoFII
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 from bagogold.bagogold.utils.acoes import verificar_tipo_acao
 from bagogold.bagogold.utils.bovespa import buscar_historico_recente_bovespa, \
@@ -11,11 +17,9 @@ from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
     ultimo_dia_util
 from bagogold.bagogold.utils.taxas_indexacao import \
     calcular_valor_atualizado_com_taxas_selic
-from decimal import Decimal
-from django.db.models.aggregates import Count
-from django.test import TestCase
-import datetime
-import os
+from bagogold.fii.models import FII, HistoricoFII
+from conf.settings_local import AWS_STORAGE_BUCKET_NAME
+
 
 class VerificarTipoAcaoTestCase(TestCase):
     def test_verificar_tipo_acao(self):
@@ -95,15 +99,15 @@ class BuscarHistoricoRecenteTestCase(TestCase):
         ultima_data_util = ultimo_dia_util()
         nome_arq = buscar_historico_recente_bovespa(ultima_data_util)
         self.assertTrue(nome_arq != None and nome_arq != '')
-        os.remove(nome_arq)
+        boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=nome_arq)
         
     def test_processar_historico_recente_bovespa(self):
         ultima_data_util = ultimo_dia_util()
         nome_arq = buscar_historico_recente_bovespa(ultima_data_util)
-        try:
-            processar_historico_recente_bovespa(nome_arq)
-        except:
-            pass
-        os.remove(nome_arq)
+#         try:
+        processar_historico_recente_bovespa(boto3.client('s3').get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=nome_arq))
+#         except:
+#             pass
+        boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=nome_arq)
         self.assertTrue(HistoricoAcao.objects.all().count() > 0)
         self.assertTrue(HistoricoFII.objects.all().count() > 0)

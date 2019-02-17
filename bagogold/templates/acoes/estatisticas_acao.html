@@ -65,12 +65,14 @@ $( document ).ready(function() {
                                 }  
     );
     
+    {% if request.user.is_authenticated and dados.mostrar_grafico_preco_medio %}
     $.plot($("#graf_preco_medio"), [ {color: "#33AA33", label: "Preço médio", lines: {show:true}, data: {{ graf_preco_medio|safe }} }, 
                                        {color: "#8811AA", label: "Valor ação", lines: {show:true}, data: {{ graf_preco_medio_valor_acao|safe }} }, 
                                   ],
                                     {grid: { hoverable: true, clickable: true }, legend:{position:"nw"}, xaxis: {mode: "time",timeformat: "%d/%m/%y"},
                                     }  
         );
+    {% endif %}
     
     
 function showTooltip(x, y, contents) {
@@ -132,6 +134,7 @@ function showTooltip(x, y, contents) {
             previousPoint = null;            
         }
     });
+    {% if request.user.is_authenticated and dados.mostrar_grafico_preco_medio %}
     $("#graf_preco_medio").bind("plothover", function (event, pos, item) {
         $("#x").text(pos.x.toFixed(2));
         $("#y").text(pos.y.toFixed(2));
@@ -154,6 +157,7 @@ function showTooltip(x, y, contents) {
             previousPoint = null;            
         }
     });
+    {% endif %}
     
 
 });

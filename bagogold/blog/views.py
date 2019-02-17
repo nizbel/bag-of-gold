@@ -19,10 +19,11 @@ from django.template.response import TemplateResponse
 import json
 import re
 import traceback
+from django.db.models.query import Prefetch
 
 @adiciona_titulo_descricao('Detalhar post', '')
 def detalhar_post(request, post_slug):
-    post = get_object_or_404(Post, slug=post_slug)
+    post = get_object_or_404(Post.objects.prefetch_related('tagpost_set__tag'), slug=post_slug)
 
     # Preparar preview para o facebook
     post.conteudo_fb = post.conteudo[:post.conteudo.find('</p>')]
@@ -116,7 +117,7 @@ def listar_posts(request):
         pagina = 1
 
     # Buscar posts
-    posts = Post.objects.all().order_by('-data')
+    posts = Post.objects.all().order_by('-data').prefetch_related(Prefetch('tagpost_set__tag', queryset=Tag.objects.order_by('nome')))
     # Paginar posts
     paginador_posts = Paginator(posts, 9)
     if pagina > paginador_posts.num_pages:

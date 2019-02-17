@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
+import datetime
 from decimal import Decimal
+
 from django.core.validators import MinValueValidator
 from django.db import models
-import datetime
+from django.urls.base import reverse
+
+from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
+
 
 class CDB_RDB (models.Model):
     CDB = 'C'
@@ -74,7 +78,7 @@ class CDB_RDB (models.Model):
         
     def vencimento_atual(self):
         return self.vencimento_na_data(datetime.date.today())
-        
+    
     def vencimento_na_data(self, data):
         if HistoricoVencimentoCDB_RDB.objects.filter(data__isnull=False, data__lte=data, cdb_rdb=self).exists():
             return HistoricoVencimentoCDB_RDB.objects.filter(data__isnull=False, data__lte=data, cdb_rdb=self).order_by('-data')[0].vencimento
@@ -90,7 +94,7 @@ class OperacaoCDB_RDB (models.Model):
     investidor = models.ForeignKey('bagogold.Investidor', related_name='op_cdb_rdb_novo')
     
     def __unicode__(self):
-        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.cdb_rdb, self.data)
+        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.cdb_rdb, self.data.strftime('%d/%m/%Y'))
     
     def carencia(self):
         if not hasattr(self, 'guarda_carencia'):
@@ -128,10 +132,14 @@ class OperacaoCDB_RDB (models.Model):
             data_vencimento += datetime.timedelta(days=1)
         return data_vencimento
     
+    @property
+    def link(self):
+        return reverse('cdb_rdb:editar_operacao_cdb_rdb', kwargs={'id_operacao': self.id})
+    
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
             if not hasattr(self, 'guarda_operacao_compra_relacionada'):
-                self.guarda_operacao_compra_relacionada = OperacaoVendaCDB_RDB.objects.filter(operacao_venda=self).select_related('operacao_compra')[0].operacao_compra
+                self.guarda_operacao_compra_relacionada = OperacaoVendaCDB_RDB.objects.filter(operacao_venda=self).select_related('operacao_compra__cdb_rdb')[0].operacao_compra
             return self.guarda_operacao_compra_relacionada
         else:
             return None
@@ -139,10 +147,14 @@ class OperacaoCDB_RDB (models.Model):
     def porcentagem(self):
         if not hasattr(self, 'guarda_porcentagem'):
             if self.tipo_operacao == 'C':
-                if HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).exists():
-                    self.guarda_porcentagem = HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).order_by('-data')[0].porcentagem
+#                 if HistoricoPorcentagemCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).exists():
+                if len([historico for historico in self.cdb_rdb.historicoporcentagemcdb_rdb_set.all() if historico.data != None and historico.data <= self.data]) > 0:
+#                     self.guarda_porcentagem = self.cdb_rdb.historicoporcentagemcdb_rdb_set.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).order_by('-data')[0].porcentagem
+                    self.guarda_porcentagem = sorted([historico for historico in self.cdb_rdb.historicoporcentagemcdb_rdb_set.all() if historico.data != None and historico.data <= self.data],
+                                                     key=lambda x: x.data, reverse=True)[0].porcentagem
                 else:
-                    self.guarda_porcentagem = HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb_id).porcentagem
+#                     self.guarda_porcentagem = HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb_id).porcentagem
+                    self.guarda_porcentagem = [historico for historico in self.cdb_rdb.historicoporcentagemcdb_rdb_set.all() if historico.data == None][0].porcentagem
             elif self.tipo_operacao == 'V':
                 self.guarda_porcentagem = self.operacao_compra_relacionada().porcentagem()
         return self.guarda_porcentagem
@@ -173,10 +185,14 @@ class OperacaoCDB_RDB (models.Model):
     
     def vencimento(self):
         if not hasattr(self, 'guarda_vencimento'):
-            if HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).exists():
-                self.guarda_vencimento = HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).order_by('-data')[0].vencimento
+#             if HistoricoVencimentoCDB_RDB.objects.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).exists():
+            if len([historico for historico in self.cdb_rdb.historicovencimentocdb_rdb_set.all() if historico.data != None and historico.data <= self.data]) > 0:
+#                 self.guarda_vencimento = self.cdb_rdb.historicovencimentocdb_rdb_set.filter(data__lte=self.data, cdb_rdb=self.cdb_rdb_id).order_by('-data')[0].vencimento
+                self.guarda_vencimento = sorted([historico for historico in self.cdb_rdb.historicovencimentocdb_rdb_set.all() if historico.data != None and historico.data <= self.data],
+                                                 key=lambda x: x.data, reverse=True)[0].vencimento
             else:
-                self.guarda_vencimento = HistoricoVencimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb_id).vencimento
+#                 self.guarda_vencimento = HistoricoVencimentoCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb_id).vencimento
+                self.guarda_vencimento = [historico for historico in self.cdb_rdb.historicovencimentocdb_rdb_set.all() if historico.data == None][0].vencimento
         return self.guarda_vencimento
     
     def venda_permitida(self, data_venda=None):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.conf.urls import url
-import views
+import bagogold.fii.views as views
 
 urlpatterns = [
 #     url(r'^acompanhamento-mensal/$', views.acompanhamento_mensal_fii, name='acompanhamento_mensal_fii'),
@@ -9,7 +9,7 @@ urlpatterns = [
     url(r'^detalhar-fii/(?P<fii_id>\d+)/$', views.detalhar_fii_id, name='detalhar_fii_id'),
     url(r'^detalhar-fii/(?P<fii_ticker>[\w\d]+)/$', views.detalhar_fii, name='detalhar_fii'),
     url(r'^detalhar-provento/(?P<provento_id>\d+)/$', views.detalhar_provento, name='detalhar_provento_fii'),
-    url(r'^editar-operacao/(?P<operacao_id>\d+)/$', views.editar_operacao_fii, name='editar_operacao_fii'),
+    url(r'^editar-operacao/(?P<id_operacao>\d+)/$', views.editar_operacao_fii, name='editar_operacao_fii'),
     url(r'^historico/$', views.historico_fii, name='historico_fii'),
     url(r'^inserir-operacao-fii/$', views.inserir_operacao_fii, name='inserir_operacao_fii'),
     url(r'^listar-proventos/$', views.listar_proventos, name='listar_proventos_fii'),

@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.utils.misc import \
-    formatar_zeros_a_direita_apos_2_casas_decimais
 from decimal import Decimal
+
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.urls.base import reverse
+
+from bagogold.bagogold.utils.misc import \
+    formatar_zeros_a_direita_apos_2_casas_decimais
+
 
 class Debenture (models.Model):
     PREFIXADO = 1
@@ -32,7 +36,8 @@ class Debenture (models.Model):
     padrao_snd = models.BooleanField(u'É padrão SND?')
     
     class Meta:
-        unique_together=('codigo', )
+        unique_together = ('codigo', )
+        ordering = ['codigo']
     
     def __unicode__(self):
         return self.codigo
@@ -189,6 +194,13 @@ class OperacaoDebenture (models.Model):
     
     def __unicode__(self):
         return u'(%s) R$ %s da debênture %s em %s' % (self.tipo_operacao, (self.quantidade*self.preco_unitario), self.debenture, self.data)
+    
+    def data_vencimento(self):
+        return self.debenture.data_vencimento
+    
+    @property
+    def link(self):
+        return reverse('debentures:editar_operacao_debenture', kwargs={'id_operacao': self.id})
     
 class HistoricoValorDebenture (models.Model):
     debenture = models.ForeignKey('Debenture')

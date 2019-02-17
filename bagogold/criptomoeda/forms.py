@@ -132,7 +132,7 @@ class ForkForm(LocalizedModelForm):
                                             'placeholder':'Selecione uma data'}),}
         
     class Media:
-        js = ('js/bagogold/form_fork_criptomoeda.js',)
+        js = ('js/bagogold/form_fork_criptomoeda.min.js',)
         
     def __init__(self, *args, **kwargs):
         self.investidor = kwargs.pop('investidor')
