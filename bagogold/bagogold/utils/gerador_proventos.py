@@ -1,18 +1,21 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import Provento, AcaoProvento,\
+import datetime
+from decimal import Decimal
+from itertools import chain
+
+from django.db import transaction
+from lxml import etree
+
+from bagogold.bagogold.models.acoes import Provento, AcaoProvento, \
     AtualizacaoSelicProvento
-from bagogold.fii.models import ProventoFII, FII
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorResponsavelPendencia, InvestidorLeituraDocumento, \
     PendenciaDocumentoProvento, ProventoAcaoDocumento, \
     ProventoAcaoDescritoDocumentoBovespa, AcaoProventoAcaoDescritoDocumentoBovespa, \
     InvestidorValidacaoDocumento, InvestidorRecusaDocumento, ProventoFIIDocumento, \
     ProventoFIIDescritoDocumentoBovespa, DocumentoProventoBovespa
-from decimal import Decimal
-from django.db import transaction
-from itertools import chain
-from lxml import etree
-import datetime
+from bagogold.fii.models import ProventoFII, FII
+
 
 def alocar_pendencia_para_investidor(pendencia, investidor):
     """
@@ -608,12 +611,12 @@ def buscar_proventos_proximos_acao(descricao_provento):
     Retorno:    Lista de proventos ordenada por quantidade de dias em relação à data EX
     """
     range_ant = [descricao_provento.data_ex - datetime.timedelta(days=365), descricao_provento.data_ex]
-    proventos_proximos_ant = Provento.objects.filter(acao=descricao_provento.acao, data_ex__range=range_ant) \
-        .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('-data_ex')[:5]
+    proventos_proximos_ant = Provento.objects.filter(acao__id=descricao_provento.acao_id, data_ex__range=range_ant) \
+        .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('-data_ex').select_related('acao')[:5]
         
     range_post = [descricao_provento.data_ex + datetime.timedelta(days=1), descricao_provento.data_ex + datetime.timedelta(days=365)]
-    proventos_proximos_post = Provento.objects.filter(acao=descricao_provento.acao, data_ex__range=range_post) \
-        .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('data_ex')[:5]
+    proventos_proximos_post = Provento.objects.filter(acao__id=descricao_provento.acao_id, data_ex__range=range_post) \
+        .exclude(id=descricao_provento.proventoacaodocumento.provento.id).order_by('data_ex').select_related('acao')[:5]
     
     # Ordenar pela diferença com a data da descrição de provento
     return sorted(chain(proventos_proximos_ant, proventos_proximos_post),
@@ -626,12 +629,12 @@ def buscar_proventos_proximos_fii(descricao_provento):
     Retorno:    Lista de proventos ordenada por quantidade de dias em relação à data EX
     """
     range_ant = [descricao_provento.data_ex - datetime.timedelta(days=365), descricao_provento.data_ex]
-    proventos_proximos_ant = ProventoFII.objects.filter(fii=descricao_provento.fii, data_ex__range=range_ant) \
-        .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('-data_ex')[:5]
+    proventos_proximos_ant = ProventoFII.objects.filter(fii__id=descricao_provento.fii_id, data_ex__range=range_ant) \
+        .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('-data_ex').select_related('fii')[:5]
         
     range_post = [descricao_provento.data_ex + datetime.timedelta(days=1), descricao_provento.data_ex + datetime.timedelta(days=365)]
-    proventos_proximos_post = ProventoFII.objects.filter(fii=descricao_provento.fii, data_ex__range=range_post) \
-        .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('data_ex')[:5]
+    proventos_proximos_post = ProventoFII.objects.filter(fii__id=descricao_provento.fii_id, data_ex__range=range_post) \
+        .exclude(id=descricao_provento.proventofiidocumento.provento.id).order_by('data_ex').select_related('fii')[:5]
     
     # Ordenar pela diferença com a data da descrição de provento
     return sorted(chain(proventos_proximos_ant, proventos_proximos_post),
@@ -657,9 +660,11 @@ def ler_provento_estruturado_fii(documento_fii):
             tree = etree.parse(documento_fii.documento)
             # Pega o último (maior ID) FII que contenha o código de negociação em seu ticker
             fii = FII.objects.filter(ticker__icontains=list(tree.getroot().iter('CodNegociacaoCota'))[0].text.strip()).order_by('-id')[0]
+            
             # Verificar se FII tem empresa igual a do documento
             if fii not in documento_fii.empresa.fii_set.all():
                 raise ValueError('Documento cita FII de outra empresa')
+            
             for element in tree.getroot().iter('Rendimento', 'Amortizacao'):
                 descricao_provento = ProventoFIIDescritoDocumentoBovespa()
                 # Se há pelo menos 5 campos, o provento pode ser prenchido
@@ -713,7 +718,9 @@ def ler_provento_estruturado_fii(documento_fii):
                     reiniciar_documento(doc_mesmo_protocolo)
                     doc_mesmo_protocolo.delete()
     except:
-        pass
+        # Fechar documento e jogar erro
+        documento_fii.documento.close()
+        raise
     
     # Fechar arquivo
     documento_fii.documento.close()

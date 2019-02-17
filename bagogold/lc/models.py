@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
+import datetime
 from decimal import Decimal
+
 from django.core.validators import MinValueValidator
 from django.db import models
-import datetime
+from django.urls.base import reverse
+
+from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
+
 
 class LetraCambio (models.Model):
     LC_PREFIXADO = 1
@@ -76,7 +80,7 @@ class OperacaoLetraCambio (models.Model):
     investidor = models.ForeignKey('bagogold.Investidor')
     
     def __unicode__(self):
-        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.lc, self.data)
+        return '(%s) R$%s de %s em %s' % (self.tipo_operacao, self.quantidade, self.lc, self.data.strftime('%d/%m/%Y'))
     
     def carencia(self):
         if not hasattr(self, 'guarda_carencia'):
@@ -114,10 +118,14 @@ class OperacaoLetraCambio (models.Model):
             data_vencimento += datetime.timedelta(days=1)
         return data_vencimento
     
+    @property
+    def link(self):
+        return reverse('lcambio:editar_operacao_lc', kwargs={'id_operacao': self.id})
+    
     def operacao_compra_relacionada(self):
         if self.tipo_operacao == 'V':
             if not hasattr(self, 'guarda_operacao_compra_relacionada'):
-                self.guarda_operacao_compra_relacionada = OperacaoVendaLetraCambio.objects.get(operacao_venda=self).operacao_compra
+                self.guarda_operacao_compra_relacionada = OperacaoVendaLetraCambio.objects.filter(operacao_venda=self).select_related('operacao_compra__lc')[0].operacao_compra
             return self.guarda_operacao_compra_relacionada
         else:
             return None
@@ -125,10 +133,14 @@ class OperacaoLetraCambio (models.Model):
     def porcentagem(self):
         if not hasattr(self, 'guarda_porcentagem'):
             if self.tipo_operacao == 'C':
-                if HistoricoPorcentagemLetraCambio.objects.filter(data__lte=self.data, lc=self.lc_id).exists():
-                    self.guarda_porcentagem = HistoricoPorcentagemLetraCambio.objects.filter(data__lte=self.data, lc=self.lc_id).order_by('-data')[0].porcentagem
+#                 if HistoricoPorcentagemLetraCambio.objects.filter(data__lte=self.data, lc=self.lc_id).exists():
+                if len([historico for historico in self.lc.historicoporcentagemletracambio_set.all() if historico.data != None and historico.data <= self.data]) > 0:
+#                     self.guarda_porcentagem = self.lc.historicoporcentagemletracambio_set.filter(data__lte=self.data, lc=self.lc_id).order_by('-data')[0].porcentagem
+                    self.guarda_porcentagem = sorted([historico for historico in self.lc.historicoporcentagemletracambio_set.all() if historico.data != None and historico.data <= self.data],
+                                 key=lambda x: x.data, reverse=True)[0].porcentagem
                 else:
-                    self.guarda_porcentagem = HistoricoPorcentagemLetraCambio.objects.get(data__isnull=True, lc=self.lc_id).porcentagem
+#                     self.guarda_porcentagem = HistoricoPorcentagemLetraCambio.objects.get(data__isnull=True, lc=self.lc_id).porcentagem
+                    self.guarda_porcentagem = [historico for historico in self.lc.historicoporcentagemletracambio_set.all() if historico.data == None][0].porcentagem
             elif self.tipo_operacao == 'V':
                 self.guarda_porcentagem = self.operacao_compra_relacionada().porcentagem()
         return self.guarda_porcentagem
@@ -157,12 +169,22 @@ class OperacaoLetraCambio (models.Model):
             self.guarda_tipo_rendimento_lc = self.lc.tipo_rendimento
         return self.guarda_tipo_rendimento_lc
     
+#     def vencimento(self):
+#         if not hasattr(self, 'guarda_vencimento'):
+#             if HistoricoVencimentoLetraCambio.objects.filter(data__lte=self.data, lc=self.lc_id).exists():
+#                 self.guarda_vencimento = HistoricoVencimentoLetraCambio.objects.filter(data__lte=self.data, lc=self.lc_id).order_by('-data')[0].vencimento
+#             else:
+#                 self.guarda_vencimento = HistoricoVencimentoLetraCambio.objects.get(data__isnull=True, lc=self.lc_id).vencimento
+#         return self.guarda_vencimento
+    
     def vencimento(self):
         if not hasattr(self, 'guarda_vencimento'):
-            if HistoricoVencimentoLetraCambio.objects.filter(data__lte=self.data, lc=self.lc_id).exists():
-                self.guarda_vencimento = HistoricoVencimentoLetraCambio.objects.filter(data__lte=self.data, lc=self.lc_id).order_by('-data')[0].vencimento
+            if len([historico for historico in self.lc.historicovencimentoletracambio_set.all() if historico.data != None and historico.data <= self.data]) > 0:
+#                 self.guarda_vencimento = self.lc.historicovencimentoletracambio_set.filter(data__lte=self.data, lc=self.lc_id).order_by('-data')[0].vencimento
+                self.guarda_vencimento = sorted([historico for historico in self.lc.historicovencimentoletracambio_set.all() if historico.data != None and historico.data <= self.data],
+                                 key=lambda x: x.data, reverse=True)[0].vencimento
             else:
-                self.guarda_vencimento = HistoricoVencimentoLetraCambio.objects.get(data__isnull=True, lc=self.lc_id).vencimento
+                self.guarda_vencimento = [historico for historico in self.lc.historicovencimentoletracambio_set.all() if historico.data == None][0].vencimento
         return self.guarda_vencimento
     
     def venda_permitida(self, data_venda=None):
@@ -179,6 +201,10 @@ class OperacaoLetraCambio (models.Model):
                 return (carencia <= (data_venda - self.data).days)
         else:
             return False
+        
+    @property
+    def link(self):
+        return reverse('lcambio:editar_operacao_lc', kwargs={'id_operacao': self.id})
     
 class OperacaoVendaLetraCambio (models.Model):
     operacao_compra = models.ForeignKey('OperacaoLetraCambio', limit_choices_to={'tipo_operacao': 'C'}, related_name='operacao_compra')

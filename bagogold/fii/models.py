@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
+import datetime
 from decimal import Decimal
+from math import floor
+
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.aggregates import Sum
-from math import floor
-import datetime
- 
+from django.urls.base import reverse
+
+from bagogold.bagogold.models.gerador_proventos import DocumentoProventoBovespa
+
+
 class FII (models.Model):
     ticker = models.CharField(u'Ticker do FII', max_length=10, unique=True) 
     empresa = models.ForeignKey('bagogold.Empresa', blank=True, null=True) 
@@ -38,7 +42,7 @@ class ProventoFII (models.Model):
     """
     A = amortização, R = rendimentos
     """
-    tipo_provento = models.CharField(u'Tipo de provento', max_length=1)
+    tipo_provento = models.CharField(u'Tipo de provento', max_length=1, choices=ESCOLHAS_TIPO_PROVENTO_FII)
     data_ex = models.DateField(u'Data EX')
     data_pagamento = models.DateField(u'Data do pagamento')
     oficial_bovespa = models.BooleanField(u'Oficial Bovespa?', default=False)
@@ -78,11 +82,16 @@ class OperacaoFII (models.Model):
         return '(' + self.tipo_operacao + ') ' + str(self.quantidade) + ' ' + self.fii.ticker + ' a R$' + str(self.preco_unitario) + ' em ' + str(self.data.strftime('%d/%m/%Y'))
     
     def qtd_proventos_utilizada(self):
-        qtd_total = UsoProventosOperacaoFII.objects.filter(operacao=self).aggregate(qtd_total=Sum('qtd_utilizada'))['qtd_total'] or 0
+        qtd_total = sum([uso_proventos.qtd_utilizada for uso_proventos in self.usoproventosoperacaofii_set.all()])
         return qtd_total
         
     def utilizou_proventos(self):
-        return UsoProventosOperacaoFII.objects.filter(operacao=self).exists()
+#         return UsoProventosOperacaoFII.objects.filter(operacao=self).exists()
+        return self.usoproventosoperacaofii_set.exists()
+    
+    @property
+    def link(self):
+        return reverse('fii:editar_operacao_fii', kwargs={'id_operacao': self.id})
 
 class UsoProventosOperacaoFII (models.Model):
     operacao = models.ForeignKey('OperacaoFII')

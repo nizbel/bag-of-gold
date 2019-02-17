@@ -39,7 +39,7 @@ def detalhar_debenture(request, debenture_id):
     try:
         debenture = Debenture.objects.get(id=debenture_id)
     except Debenture.DoesNotExist:
-        messages.error(request, 'Debênture selecionado é inválido')
+        messages.error(request, 'Debênture selecionado não foi encontrado')
         return HttpResponseRedirect(reverse('debentures:listar_debentures'))
     
     debenture.valor_emissao = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(debenture.valor_emissao))
@@ -52,14 +52,47 @@ def detalhar_debenture(request, debenture_id):
     else:
         debenture.valor_atual = Decimal('0.00') 
     
-    return TemplateResponse(request, 'debentures/detalhar_debenture.html', {'debenture': debenture})
+    if request.user.is_authenticated():
+        operacoes = OperacaoDebenture.objects.filter(debenture=debenture, investidor=request.user.investidor)
+    else:
+        operacoes = list()
+    
+    lista_historico = HistoricoValorDebenture.objects.filter(debenture=debenture).order_by('data')
+    
+    # TODO melhorar forma de verificar amortizações para IPCA
+    amortizacoes = [{'data': historico.data, 'valor': historico.valor_nominal} for historico in lista_historico]
+    for indice, amortizacao in enumerate(amortizacoes):
+        # Marcar primeira para remoção
+        if indice == 0:
+            amortizacao['remover'] = True
+        # Se valor não foi alterado. não houve amortização
+        elif amortizacao['valor'] == amortizacoes[indice-1]['valor']:
+            amortizacao['remover'] = True
+        # Guardar valor amortização
+        else:
+            amortizacao['novo_valor'] = amortizacoes[indice-1]['valor'] - amortizacao['valor']
+            if debenture.indice != Debenture.IPCA:
+                amortizacao['remover'] = False
+            else:
+                # Para IPCA, será considerado amortização caso seja maior do que pelo menos 0,5% do valor de emissão
+                if amortizacao['novo_valor'] >= debenture.valor_emissao * Decimal('0.005'):
+                    amortizacao['remover'] = False
+                else:
+                    amortizacao['remover'] = True
+    amortizacoes = [{'data': amortizacao['data'], 'valor': amortizacao['novo_valor']} for amortizacao in amortizacoes if not amortizacao['remover']]
+    
+    juros = [{'data': historico.data, 'valor': historico.juros} for historico in lista_historico]
+    premios = [{'data': historico.data, 'valor': historico.premio} for historico in lista_historico if historico.premio != 0]
+    
+    return TemplateResponse(request, 'debentures/detalhar_debenture.html', {'debenture': debenture, 'operacoes': operacoes,
+                                                                            'juros': juros, 'amortizacoes': amortizacoes, 'premios': premios})
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em Debêntures', 'Alterar valores de uma operação de compra/venda em Debêntures')
-def editar_operacao_debenture(request, operacao_id):
+def editar_operacao_debenture(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_debenture = OperacaoDebenture.objects.get(pk=operacao_id)
+    operacao_debenture = OperacaoDebenture.objects.get(pk=id_operacao)
     
     # Verificar se a operação é do investidor logado
     if operacao_debenture.investidor != investidor:
@@ -70,7 +103,7 @@ def editar_operacao_debenture(request, operacao_id):
                                             extra=0, formset=DivisaoOperacaoDebentureFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -246,7 +279,7 @@ def inserir_operacao_debenture(request):
     investidor = request.user.investidor
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoDebenture, DivisaoOperacaoDebenture, fields=('divisao', 'quantidade'), can_delete=False,
@@ -440,13 +473,13 @@ def painel(request):
 @adiciona_titulo_descricao('Sobre Debêntures', 'Detalha o que são Debêntures')
 def sobre(request):
     data_atual = datetime.date.today()
-    historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
+    historico_di = HistoricoTaxaDI.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3)).order_by('data')
     graf_historico_di = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(valor_historico.taxa)] for valor_historico in historico_di]
         
     historico_ipca = HistoricoIPCA.objects.filter(data_inicio__year__gte=(data_atual.year-3)).order_by('data_inicio')
-    graf_historico_ipca = [[str(calendar.timegm(valor_historico.data_inicio.timetuple()) * 1000), float(valor_historico.valor)] for valor_historico in historico_ipca]
+    graf_historico_ipca = [[str(calendar.timegm(valor_historico.data_inicio.timetuple()) * 1000), float(valor_historico.valor * 100)] for valor_historico in historico_ipca]
     
-    historico_selic = HistoricoTaxaSelic.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3))
+    historico_selic = HistoricoTaxaSelic.objects.filter(data__gte=data_atual.replace(year=data_atual.year-3)).order_by('data')
     graf_historico_selic = [[str(calendar.timegm(valor_historico.data.timetuple()) * 1000), float(pow(valor_historico.taxa_diaria, 252) - 1)*100] for valor_historico in historico_selic]
     
     if request.user.is_authenticated():

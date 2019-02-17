@@ -52,7 +52,7 @@ def quantidade_titulos_ate_dia(investidor, dia):
             
     return qtd_titulos
 
-def quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id, dia=datetime.date.today()):
+def quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id, dia=None):
     """ 
     Calcula a quantidade de títulos do investidor até dia determinado
     
@@ -60,6 +60,10 @@ def quantidade_titulos_ate_dia_por_titulo(investidor, titulo_id, dia=datetime.da
                 Dia final
     Retorno: Quantidade de títulos
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     qtd_titulos = OperacaoTitulo.objects.filter(investidor=investidor, data__lte=dia, titulo__id=titulo_id).exclude(data__isnull=True) \
         .aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
                             When(tipo_operacao='V', then=F('quantidade')*-1),
@@ -111,7 +115,7 @@ def calcular_qtd_um_titulo_ate_dia_por_divisao(investidor, dia, titulo_id):
     
     return qtd_titulos
 
-def calcular_valor_td_ate_dia(investidor, dia=datetime.date.today()):
+def calcular_valor_td_ate_dia(investidor, dia=None):
     """ 
     Calcula o valor dos títulos do investidor até dia determinado
     
@@ -119,6 +123,9 @@ def calcular_valor_td_ate_dia(investidor, dia=datetime.date.today()):
                 Dia final
     Retorno: Valor dos títulos {titulo_id: valor_da_data}
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
     
     qtd_titulos = quantidade_titulos_ate_dia(investidor, dia)
     

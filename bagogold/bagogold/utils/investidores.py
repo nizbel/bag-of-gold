@@ -62,11 +62,16 @@ def is_superuser(user):
         return True
     raise PermissionDenied
 
-def atualizar_checkpoints(investidor):
+def atualizar_checkpoints(investidor, ano_maximo=None):
     """
     Atualiza os checkpoints para um investidor, buscando os últimos checkpoints registrados
+    
     Parâmetros: Investidor
+                Último ano a partir do qual deve ser atualizado
     """
+    if ano_maximo == None:
+        ano_maximo = datetime.date.today().year
+    
     # FII
     # Verificar se usuário possui operações em FII
     if OperacaoFII.objects.filter(investidor=investidor).exists():
@@ -74,7 +79,7 @@ def atualizar_checkpoints(investidor):
         lista_fiis_anos = CheckpointFII.objects.filter(investidor=investidor).values('fii').annotate(ultimo_ano=Max('ano')) \
             .values('fii', 'ultimo_ano', 'quantidade').exclude(quantidade=0)
         for fii_ano in lista_fiis_anos:
-            ultimo_ano_checkpoint = fii_ano['ultimo_ano']
+            ultimo_ano_checkpoint = min(fii_ano['ultimo_ano'], ano_maximo)
             fii = FII.objects.get(id=fii_ano['fii'])
             # Repete o procedimento para o ano posterior ao último checkpoint, até o ano atual
             for ano in range(ultimo_ano_checkpoint+1, datetime.date.today().year+1):
@@ -96,7 +101,7 @@ def atualizar_checkpoints(investidor):
         lista_divisoes_anos = CheckpointDivisaoProventosFII.objects.filter(divisao__investidor=investidor).values('divisao').annotate(ultimo_ano=Max('ano')) \
             .values('divisao', 'ultimo_ano', 'valor').exclude(valor=0)
         for divisao_ano in lista_divisoes_anos:
-            ultimo_ano_checkpoint = divisao_ano['ultimo_ano']
+            ultimo_ano_checkpoint = min(divisao_ano['ultimo_ano'], ano_maximo)
             divisao = Divisao.objects.get(id=divisao_ano['divisao'])
             # Repete o procedimento ano a ano, até o ano atual
             for ano in range(ultimo_ano_checkpoint+1, datetime.date.today().year+1):
@@ -111,7 +116,8 @@ def atualizar_checkpoints(investidor):
         # Caso não haja checkpoint, buscar ano da primeira operação em cdb/rdb
         else:
             ano_mais_recente = OperacaoCDB_RDB.objects.filter(investidor=investidor).order_by('-data')[0].data.year
-            
+        
+        ano_mais_recente = min(ano_mais_recente, ano_maximo)
         # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
         for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
             # Para checkpoints no ano mais recente
@@ -128,6 +134,7 @@ def atualizar_checkpoints(investidor):
         else:
             ano_mais_recente = OperacaoCDB_RDB.objects.filter(investidor=investidor).order_by('-data')[0].data.year
             
+        ano_mais_recente = min(ano_mais_recente, ano_maximo)
         # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
         for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
             # Para checkpoints no ano mais recente
@@ -144,6 +151,7 @@ def atualizar_checkpoints(investidor):
         else:
             ano_mais_recente = OperacaoLetraCambio.objects.filter(investidor=investidor).order_by('-data')[0].data.year
             
+        ano_mais_recente = min(ano_mais_recente, ano_maximo)
         # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
         for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
             # Para checkpoints no ano mais recente
@@ -160,6 +168,7 @@ def atualizar_checkpoints(investidor):
         else:
             ano_mais_recente = OperacaoLetraCambio.objects.filter(investidor=investidor).order_by('-data')[0].data.year
             
+        ano_mais_recente = min(ano_mais_recente, ano_maximo)
         # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
         for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
             # Para checkpoints no ano mais recente
@@ -176,6 +185,7 @@ def atualizar_checkpoints(investidor):
         else:
             ano_mais_recente = OperacaoLetraCredito.objects.filter(investidor=investidor).order_by('-data')[0].data.year
             
+        ano_mais_recente = min(ano_mais_recente, ano_maximo)
         # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
         for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
             # Para checkpoints no ano mais recente
@@ -192,20 +202,26 @@ def atualizar_checkpoints(investidor):
         else:
             ano_mais_recente = OperacaoLetraCredito.objects.filter(investidor=investidor).order_by('-data')[0].data.year
             
+        ano_mais_recente = min(ano_mais_recente, ano_maximo)
         # Gerar checkpoints a partir do ano seguinte a esse ano mais recente
         for ano in xrange(ano_mais_recente, datetime.date.today().year+1):
             # Para checkpoints no ano mais recente
             for checkpoint in CheckpointDivisaoLCI_LCA.objects.filter(divisao_operacao__operacao__investidor=investidor, ano=ano_mais_recente):
                 gerar_checkpoint_divisao_lci_lca(checkpoint.divisao_operacao, ano)
                 
-def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), destinacao=''):
+def buscar_acoes_investidor_na_data(investidor, data=None, destinacao=''):
     """
     Busca as ações que o investidor possui na da especificada
+    
     Parâmetros: Investidor
                 Data da posição
-                DestinaçãO (Buy and Hold, Trading ou ambos)
+                Destinação (Buy and Hold, Trading ou ambos)
     Retorno: Lista com as ações que o investidor possui posição
     """
+    # Preparar data
+    if data == None:
+        data = datetime.date.today()
+        
     if destinacao not in ['', 'B', 'T']:
         raise ValueError
     # Buscar proventos em ações
@@ -226,6 +242,7 @@ def buscar_acoes_investidor_na_data(investidor, data=datetime.date.today(), dest
 def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     """
     Busca as últimas operações feitas pelo investidor, ordenadas por data decrescente
+    
     Parâmetros: Investidor
                 Quantidade de operações a ser retornada
     Retorno: Lista com as operações ordenadas por data
@@ -246,14 +263,13 @@ def buscar_ultimas_operacoes(investidor, quantidade_operacoes):
     lista_operacoes = sorted(chain(operacoes_fii, operacoes_td, operacoes_acoes, operacoes_lci_lca, operacoes_cdb_rdb, 
                                    operacoes_cri_cra, operacoes_debentures, operacoes_fundo_investimento, operacoes_criptomoedas, 
                                    outros_investimentos, operacoes_lc),
-                            key=attrgetter('data'), reverse=True)
+                             key=attrgetter('data'), reverse=True)
     
     ultimas_operacoes = lista_operacoes[:min(quantidade_operacoes, len(lista_operacoes))]
     
     return ultimas_operacoes
 
 def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
-    from bagogold.cdb_rdb.models import OperacaoCDB_RDB
     """
     Busca as operações feitas pelo investidor, ordenadas por data crescente, no período especificado
     
@@ -282,28 +298,42 @@ def buscar_operacoes_no_periodo(investidor, data_inicial, data_final):
     
     return lista_operacoes
 
-def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.today()):
+def buscar_totais_atuais_investimentos(investidor, data_atual=None):
     """
     Traz os totais de investimento do investidor em data especificada
+    
     Parâmetros: Investidor
                 Data
     Retorno: Totais atuais {investimento: total}
     """
+    # Preparar data
+    if data_atual == None:
+        data_atual = datetime.date.today()
+        
     totais_atuais = {'Ações': Decimal(0), 'CDB/RDB': Decimal(0), 'CRI/CRA': Decimal(0), 'Criptomoedas': Decimal(0), 'Debêntures': Decimal(0), 
                      'FII': Decimal(0), 'Fundos de Inv.': Decimal(0), 'LCI/LCA': Decimal(0), 'Outros inv.': Decimal(0), 
                      'Letras de Câmbio': Decimal(0),'Tesouro Direto': Decimal(0), }
     
     # Ações
-    acoes_investidor = buscar_acoes_investidor_na_data(investidor)
+    acoes_investidor = buscar_acoes_investidor_na_data(investidor, data_atual)
     # Cálculo de quantidade
-    for acao in Acao.objects.filter(id__in=acoes_investidor):
-        acao_qtd = quantidade_acoes_ate_dia(investidor, acao.ticker, data_atual, considerar_trade=True)
-        if acao_qtd > 0:
-            if ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).exists():
-                acao_valor = ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
-            else:
-                acao_valor = HistoricoAcao.objects.filter(acao__ticker=acao.ticker).order_by('-data')[0].preco_unitario
-            totais_atuais['Ações'] += (acao_qtd * acao_valor)
+#     for acao in Acao.objects.filter(id__in=acoes_investidor):
+#         acao_qtd = quantidade_acoes_ate_dia(investidor, acao.ticker, data_atual, considerar_trade=True)
+#         if acao_qtd > 0:
+#             if ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).exists():
+#                 acao_valor = ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
+#             else:
+#                 acao_valor = HistoricoAcao.objects.filter(acao__ticker=acao.ticker).order_by('-data')[0].preco_unitario
+#             totais_atuais['Ações'] += (acao_qtd * acao_valor)
+    lista_acoes = list(Acao.objects.filter(id__in=acoes_investidor))
+    qtd_acoes = {acao.id: quantidade_acoes_ate_dia(investidor, acao.ticker, data_atual, considerar_trade=True) for acao in lista_acoes}
+    lista_valores_diarios = ValorDiarioAcao.objects.filter(acao__in=lista_acoes, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('acao__id', '-data_hora').distinct('acao__id')
+    lista_historicos = HistoricoAcao.objects.filter(acao__in=lista_acoes, data__lte=data_atual).order_by('acao__id', '-data').distinct('acao__id')
+    lista_valores = {valor.acao_id: valor.preco_unitario for valor in lista_valores_diarios}
+    for historico in lista_historicos:
+        if historico.acao_id not in lista_valores.keys():
+            lista_valores[historico.acao_id] = historico.preco_unitario
+    totais_atuais['Ações'] += sum([qtd_acoes[acao_id] * lista_valores[acao_id] for acao_id in qtd_acoes.keys() if qtd_acoes[acao_id] > 0])
     totais_atuais['Ações'] += calcular_poupanca_prov_acao_ate_dia(investidor, data_atual)
 
     # CDB / RDB
@@ -333,12 +363,18 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
         
     # Fundos de investimento imobiliário
     fiis = calcular_qtd_fiis_ate_dia(investidor, data_atual)
-    for ticker in fiis.keys():
-        if ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).exists():
-            fii_valor = ValorDiarioFII.objects.filter(fii__ticker=ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
+    # Buscar valores diários e históricos
+    ultimos_valores_diarios = {ticker: valor for ticker, valor in \
+                               ValorDiarioFII.objects.filter(fii__ticker__in=fiis, data_hora__date=datetime.date.today()).order_by('fii__id', '-data_hora') \
+                               .distinct('fii__id').values_list('fii__ticker', 'preco_unitario')}    
+    ultimos_historicos = {ticker: valor for ticker, valor in HistoricoFII.objects.filter(fii__ticker__in=fiis, data__lte=data_atual).order_by('fii__ticker', '-data') \
+                          .distinct('fii__ticker').values_list('fii__ticker', 'preco_unitario')}
+    
+    for ticker in fiis:
+        if ticker in ultimos_valores_diarios:
+            totais_atuais['FII'] += (fiis[ticker] * ultimos_valores_diarios[ticker])
         else:
-            fii_valor = HistoricoFII.objects.filter(fii__ticker=ticker).order_by('-data')[0].preco_unitario
-        totais_atuais['FII'] += (fiis[ticker] * fii_valor)
+            totais_atuais['FII'] += (fiis[ticker] * ultimos_historicos[ticker])
     totais_atuais['FII'] += calcular_poupanca_prov_fii_ate_dia(investidor, data_atual)
         
     # Fundos de investimento
@@ -379,6 +415,7 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=datetime.date.toda
 def buscar_proventos_a_receber(investidor, fonte_provento=''):
     """
     Retorna proventos que o investidor irá receber futuramente, já passada a data EX
+    
     Parâmetros: Investidor
                 Fonte do provento ('F' = FII, 'A' = Ações, '' = Ambos)
     Retorno:    Lista de proventos
@@ -391,13 +428,13 @@ def buscar_proventos_a_receber(investidor, fonte_provento=''):
     if fonte_provento != 'F':
         acoes_investidor = buscar_acoes_investidor_na_data(investidor)
         
-        for acao in Acao.objects.filter(id__in=acoes_investidor):
-            proventos_a_pagar = Provento.objects.filter(acao=acao, data_ex__lte=data_atual, data_pagamento__gte=data_atual, tipo_provento__in=['D', 'J'])
-            for provento in proventos_a_pagar:
-                qtd_acoes = quantidade_acoes_ate_dia(investidor, acao.ticker, provento.data_ex - datetime.timedelta(days=1), considerar_trade=True) 
-                if qtd_acoes > 0:
-                    provento.quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
-                    proventos_a_receber.append(provento)
+#         for acao in Acao.objects.filter(id__in=acoes_investidor):
+        proventos_a_pagar = Provento.objects.filter(acao__id__in=acoes_investidor, data_ex__lte=data_atual, data_pagamento__gte=data_atual, tipo_provento__in=['D', 'J']).select_related('acao')
+        for provento in proventos_a_pagar:
+            qtd_acoes = quantidade_acoes_ate_dia(investidor, provento.acao.ticker, provento.data_ex - datetime.timedelta(days=1), considerar_trade=True) 
+            if qtd_acoes > 0:
+                provento.quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
+                proventos_a_receber.append(provento)
           
     if fonte_provento != 'A':
         # Buscar proventos em FIIs          
@@ -406,13 +443,13 @@ def buscar_proventos_a_receber(investidor, fonte_provento=''):
         # Remover FIIs repetidos
         fiis_investidor = list(set(fiis_investidor))
         
-        for fii in FII.objects.filter(id__in=fiis_investidor):
-            proventos_a_pagar = ProventoFII.objects.filter(fii=fii, data_ex__lte=data_atual, data_pagamento__gte=data_atual)
-            for provento in proventos_a_pagar:
-                qtd_fiis = calcular_qtd_fiis_ate_dia_por_ticker(investidor, provento.data_ex - datetime.timedelta(days=1), fii.ticker)
-                if qtd_fiis > 0:
-                    provento.quantia_a_receber = (qtd_fiis * provento.valor_unitario)
-                    proventos_a_receber.append(provento)
+#         for fii in FII.objects.filter(id__in=fiis_investidor):
+        proventos_a_pagar = ProventoFII.objects.filter(fii__id__in=fiis_investidor, data_ex__lte=data_atual, data_pagamento__gte=data_atual).select_related('fii')
+        for provento in proventos_a_pagar:
+            qtd_fiis = calcular_qtd_fiis_ate_dia_por_ticker(investidor, provento.data_ex - datetime.timedelta(days=1), provento.fii.ticker)
+            if qtd_fiis > 0:
+                provento.quantia_a_receber = (qtd_fiis * provento.valor_unitario)
+                proventos_a_receber.append(provento)
     
     # Arredondar valores
     for provento in proventos_a_receber:
@@ -423,6 +460,7 @@ def buscar_proventos_a_receber(investidor, fonte_provento=''):
 def buscar_proventos_a_receber_data_ex_futura(investidor):
     """
     Retorna proventos que o investidor irá receber futuramente, não passada a data EX
+    
     Parâmetros: Investidor
     Retorno:    Lista de proventos
     """
@@ -432,13 +470,13 @@ def buscar_proventos_a_receber_data_ex_futura(investidor):
     
     data_atual = datetime.date.today()
     
-    for acao in Acao.objects.filter(id__in=acoes_investidor):
-        proventos_a_pagar = Provento.objects.filter(acao=acao, data_ex__gt=data_atual, tipo_provento__in=['D', 'J'])
-        for provento in proventos_a_pagar:
-            qtd_acoes = quantidade_acoes_ate_dia(investidor, acao.ticker, data_atual, considerar_trade=True) 
-            if qtd_acoes > 0:
-                provento.quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
-                proventos_a_receber.append(provento)
+#     for acao in Acao.objects.filter(id__in=acoes_investidor):
+    proventos_a_pagar = Provento.objects.filter(acao__id__in=acoes_investidor, data_ex__gt=data_atual, tipo_provento__in=['D', 'J']).select_related('acao')
+    for provento in proventos_a_pagar:
+        qtd_acoes = quantidade_acoes_ate_dia(investidor, provento.acao.ticker, data_atual, considerar_trade=True) 
+        if qtd_acoes > 0:
+            provento.quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
+            proventos_a_receber.append(provento)
           
     # Buscar proventos em FIIs          
     fiis_investidor = OperacaoFII.objects.filter(investidor=investidor, data__lte=datetime.date.today()).values_list('fii', flat=True)
@@ -446,13 +484,13 @@ def buscar_proventos_a_receber_data_ex_futura(investidor):
     # Remover FIIs repetidos
     fiis_investidor = list(set(fiis_investidor))
     
-    for fii in FII.objects.filter(id__in=fiis_investidor):
-        proventos_a_pagar = ProventoFII.objects.filter(fii=fii, data_ex__gt=data_atual)
-        for provento in proventos_a_pagar:
-            qtd_fiis = calcular_qtd_fiis_ate_dia_por_ticker(investidor, data_atual, fii.ticker)
-            if qtd_fiis > 0:
-                provento.quantia_a_receber = (qtd_fiis * provento.valor_unitario)
-                proventos_a_receber.append(provento)
+#     for fii in FII.objects.filter(id__in=fiis_investidor):
+    proventos_a_pagar = ProventoFII.objects.filter(fii__id__in=fiis_investidor, data_ex__gt=data_atual).select_related('fii')
+    for provento in proventos_a_pagar:
+        qtd_fiis = calcular_qtd_fiis_ate_dia_por_ticker(investidor, data_atual, provento.fii.ticker)
+        if qtd_fiis > 0:
+            provento.quantia_a_receber = (qtd_fiis * provento.valor_unitario)
+            proventos_a_receber.append(provento)
     
     # Arredondar valores
     for provento in proventos_a_receber:
@@ -466,3 +504,4 @@ def user_blocked(user):
     # Verifica se última tentativa foi feita a no máximo 10 minutos
     return (LoginIncorreto.objects.filter(user=user).count() >= 6 and 
         (timezone.now() - LoginIncorreto.objects.filter(user=user).order_by('-horario')[0].horario).total_seconds() < 10 * 60)
+    

@@ -252,7 +252,7 @@ class InserirForkTestCase(TestCase):
         """Testa se redireciona ao receber usuário deslogado"""
         response = self.client.get(reverse('criptomoeda:inserir_fork'))
         self.assertEqual(response.status_code, 302)
-        # TODO Verificar se resposta foi para tela de login
+        # Verificar se resposta foi para tela de login
         self.assertTrue('/login/' in response.url)
         
     def test_usuario_logado(self):

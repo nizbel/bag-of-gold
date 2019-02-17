@@ -309,15 +309,15 @@ def editar_historico_vencimento(request, historico_vencimento_id):
 
 @login_required
 @adiciona_titulo_descricao('Editar operação em CDB/RDB', 'Alterar valores de uma operação de compra/venda em CDB/RDB')
-def editar_operacao_cdb_rdb(request, operacao_id):
+def editar_operacao_cdb_rdb(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_cdb_rdb = get_object_or_404(OperacaoCDB_RDB, id=operacao_id)
+    operacao_cdb_rdb = get_object_or_404(OperacaoCDB_RDB, id=id_operacao)
     if operacao_cdb_rdb.investidor != investidor:
         raise PermissionDenied
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoCDB_RDB, DivisaoOperacaoCDB_RDB, fields=('divisao', 'quantidade'),
@@ -421,7 +421,8 @@ def historico(request):
                                         .annotate(tipo=Case(When(tipo_operacao='C', then=Value(u'Compra')),
                                                             When(tipo_operacao='V', then=Value(u'Venda')), output_field=CharField())) \
                                         .annotate(qtd_vendida=Case(When(tipo_operacao='C', then=Value(0)), output_field=DecimalField())) \
-                                        .annotate(atual=Case(When(tipo_operacao='C', then=F('quantidade')), output_field=DecimalField()))
+                                        .annotate(atual=Case(When(tipo_operacao='C', then=F('quantidade')), output_field=DecimalField())) \
+                                        .prefetch_related('cdb_rdb__historicovencimentocdb_rdb_set', 'cdb_rdb__historicoporcentagemcdb_rdb_set')
     # Verifica se não há operações
     if not operacoes:
         return TemplateResponse(request, 'cdb_rdb/historico.html', {'dados': {}, 'operacoes': list(), 
@@ -705,7 +706,7 @@ def inserir_operacao_cdb_rdb(request):
                                             extra=1, formset=DivisaoOperacaoCDB_RDBFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         form_operacao_cdb_rdb = OperacaoCDB_RDBForm(request.POST, investidor=investidor)
@@ -840,7 +841,7 @@ def painel(request):
         return TemplateResponse(request, 'cdb_rdb/painel.html', {'operacoes': {}, 'dados': dados})
      
     # Pegar data final, nivelar todas as operações para essa data
-    data_final = HistoricoTaxaDI.objects.filter().order_by('-data')[0].data
+    data_final, taxa_final = HistoricoTaxaDI.objects.all().values_list('data', 'taxa').order_by('-data')[0]
      
     # Prepara o campo valor atual
     for operacao in operacoes:
@@ -860,8 +861,6 @@ def painel(request):
     total_ganho_prox_dia = 0
     total_vencimento = 0
      
-    ultima_taxa_di = HistoricoTaxaDI.objects.filter().order_by('-data')[0].taxa
-     
     for operacao in operacoes:
         # Calcular o ganho no dia seguinte
         if data_final < operacao.data_vencimento():
@@ -870,7 +869,7 @@ def painel(request):
                 operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa) - operacao.atual
             elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
                 # Considerar rendimento do dia anterior
-                operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_di(ultima_taxa_di, operacao.atual, operacao.taxa) - operacao.atual
+                operacao.ganho_prox_dia = calcular_valor_atualizado_com_taxa_di(taxa_final, operacao.atual, operacao.taxa) - operacao.atual
             # Formatar
             str_auxiliar = str(operacao.ganho_prox_dia.quantize(Decimal('.0001')))
             operacao.ganho_prox_dia = Decimal(str_auxiliar[:len(str_auxiliar)-2])
@@ -893,7 +892,7 @@ def painel(request):
                 operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
             elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
                 # Considerar rendimento do dia anterior
-                operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({HistoricoTaxaDI.objects.get(data=data_final).taxa: qtd_dias_uteis_ate_vencimento},
+                operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({taxa_final: qtd_dias_uteis_ate_vencimento},
                                                      operacao.atual, operacao.taxa)
             str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
             operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])

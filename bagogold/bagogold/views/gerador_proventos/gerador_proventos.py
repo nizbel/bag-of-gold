@@ -12,7 +12,7 @@ from django.core.mail import mail_admins
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.db.models.expressions import Case, When, Value
-from django.db.models.fields import CharField, Field
+from django.db.models.fields import CharField
 from django.forms.formsets import formset_factory
 from django.forms.models import model_to_dict
 from django.http.response import HttpResponseRedirect, HttpResponse, Http404
@@ -63,25 +63,7 @@ def baixar_documento_provento(request, id_documento):
         else:
             response = HttpResponse(documento_provento.documento, content_type='application/pdf')
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
-        response['Content-Length'] = os.path.getsize(settings.MEDIA_ROOT + documento_provento.documento.name)
-    
-        return response
-    else:
-        messages.error(request, 'Documento não foi encontrado para download')
-        return HttpResponseRedirect(reverse('gerador_proventos:listar_pendencias'))
-    
-def baixar_documento_provento_aws(request, id_documento):
-    if DocumentoProventoBovespa.objects.filter(id=id_documento).exists():
-        documento_provento = DocumentoProventoBovespa.objects.get(id=id_documento)
-        filename = documento_provento.documento.name.split('/')[-1]
-        if documento_provento.extensao_documento() == 'doc':
-            response = HttpResponse(documento_provento.documento, content_type='application/msword')
-        elif documento_provento.extensao_documento() == 'xml':
-            response = HttpResponse(documento_provento.documento, content_type='application/xml')
-        else:
-            response = HttpResponse(documento_provento.documento, content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename=%s' % filename
-        response['Content-Length'] = os.path.getsize(settings.MEDIA_ROOT + documento_provento.documento.name)
+        response['Content-Length'] = documento_provento.tamanho_arquivo()
     
         return response
     else:
@@ -92,7 +74,8 @@ def baixar_documento_provento_aws(request, id_documento):
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 @adiciona_titulo_descricao('Detalhar documento da Bovespa', 'Detalha informações de documento de proventos da Bovespa')
 def detalhar_documento(request, id_documento):
-    documento = DocumentoProventoBovespa.objects.get(id=id_documento)
+    documento = DocumentoProventoBovespa.objects.filter(id=id_documento).prefetch_related('pendenciadocumentoprovento_set') \
+        .select_related('investidorleituradocumento__investidor__user', 'investidorvalidacaodocumento__investidor__user')[0]
     documento.nome = documento.documento.name.split('/')[-1]
     
     # Se documento for ação
@@ -126,7 +109,7 @@ def detalhar_documento(request, id_documento):
 @permission_required('bagogold.pode_gerar_proventos', raise_exception=True)
 @adiciona_titulo_descricao('Detalhar provento de uma Ação', 'Mostra valores e histórico de versionamento de um provento recebido por uma Ação')
 def detalhar_provento_acao(request, id_provento):
-    provento = Provento.gerador_objects.get(id=id_provento)
+    provento = Provento.gerador_objects.filter(id=id_provento).select_related('acao', 'atualizacaoselicprovento')[0]
     
     # Remover 0s a direita para valores
     provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(provento.valor_unitario))
@@ -139,7 +122,8 @@ def detalhar_provento_acao(request, id_provento):
     # Adicionar informação de versão
     try:
         provento.versao = ProventoAcaoDocumento.objects.filter(provento=provento).order_by('-versao')[0].versao
-        versoes = ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento).order_by('proventoacaodocumento__versao')
+        versoes = ProventoAcaoDescritoDocumentoBovespa.objects.filter(proventoacaodocumento__provento=provento).order_by('proventoacaodocumento__versao') \
+            .select_related('acao', 'proventoacaodocumento__documento', 'selicproventoacaodescritodocbovespa')
         for versao in versoes:
             # Remover 0s a direita para valores
             versao.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(versao.valor_unitario))
@@ -622,7 +606,7 @@ def listar_pendencias(request):
     query_pendencias = PendenciaDocumentoProvento.objects.all().annotate(tipo_pendencia=Case(When(tipo='L', then=Value(u'Leitura')), 
                                                                                              When(tipo='V', then=Value(u'Validação')), output_field=CharField())) \
         .annotate(tipo_documento=Case(When(documento__tipo='A', then=Value(u'Ação')), When(documento__tipo='F', then=Value('FII')), output_field=CharField())) \
-        .select_related('documento', 'documento__empresa', 'investidorresponsavelpendencia')
+        .select_related('documento__empresa', 'investidorresponsavelpendencia__investidor__user')
     # Verifica a quantidade de pendências escolhida para filtrar
     if request.method == 'POST':
         # Preparar filtro por quantidade
@@ -888,7 +872,7 @@ def validar_documento_provento(request, id_pendencia):
     investidor = request.user.investidor
     
     try:
-        pendencia = PendenciaDocumentoProvento.objects.get(id=id_pendencia)
+        pendencia = PendenciaDocumentoProvento.objects.select_related('documento__investidorleituradocumento').get(id=id_pendencia)
         # Verificar se pendência é de validação
         if pendencia.tipo != 'V':
             messages.error(request, 'Pendência não é de validação')
@@ -1072,7 +1056,7 @@ def validar_documento_provento(request, id_pendencia):
     if pendencia.documento.investidorleituradocumento.decisao == 'C':
         if pendencia.documento.tipo == 'A':
             proventos_documento = ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
-            descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
+            descricoes_proventos = ProventoAcaoDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento).select_related('proventoacaodocumento__provento')
             for descricao_provento in descricoes_proventos:
                 # Definir tipo de provento
                 if descricao_provento.tipo_provento == 'A':
@@ -1101,7 +1085,7 @@ def validar_documento_provento(request, id_pendencia):
             pendencia.decisao = 'Criar %s provento(s)' % (ProventoAcaoDocumento.objects.filter(documento=pendencia.documento).count())
         elif pendencia.documento.tipo == 'F':
             proventos_documento = ProventoFIIDocumento.objects.filter(documento=pendencia.documento).values_list('descricao_provento', flat=True)
-            descricoes_proventos = ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento)
+            descricoes_proventos = ProventoFIIDescritoDocumentoBovespa.objects.filter(id__in=proventos_documento).select_related('proventofiidocumento__provento')
             for descricao_provento in descricoes_proventos:
                 # Remover 0s a direita para valores
                 descricao_provento.valor_unitario = Decimal(formatar_zeros_a_direita_apos_2_casas_decimais(descricao_provento.valor_unitario))

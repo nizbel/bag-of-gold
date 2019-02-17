@@ -291,17 +291,17 @@ def editar_lci_lca(request, lci_lca_id):
     
 @login_required
 @adiciona_titulo_descricao('Editar operação em Letras de Crédito', 'Alterar valores de uma operação de compra/venda em Letras de Crédito')
-def editar_operacao_lci_lca(request, operacao_id):
+def editar_operacao_lci_lca(request, id_operacao):
     investidor = request.user.investidor
     
-    operacao_lci_lca = OperacaoLetraCredito.objects.get(pk=operacao_id)
+    operacao_lci_lca = OperacaoLetraCredito.objects.get(pk=id_operacao)
     
     # Verifica se a operação é do investidor, senão, jogar erro de permissão
     if operacao_lci_lca.investidor != investidor:
         raise PermissionDenied
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     # Preparar formset para divisoes
     DivisaoFormSet = inlineformset_factory(OperacaoLetraCredito, DivisaoOperacaoLCI_LCA, fields=('divisao', 'quantidade'),
@@ -627,7 +627,7 @@ def inserir_operacao_lci_lca(request):
                                             extra=1, formset=DivisaoOperacaoLCI_LCAFormSet)
     
     # Testa se investidor possui mais de uma divisão
-    varias_divisoes = len(Divisao.objects.filter(investidor=investidor)) > 1
+    varias_divisoes = Divisao.objects.filter(investidor=investidor).count() > 1
     
     if request.method == 'POST':
         if request.POST.get("save"):
@@ -805,7 +805,6 @@ def painel(request):
                           
                 elif operacao.tipo_operacao == 'V':
                     if (operacao.data == data_iteracao.data):
-                        print operacao
                         operacao.total = operacao.quantidade
                         # Remover quantidade da operação de compra
                         operacao_compra_id = operacao.operacao_compra_relacionada().id

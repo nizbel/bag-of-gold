@@ -123,7 +123,7 @@ class Divisao (models.Model):
         # Computar compras
         saldo -= (DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
         for venda_divisao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V') \
-            .annotate(tipo_rendimento=F('operacao__cdb_rdb__tipo_rendimento')).select_related('operacao', 'operacao__cdb_rdb'):
+            .annotate(tipo_rendimento=F('operacao__cdb_rdb__tipo_rendimento')).select_related('operacao__cdb_rdb'):
             # Para venda, calcular valor do cdb/rdb no dia da venda
             valor_venda = venda_divisao.quantidade
              
@@ -824,8 +824,8 @@ class TransferenciaEntreDivisoes(models.Model):
     divisao_recebedora = models.ForeignKey('Divisao', verbose_name=u'Divisão recebedora', blank=True, null=True, related_name='divisao_recebedora')
     data = models.DateField(u'Data da transferência', blank=True, null=True)
     """
-    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debênture; F = FII; 
-    I = Fundo de investimento; L = Letra de Crédito; R = CRI/CRA; T = Trading; O = Outros investimentos; N = Não alocado
+    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debênture; F = FII; I = Fundo de investimento;
+    L = Letra de Crédito; M = Criptomoeda;  O = Outros investimentos; R = CRI/CRA; T = Trading; N = Não alocado
     """
     investimento_origem = models.CharField('Investimento de origem', blank=True, null=True, max_length=1)
     investimento_destino = models.CharField('Investimento de destino', blank=True, null=True, max_length=1)

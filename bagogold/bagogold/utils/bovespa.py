@@ -1,17 +1,24 @@
 # -*- coding: utf-8 -*-
 from StringIO import StringIO
-from bagogold.bagogold.models.acoes import HistoricoAcao, Acao
-from bagogold.bagogold.models.empresa import Empresa
-from bagogold.fii.models import FII, HistoricoFII
+import datetime
 from decimal import Decimal
+import re
+from urllib2 import urlopen
+import zipfile
+
+import boto3
 from django.db import transaction
 from lxml import etree
-from mechanize._form import ControlNotFoundError
-from urllib2 import urlopen
-import datetime
 import mechanize
-import re
-import zipfile
+from mechanize._form import ControlNotFoundError
+
+from bagogold.bagogold.models.acoes import HistoricoAcao, Acao
+from bagogold.bagogold.models.empresa import Empresa
+from bagogold.bagogold.utils.acoes import verificar_tipo_acao
+from bagogold.fii.models import FII, HistoricoFII
+from bagogold.settings import CAMINHO_HISTORICO_RECENTE_ACOES_FIIS
+from conf.settings_local import AWS_STORAGE_BUCKET_NAME
+
 
 def preencher_empresa_fii_nao_listado(ticker, num_tentativas=0):
     """
@@ -68,21 +75,25 @@ def buscar_historico_recente_bovespa(data):
             
         # Ler arquivo mais recente
         ult_arq_zip = max(unzipped.namelist())
-        file(ult_arq_zip,'wb').write(unzipped.read(ult_arq_zip))
+        caminho_arquivo = CAMINHO_HISTORICO_RECENTE_ACOES_FIIS + ult_arq_zip
+        boto3.client('s3').put_object(Body=unzipped.read(ult_arq_zip), Bucket=AWS_STORAGE_BUCKET_NAME, Key=caminho_arquivo)
+#         open(caminho_arquivo,'wb').write(unzipped.read(ult_arq_zip))
         
-        return ult_arq_zip
+#         print caminho_arquivo
+        return caminho_arquivo
             
     except ControlNotFoundError:
         raise ValueError(u'Não encontrou os controles')
 
-def processar_historico_recente_bovespa(nome_arquivo_hist):
+def processar_historico_recente_bovespa(arquivo):
     """
     Processa o arquivo com o histórico recente da bovespa
     
-    Parâmetros: Nome do arquivo
+    Parâmetros: Arquivo a ser analisado
     """
     try:
-        tree = etree.parse(open(nome_arquivo_hist))
+        dados_arquivo = arquivo['Body']
+        tree = etree.parse(dados_arquivo)
         with transaction.atomic():
             namespace = '{urn:bvmf.217.01.xsd}'
             if len(tree.findall('.//%sPricRpt' % namespace)) == 0:
@@ -103,3 +114,72 @@ def processar_historico_recente_bovespa(nome_arquivo_hist):
 #                         print ticker, hist.data
     except:
         raise
+    
+def ler_serie_historica_anual_bovespa(nome_arquivo, mostrar_log=True):
+    """
+    Lê série histórica anual de documento da Bovespa
+    
+    Parâmetros: Nome do arquivo
+                Deve mostrar log?
+    """
+    # Carregar FIIs disponíveis
+    fiis_lista = FII.objects.all()
+    
+    # Carregar ações
+    acoes_lista = list(Acao.objects.all())
+    
+    content = nome_arquivo.readlines()
+    for line in content[1:len(content)-1]:
+        data = datetime.date(int(line[2:6]), int(line[6:8]), int(line[8:10]))
+        valor = Decimal(line[108:119] + '.' + line[119:121])
+        ticker = line[12:24].strip()
+        if ticker in [fii.ticker for fii in fiis_lista]:
+            _, criado = HistoricoFII.objects.update_or_create(fii=[fii for fii in fiis_lista if fii.ticker == ticker][0], data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+            if criado and mostrar_log:
+                print ticker, 'em', data, 'criado'
+        elif line[39:41] == 'ON' or (line[39:41] == 'PN'):
+            if len(ticker) == 5 and int(ticker[4]) in [3,4,5,6,7,8]:
+#                     print line[12:24], line[39:49]
+                if ticker in [acao.ticker for acao in acoes_lista]:
+                    _, criado = HistoricoAcao.objects.update_or_create(acao=[acao for acao in acoes_lista if acao.ticker == ticker][0], data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+                    if criado and mostrar_log:
+                        print ticker, 'em', data, 'criado (Histórico)'
+                else:
+                    empresa_existe = False
+                    if ticker[0:4] in [acao.ticker for acao in acoes_lista]:
+                        empresa_existe = True
+                        empresa = [acao.empresa for acao in acoes_lista if acao.ticker[0:4] == ticker[0:4]][0]
+                        break
+                    if not empresa_existe:
+                        empresa = Empresa(nome=line[27:39].strip(), nome_pregao=line[27:39].strip())
+                        empresa.save()
+                    acao = Acao(ticker=ticker, empresa=empresa, tipo=verificar_tipo_acao(ticker))
+                    acao.save()
+                    _, criado = HistoricoAcao.objects.update_or_create(acao=acao, data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+                    if mostrar_log:
+                        print ticker, 'em', data, 'criado (TICKER)'
+                        
+                    acoes_lista.append(acao)
+        elif line[39:42] == 'UNT':
+            if len(ticker) == 6 and ticker[4:6] == '11':
+                if ticker in [acao.ticker for acao in acoes_lista]:
+                    _, criado = HistoricoAcao.objects.update_or_create(acao=[acao for acao in acoes_lista if acao.ticker == ticker][0], data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+                    if criado and mostrar_log:
+                        print ticker, 'em', data, 'criado (Histórico)'
+                else:
+                    empresa_existe = False
+                    if ticker[0:4] in [acao.ticker for acao in acoes_lista]:
+                        empresa_existe = True
+                        empresa = [acao.empresa for acao in acoes_lista if acao.ticker[0:4] == ticker[0:4]][0]
+                        break
+                    if not empresa_existe:
+                        empresa = Empresa(nome=line[27:39].strip(), nome_pregao=line[27:39].strip())
+                        empresa.save()
+                    acao = Acao(ticker=ticker, empresa=empresa, tipo=verificar_tipo_acao(ticker))
+                    acao.save()
+                    _, criado = HistoricoAcao.objects.update_or_create(acao=acao, data=data, defaults={'preco_unitario':valor, 'oficial_bovespa': True})
+                    if mostrar_log:
+                        print ticker, 'em', data, 'criado (TICKER)'
+
+                    acoes_lista.append(acao)
+    

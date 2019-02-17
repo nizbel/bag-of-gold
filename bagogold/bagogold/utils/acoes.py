@@ -384,13 +384,14 @@ def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
 				Destinação ('B' ou 'T')
     Retorno: Quantidade provisionada no dia
     """
-    operacoes = OperacaoAcao.objects.filter(investidor=investidor, destinacao=destinacao, data__lte=dia).annotate(acao_ticker=F('acao__ticker')).order_by('data')
+    operacoes = OperacaoAcao.objects.filter(investidor=investidor, destinacao=destinacao, data__lte=dia).annotate(acao_ticker=F('acao__ticker')).order_by('data') \
+        .prefetch_related('usoproventosoperacaoacao_set')
     
     # Remover valores repetidos
 #     acoes = list(set(operacoes.values_list('acao', flat=True)))
 
     proventos = Provento.objects.filter(acao__in=list(set(operacoes.values_list('acao', flat=True))), data_pagamento__lte=dia).annotate(acao_ticker=F('acao__ticker')) \
-        .annotate(data=F('data_ex')).order_by('data')
+        .annotate(data=F('data_ex')).order_by('data').prefetch_related('acaoprovento_set')
      
     lista_conjunta = sorted(chain(proventos, operacoes),
                             key=attrgetter('data'))

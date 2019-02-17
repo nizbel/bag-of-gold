@@ -16,6 +16,7 @@ from bagogold.bagogold.utils.taxas_indexacao import \
     calcular_valor_atualizado_com_taxa_prefixado
 from bagogold.lci_lca.models import OperacaoLetraCredito, \
     OperacaoVendaLetraCredito, CheckpointLetraCredito, LetraCredito
+from bagogold.bagogold.forms import operacao_acao
 
 
 def calcular_valor_venda_lci_lca(operacao_venda, arredondar=True, valor_liquido=False):
@@ -56,7 +57,7 @@ def calcular_valor_venda_lci_lca(operacao_venda, arredondar=True, valor_liquido=
 #     # Calcular
 #     return calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao_venda.quantidade, operacao_venda.porcentagem()).quantize(Decimal('.01'), ROUND_DOWN)
 
-def calcular_valor_operacao_lci_lca_ate_dia(operacao, dia=datetime.date.today(), arredondar=True, valor_liquido=False):
+def calcular_valor_operacao_lci_lca_ate_dia(operacao, dia=None, arredondar=True, valor_liquido=False):
     """
     Calcula o valor de uma operação de compra em LCI/LCA até dia especificado
     
@@ -66,6 +67,10 @@ def calcular_valor_operacao_lci_lca_ate_dia(operacao, dia=datetime.date.today(),
                 Levar em consideração impostos (IOF e IR)?
     Resultado: Valor em reais da venda
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     if operacao.tipo_operacao != 'C':
         raise ValueError('Apenas para operações de compra')
     # Calcular limitado ao vencimento da LCI/LCA
@@ -147,7 +152,7 @@ def calcular_valor_atualizado_operacao_ate_dia(valor, data_inicial, data_final, 
         else:
             return Decimal(valor)
 
-def calcular_valor_lci_lca_ate_dia(investidor, dia=datetime.date.today(), valor_liquido=False):
+def calcular_valor_lci_lca_ate_dia(investidor, dia=None, valor_liquido=False):
     """ 
     Calcula o valor das letras de crédito no dia determinado
     
@@ -156,6 +161,10 @@ def calcular_valor_lci_lca_ate_dia(investidor, dia=datetime.date.today(), valor_
                 Deve considerar IOF e IR?
     Retorno: Valor de cada letra de crédito na data escolhida {id_letra: valor_na_data, }
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
 #     # Definir vendas do investidor
 #     vendas = OperacaoVendaLetraCredito.objects.filter(operacao_compra__investidor=investidor, operacao_venda__investidor=investidor, operacao_compra__data__lte=dia,
 #                                                                              operacao_venda__data__lte=dia).values('operacao_compra').annotate(soma_venda=Sum('operacao_venda__quantidade'))
@@ -213,53 +222,37 @@ def calcular_valor_lci_lca_ate_dia_por_divisao(dia, divisao_id):
     """
     if not DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).exists():
         return {}
-    
-    operacoes = list(DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id).annotate(data=F('operacao__data')).exclude(data__isnull=True) \
-                     .annotate(atual=F('quantidade')).annotate(tipo_operacao=F('operacao__tipo_operacao')).annotate(letra_credito_id=F('operacao__letra_credito')) \
-                     .select_related('operacao').order_by('-tipo_operacao', 'data'))
      
-    # Pegar data inicial
-    data_inicial = operacoes[0].data
-     
-    letras_credito = {}
-    for operacao in operacoes:
-        # Processar operações
-        if operacao.letra_credito_id not in letras_credito.keys():
-            letras_credito[operacao.letra_credito_id] = 0
-                 
-        # Vendas
-        if operacao.tipo_operacao == 'V':
-            # Remover quantidade da operação de compra
-            operacao_compra_id = operacao.operacao.operacao_compra_relacionada().id
-            for operacao_c in operacoes:
-                if (operacao_c.operacao_id == operacao_compra_id):
-#                     operacao.atual = DivisaoOperacaoLCI_LCA.objects.get(divisao__id=divisao_id, operacao=operacao).quantidade
-                    operacao_c.atual -= operacao.atual
-                    break
-#                 
-    # Remover operações de venda e operações de compra totalmente vendidas
-    operacoes = [operacao for operacao in operacoes if operacao.tipo_operacao == 'C' and operacao.atual > 0]
-     
-    # Calcular o valor atualizado do patrimonio
-    historico = HistoricoTaxaDI.objects.filter(data__range=[data_inicial, dia])
-     
-    for operacao in operacoes:
-        taxas_dos_dias = dict(historico.filter(data__range=[operacao.data, dia]).values('taxa').annotate(qtd_dias=Count('taxa')).values_list('taxa', 'qtd_dias'))
-        operacao.atual = calcular_valor_atualizado_com_taxas_di(taxas_dos_dias, operacao.atual, operacao.operacao.porcentagem())
-        # Arredondar valores
-        str_auxiliar = str(operacao.atual.quantize(Decimal('.0001')))
-        operacao.atual = Decimal(str_auxiliar[:len(str_auxiliar)-2])
-             
-    # Preencher os valores nas letras de crédito
-    for letra_credito_id in letras_credito.keys():
-        letras_credito[letra_credito_id] += sum([operacao.atual for operacao in operacoes if operacao.letra_credito_id == letra_credito_id])
+    compras_cdb_rdb = dict(DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id, operacao__tipo_operacao='C') \
+                           .values_list('operacao', 'quantidade'))
          
-        if letras_credito[letra_credito_id] == 0:
-            del letras_credito[letra_credito_id]
+    vendas_cdb_rdb = dict(DivisaoOperacaoLCI_LCA.objects.filter(operacao__data__lte=dia, divisao__id=divisao_id, operacao__tipo_operacao='V') \
+                          .annotate(compra=F('operacao__operacao_venda__operacao_compra')).values('compra').annotate(qtd_total=Sum('quantidade')) \
+                          .values_list('compra', 'qtd_total'))
+                                      
+    operacoes_cdb_rdb = { k: compras_cdb_rdb.get(k, 0) - vendas_cdb_rdb.get(k, 0) for k in set(compras_cdb_rdb) | set(vendas_cdb_rdb) \
+               if compras_cdb_rdb.get(k, 0) - vendas_cdb_rdb.get(k, 0) > 0}
+        
+    # Verificar se não há mais operações vigentes na divisão
+    if not operacoes_cdb_rdb.keys():
+        return {}
+      
+    # Buscar operações não totalmente vendidas
+    operacoes = DivisaoOperacaoLCI_LCA.objects.filter(operacao__id__in=operacoes_cdb_rdb.keys(), divisao__id=divisao_id).annotate(letra_credito=F('operacao__letra_credito')) \
+        .select_related('operacao').order_by('operacao__data').prefetch_related('operacao__letra_credito__historicovencimentoletracredito_set', 'operacao__letra_credito__historicoporcentagemletracredito_set')
+     
+    for operacao in operacoes:
+        operacao.atual = calcular_valor_op_lci_lca_ate_dia_por_divisao(operacao, dia, True)
+         
+    letras_credito = {}
+     
+    # Preencher os valores nos CDB/RDB
+    for investimento in list(set(operacoes.values_list('letra_credito', flat=True))):
+        letras_credito[investimento] = sum([operacao.atual for operacao in operacoes if operacao.letra_credito == investimento])
     
     return letras_credito
 
-def calcular_valor_um_lci_lca_ate_dia_por_divisao(lci_lca, divisao_id, dia=datetime.date.today()):
+def calcular_valor_um_lci_lca_ate_dia_por_divisao(lci_lca, divisao_id, dia=None):
     """ 
     Calcula o valor total de um LCI/LCA da divisão no dia determinado
     
@@ -268,6 +261,10 @@ def calcular_valor_um_lci_lca_ate_dia_por_divisao(lci_lca, divisao_id, dia=datet
                 Data final
     Retorno: Valor atualizado do LCI/LCA na data
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     valor_atualizado = 0
     # Buscar checkpoints de divisão para o LCI/LCA
     for checkpoint in CheckpointDivisaoLCI_LCA.objects.filter(divisao_operacao__operacao__letra_credito=lci_lca, ano=dia.year-1, divisao_operacao__divisao__id=divisao_id):
@@ -300,7 +297,7 @@ def calcular_valor_um_lci_lca_ate_dia_por_divisao(lci_lca, divisao_id, dia=datet
     
     return valor_atualizado
 
-def calcular_valor_op_lci_lca_ate_dia_por_divisao(divisao_operacao, dia=datetime.date.today(), arredondar=True):
+def calcular_valor_op_lci_lca_ate_dia_por_divisao(divisao_operacao, dia=None, arredondar=True):
     """ 
     Calcula o valor de uma operação em LCI/LCA para uma divisão divisão no dia determinado
     
@@ -308,6 +305,10 @@ def calcular_valor_op_lci_lca_ate_dia_por_divisao(divisao_operacao, dia=datetime
                 Data final
     Retorno: Valor atualizado da operação na data
     """
+    # Preparar data
+    if dia == None:
+        dia = datetime.date.today()
+        
     # Adicionar informação de taxa para evitar buscas excessivas na base
     divisao_operacao.operacao.taxa = divisao_operacao.operacao.porcentagem()
     
@@ -337,7 +338,7 @@ def calcular_valor_op_lci_lca_ate_dia_por_divisao(divisao_operacao, dia=datetime
         return valor_atualizado.quantize(Decimal('.01'), ROUND_DOWN)
     return valor_atualizado
 
-def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
+def buscar_operacoes_vigentes_ate_data(investidor, data=None):
     """
     Calcula o valor das operações em LCI/LCA vigentes até data especificada
     
@@ -345,6 +346,10 @@ def buscar_operacoes_vigentes_ate_data(investidor, data=datetime.date.today()):
                 Data
     Retorno: Lista de operações vigentes, adicionando os campos qtd_disponivel_venda e qtd_vendida
     """
+    # Preparar data
+    if data == None:
+        data = datetime.date.today()
+        
     operacoes = OperacaoLetraCredito.objects.filter(investidor=investidor, tipo_operacao='C', data__lte=data).exclude(data__isnull=True) \
         .annotate(qtd_vendida=Coalesce(Sum(Case(When(operacao_compra__operacao_venda__data__lte=data, then='operacao_compra__operacao_venda__quantidade'))), 0)).exclude(quantidade=F('qtd_vendida')) \
         .annotate(qtd_disponivel_venda=(F('quantidade') - F('qtd_vendida'))).select_related('letra_credito')
