@@ -12,7 +12,7 @@ from bagogold.bagogold.utils.taxas_indexacao import buscar_valores_diarios_di
 
 
 class Command(BaseCommand):
-    help = 'Preenche histórico para a taxa DI'
+    help = 'Preenche histÃ³rico para a taxa DI'
 
     def add_arguments(self, parser):
         parser.add_argument('-g', '--geral', action='store_true', dest='geral')
@@ -23,12 +23,12 @@ class Command(BaseCommand):
             # 3 tentativas
             while (num_tentativa <= 3):
                 try:
-                    # Busca todas as datas se geral, se não, busca último ano
+                    # Busca todas as datas se geral, se nÃ£o, busca Ãºltimo ano
                     if options['geral']:
                         buscar_valores_diarios_di()
                     else:
                         buscar_valores_diarios_di(datetime.date.today() - datetime.timedelta(days=365))
-                # Erro 530 indica que há o máximo de usuários possível no FTP, tentar novamente mais tarde
+                # Erro 530 indica que hÃ¡ o mÃ¡ximo de usuÃ¡rios possÃ­vel no FTP, tentar novamente mais tarde
                 except ftplib.error_perm, err:
                     if not err[0].startswith('530'):
                         raise
@@ -39,5 +39,5 @@ class Command(BaseCommand):
             if settings.ENV == 'DEV':
                 print traceback.format_exc()
             elif settings.ENV == 'PROD':
-                mail_admins(u'Erro em Preencher histórico do DI', traceback.format_exc().decode('utf-8'))
+                mail_admins(u'Erro em Preencher histÃ³rico do DI', traceback.format_exc().decode('utf-8'))
 
