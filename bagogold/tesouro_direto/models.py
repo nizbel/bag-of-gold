@@ -73,9 +73,12 @@ class Titulo (models.Model):
             return True
         return False
         
-    def valor_vencimento(self, data=datetime.date.today()):
+    def valor_vencimento(self, data=None):
         from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_acumulado_ipca, \
             calcular_valor_acumulado_selic
+        
+        if data == None:
+            data = datetime.date.today()
         
         if self.tipo in self.TIPO_LETRA_TESOURO:
             return 1000
