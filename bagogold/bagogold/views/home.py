@@ -266,9 +266,19 @@ def detalhar_acumulados_mensais(request):
     taxas['taxa_media_12_meses'] = sum([acumulado for _, _, acumulado in acumulados_mensais]) / (data_fim_periodo - data_atual.date()).days / 24 / 3600
     
     if taxas['taxa_media_12_meses'] != 0:
+        # Testar se valor é negativo
+        negativo = False
+        if (taxas['taxa_media_12_meses'] < 0):
+            negativo = True
+            taxas['taxa_media_12_meses'] *= -1
+        
+        print taxas['taxa_media_12_meses'], ('%e' % taxas['taxa_media_12_meses']), ('%e' % taxas['taxa_media_12_meses']).partition('-')[2]
         indice_primeiro_numero_valido = int(('%e' % taxas['taxa_media_12_meses']).partition('-')[2])
         if str(taxas['taxa_media_12_meses']).index('.') + indice_primeiro_numero_valido + 2 <= len(str(taxas['taxa_media_12_meses'])):
             taxas['taxa_media_12_meses'] = taxas['taxa_media_12_meses'].quantize(Decimal('0.' + '1'.zfill((indice_primeiro_numero_valido)+2)))
+        
+        if negativo:
+            taxas['taxa_media_12_meses'] *= -1
 
 #     velocidades = list()
 #     for mes in range(10):

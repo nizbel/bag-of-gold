@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% load staticfiles %}
+{% load misc %}
 
 {% block extra_head %}
 <link href={% static "assets/global/plugins/bootstrap-datepicker/css/bootstrap-datepicker3.min.css" %} rel="stylesheet" type="text/css" />
@@ -83,12 +84,14 @@
                         </h4>
                     </div>
                     <div class="text-center font-yellow-crusta">
-                        <p class="lead">
-                        	<span class="text-left">
+                        <p class="row lead">
+                        	<span class="col-sm-1 text-right px-0">
                                 <a class="font-yellow-crusta hidden" href="javascript:;" onclick="diminuirEscala();" id="btnDiminuir"><i class="fa fa-arrow-left"></i></a>
                             </span>
-                            <strong>R$ <span data-counter="counterup" id="taxa_media" data-value="{{ taxas.taxa_media_12_meses }}">0</span>/<span id="escalaAtual">segundo</span></strong>
-                        	<span class="text-right">
+                            <span class="col-sm-10">
+                            	<strong>R$ {% if taxas.taxa_media_12_meses < 0 %}-{% endif %}<span data-counter="counterup" id="taxa_media" data-value="{{ taxas.taxa_media_12_meses|template_abs }}">0</span>/<span id="escalaAtual">segundo</span></strong>
+                        	</span>
+                        	<span class="col-sm-1 text-left px-0">
                                 <a class="font-yellow-crusta" href="javascript:;" onclick="aumentarEscala();" id="btnAumentar"><i class="fa fa-arrow-right"></i></a>
                             </span>
                         </p>
@@ -154,17 +157,28 @@
 <script src={% static "assets/global/plugins/bootstrap-datepicker/locales/bootstrap-datepicker.pt-BR.min.js" %} type="text/javascript"></script>
 <script type="text/javascript">
 var escalaAtual = $('#escalaAtual').text();
+var valoresEscala = [$('#taxa_media').attr('data-value')];
 
 function aumentarEscala() {
 	var valor_atual = $('#taxa_media').attr('data-value');
 	valor_atual = parseFloat(valor_atual.replace(',', '.'));
 	
 	if (escalaAtual == 'segundo') {
-		$('#taxa_media').attr('data-value', String(valor_atual * 3600).replace('.', ','));
+		if (valoresEscala.length >= 2) {
+			$('#taxa_media').attr('data-value', valoresEscala[1]);
+		} else {
+			$('#taxa_media').attr('data-value', manterLimiteDecimais(String(valor_atual * 3600).replace('.', ',')));
+			valoresEscala.push($('#taxa_media').attr('data-value'));
+		}
 		$('#btnDiminuir').removeClass('hidden');
 		escalaAtual = 'hora';
 	} else if (escalaAtual == 'hora') {
-		$('#taxa_media').attr('data-value', String(valor_atual * 24).replace('.', ','));
+		if (valoresEscala.length == 3) {
+			$('#taxa_media').attr('data-value', valoresEscala[2]);
+		} else {
+			$('#taxa_media').attr('data-value', manterLimiteDecimais(String(valor_atual * 24).replace('.', ',')));
+			valoresEscala.push($('#taxa_media').attr('data-value'));
+		}
 		$('#btnAumentar').addClass('hidden');
 		escalaAtual = 'dia';
 	} 
@@ -175,6 +189,52 @@ function aumentarEscala() {
         delay: 10,
         time: 1000
     });
+}
+
+function diminuirEscala() {
+	//var valor_atual = $('#taxa_media').attr('data-value');
+	//valor_atual = parseFloat(valor_atual.replace(',', '.'));
+	
+	if (escalaAtual == 'hora') {
+		//$('#taxa_media').attr('data-value', manterLimiteDecimais(String(valor_atual / 3600).replace('.', ',')));
+		$('#taxa_media').attr('data-value', valoresEscala[0]);
+		$('#btnDiminuir').addClass('hidden');
+		escalaAtual = 'segundo';
+	} else if (escalaAtual == 'dia') {
+		//$('#taxa_media').attr('data-value', manterLimiteDecimais(String(valor_atual / 24).replace('.', ',')));
+		$('#taxa_media').attr('data-value', valoresEscala[1]);
+		$('#btnAumentar').removeClass('hidden');
+		escalaAtual = 'hora';
+	} 
+
+	$('#escalaAtual').text(escalaAtual);
+
+	$('#taxa_media').counterUp({
+        delay: 10,
+        time: 1000
+    });
+}
+
+function manterLimiteDecimais(stringValor) {
+	var maiorQueUm = stringValor.charAt(0) != '0';
+	if (maiorQueUm) {
+		if (stringValor.indexOf(',') > -1) {
+			var partes = stringValor.split(',');
+			var parteDecimal = partes[1];
+			if (parteDecimal.length > 3) {
+				parteDecimal = parteDecimal.substring(0, 3);
+			}
+			stringValor = partes[0] + ',' + parteDecimal;
+		}
+	} else {
+		for (var posicao = stringValor.indexOf(',') + 1; posicao < stringValor.length; posicao++) {
+			if (stringValor.charAt(posicao) != '0') {
+				stringValor = stringValor.substring(0, posicao + 3);
+			}
+		}
+	}
+	
+	return stringValor
 }
 
 $( document ).ready(function() {
