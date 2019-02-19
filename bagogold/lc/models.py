@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models.query import prefetch_related_objects
 from django.urls.base import reverse
 
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
@@ -142,6 +143,7 @@ class OperacaoLetraCambio (models.Model):
 #                     self.guarda_porcentagem = HistoricoPorcentagemLetraCambio.objects.get(data__isnull=True, lc=self.lc_id).porcentagem
                     self.guarda_porcentagem = [historico for historico in self.lc.historicoporcentagemletracambio_set.all() if historico.data == None][0].porcentagem
             elif self.tipo_operacao == 'V':
+                prefetch_related_objects([self.operacao_compra_relacionada()], 'lc__historicoporcentagemletracambio_set')
                 self.guarda_porcentagem = self.operacao_compra_relacionada().porcentagem()
         return self.guarda_porcentagem
     

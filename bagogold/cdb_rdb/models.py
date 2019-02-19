@@ -7,6 +7,7 @@ from django.db import models
 from django.urls.base import reverse
 
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
+from django.db.models.query import prefetch_related_objects
 
 
 class CDB_RDB (models.Model):
@@ -156,6 +157,7 @@ class OperacaoCDB_RDB (models.Model):
 #                     self.guarda_porcentagem = HistoricoPorcentagemCDB_RDB.objects.get(data__isnull=True, cdb_rdb=self.cdb_rdb_id).porcentagem
                     self.guarda_porcentagem = [historico for historico in self.cdb_rdb.historicoporcentagemcdb_rdb_set.all() if historico.data == None][0].porcentagem
             elif self.tipo_operacao == 'V':
+                prefetch_related_objects([self.operacao_compra_relacionada()], 'cdb_rdb__historicoporcentagemcdb_rdb_set')
                 self.guarda_porcentagem = self.operacao_compra_relacionada().porcentagem()
         return self.guarda_porcentagem
     
