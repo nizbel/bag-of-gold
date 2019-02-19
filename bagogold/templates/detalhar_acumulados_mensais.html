@@ -192,16 +192,11 @@ function aumentarEscala() {
 }
 
 function diminuirEscala() {
-	//var valor_atual = $('#taxa_media').attr('data-value');
-	//valor_atual = parseFloat(valor_atual.replace(',', '.'));
-	
 	if (escalaAtual == 'hora') {
-		//$('#taxa_media').attr('data-value', manterLimiteDecimais(String(valor_atual / 3600).replace('.', ',')));
 		$('#taxa_media').attr('data-value', valoresEscala[0]);
 		$('#btnDiminuir').addClass('hidden');
 		escalaAtual = 'segundo';
 	} else if (escalaAtual == 'dia') {
-		//$('#taxa_media').attr('data-value', manterLimiteDecimais(String(valor_atual / 24).replace('.', ',')));
 		$('#taxa_media').attr('data-value', valoresEscala[1]);
 		$('#btnAumentar').removeClass('hidden');
 		escalaAtual = 'hora';

@@ -272,7 +272,6 @@ def detalhar_acumulados_mensais(request):
             negativo = True
             taxas['taxa_media_12_meses'] *= -1
         
-        print taxas['taxa_media_12_meses'], ('%e' % taxas['taxa_media_12_meses']), ('%e' % taxas['taxa_media_12_meses']).partition('-')[2]
         indice_primeiro_numero_valido = int(('%e' % taxas['taxa_media_12_meses']).partition('-')[2])
         if str(taxas['taxa_media_12_meses']).index('.') + indice_primeiro_numero_valido + 2 <= len(str(taxas['taxa_media_12_meses'])):
             taxas['taxa_media_12_meses'] = taxas['taxa_media_12_meses'].quantize(Decimal('0.' + '1'.zfill((indice_primeiro_numero_valido)+2)))
