@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from django.core.validators import MinValueValidator
 from django.db import models
+from django.db.models.query import prefetch_related_objects
 from django.urls.base import reverse
 
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
@@ -129,11 +130,16 @@ class OperacaoLetraCredito (models.Model):
     def porcentagem(self):
         if not hasattr(self, 'guarda_porcentagem'):
             if self.tipo_operacao == 'C':
-                if HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito_id).order_by('-data').exists():
-                    self.guarda_porcentagem = HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito_id).order_by('-data')[0].porcentagem
+#                 if HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito_id).order_by('-data').exists():
+                if len([historico for historico in self.letra_credito.historicoporcentagemletracredito_set.all() if historico.data != None and historico.data <= self.data]) > 0:
+#                     self.guarda_porcentagem = HistoricoPorcentagemLetraCredito.objects.filter(data__lte=self.data, letra_credito=self.letra_credito_id).order_by('-data')[0].porcentagem
+                    self.guarda_porcentagem = sorted([historico for historico in self.letra_credito.historicoporcentagemletracredito_set.all() if historico.data != None and historico.data <= self.data],
+                                 key=lambda x: x.data, reverse=True)[0].porcentagem
                 else:
-                    self.guarda_porcentagem = HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito_id).porcentagem
+#                     self.guarda_porcentagem = HistoricoPorcentagemLetraCredito.objects.get(data__isnull=True, letra_credito=self.letra_credito_id).porcentagem
+                    self.guarda_porcentagem = [historico for historico in self.letra_credito.historicoporcentagemletracredito_set.all() if historico.data == None][0].porcentagem
             elif self.tipo_operacao == 'V':
+                prefetch_related_objects([self.operacao_compra_relacionada()], 'letra_credito__historicoporcentagemletracredito_set')
                 self.guarda_porcentagem = self.operacao_compra_relacionada().porcentagem()
         return self.guarda_porcentagem
     
