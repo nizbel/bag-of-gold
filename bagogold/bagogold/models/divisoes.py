@@ -64,7 +64,7 @@ class Divisao (models.Model):
         
         return min(datas_primeira_operacao)
     
-    def saldo_acoes_bh(self, data=datetime.date.today()):
+    def saldo_acoes_bh(self, data=None):
         from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
         from bagogold.bagogold.utils.acoes import \
             calcular_poupanca_prov_acao_ate_dia_por_divisao
@@ -72,6 +72,9 @@ class Divisao (models.Model):
         Calcula o saldo de operações de ações Buy and Hold de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
+        if data == None:
+            data = datetime.date.today()
+            
         for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='B', operacao__data__lte=data).select_related('operacao'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
@@ -91,11 +94,14 @@ class Divisao (models.Model):
             
         return saldo
     
-    def saldo_acoes_trade(self, data=datetime.date.today()):
+    def saldo_acoes_trade(self, data=None):
         """
         Calcula o saldo de operações de ações para trade de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
+        if data == None:
+            data = datetime.date.today()
+            
         for operacao_divisao in DivisaoOperacaoAcao.objects.filter(divisao=self, operacao__destinacao='T', operacao__data__lte=data).select_related('operacao'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
@@ -110,7 +116,7 @@ class Divisao (models.Model):
             
         return saldo
     
-    def saldo_cdb_rdb(self, data=datetime.date.today()):
+    def saldo_cdb_rdb(self, data=None):
         from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_di, \
             calcular_valor_atualizado_com_taxa_prefixado
         from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
@@ -119,7 +125,10 @@ class Divisao (models.Model):
         Calcula o saldo de operações de CDB/RDB de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
+        if data == None:
+            data = datetime.date.today()
         historico_di = HistoricoTaxaDI.objects.all()
+        
         # Computar compras
         saldo -= (DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
         for venda_divisao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V') \
@@ -153,10 +162,13 @@ class Divisao (models.Model):
         
         return saldo
     
-    def saldo_cri_cra(self, data=datetime.date.today()):
+    def saldo_cri_cra(self, data=None):
         """
         Calcula o saldo de operações de CRI/CRA de uma divisão (dinheiro livre)
         """
+        if data == None:
+            data = datetime.date.today()
+            
         saldo = DivisaoOperacaoCRI_CRA.objects.filter(divisao=self, operacao__data__lte=data) \
         .annotate(total=Case(When(operacao__tipo_operacao='C', then=-1 * (F('quantidade') * F('operacao__preco_unitario') + F('operacao__taxa') * (F('quantidade') / F('operacao__quantidade')))),
                             When(operacao__tipo_operacao='V', then=F('quantidade') * F('operacao__preco_unitario') - F('operacao__taxa') * (F('quantidade') / F('operacao__quantidade'))),
@@ -170,10 +182,13 @@ class Divisao (models.Model):
             
         return saldo
     
-    def saldo_criptomoeda(self, data=datetime.date.today()):
+    def saldo_criptomoeda(self, data=None):
         """
         Calcula o saldo de operações em Criptomoedas de uma divisão (dinheiro livre)
         """
+        if data == None:
+            data = datetime.date.today()
+            
         # Pegar operações que não tenham criptomoeda como moeda utilizada, apenas reais
         # Operações sem taxa
         saldo = DivisaoOperacaoCriptomoeda.objects.filter(divisao=self, operacao__data__lte=data, operacao__operacaocriptomoedamoeda__isnull=True,
@@ -209,10 +224,13 @@ class Divisao (models.Model):
             
         return saldo
     
-    def saldo_debentures(self, data=datetime.date.today()):
+    def saldo_debentures(self, data=None):
         """
         Calcula o saldo de operações de Debêntures de uma divisão (dinheiro livre)
         """
+        if data == None:
+            data = datetime.date.today()
+            
         saldo = DivisaoOperacaoDebenture.objects.filter(divisao=self, operacao__data__lte=data) \
         .annotate(total=Case(When(operacao__tipo_operacao='C', then=-1 * (F('quantidade') * F('operacao__preco_unitario') + F('operacao__taxa') * (F('quantidade') / F('operacao__quantidade')))),
                             When(operacao__tipo_operacao='V', then=F('quantidade') * F('operacao__preco_unitario') - F('operacao__taxa') * (F('quantidade') / F('operacao__quantidade'))),
@@ -226,13 +244,16 @@ class Divisao (models.Model):
             
         return saldo
     
-    def saldo_fii(self, data=datetime.date.today()):
+    def saldo_fii(self, data=None):
         from bagogold.fii.utils import \
             calcular_poupanca_prov_fii_ate_dia_por_divisao
         """
         Calcula o saldo de operações de FII de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
+        if data == None:
+            data = datetime.date.today()
+            
         for operacao_divisao in DivisaoOperacaoFII.objects.filter(divisao=self, operacao__data__lte=data).select_related('operacao'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
@@ -249,11 +270,14 @@ class Divisao (models.Model):
         
         return saldo
     
-    def saldo_fundo_investimento(self, data=datetime.date.today()):
+    def saldo_fundo_investimento(self, data=None):
         """
         Calcula o saldo de operações de fundo de investimento de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
+        if data == None:
+            data = datetime.date.today()
+            
         for operacao_divisao in DivisaoOperacaoFundoInvestimento.objects.filter(divisao=self, operacao__data__lte=data).annotate(tipo_operacao=F('operacao__tipo_operacao')):
             if operacao_divisao.tipo_operacao == 'C':
                 saldo -= operacao_divisao.quantidade 
@@ -266,7 +290,7 @@ class Divisao (models.Model):
         
         return saldo
     
-    def saldo_lc(self, data=datetime.date.today()):
+    def saldo_lc(self, data=None):
         from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_di, \
             calcular_valor_atualizado_com_taxa_prefixado
         from bagogold.bagogold.utils.misc import qtd_dias_uteis_no_periodo, calcular_iof_e_ir_longo_prazo
@@ -276,6 +300,8 @@ class Divisao (models.Model):
         Calcula o saldo de operações de Letra de Câmbio de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
+        if data == None:
+            data = datetime.date.today()
         historico_di = HistoricoTaxaDI.objects.all()
         
         # Computar compras
@@ -312,12 +338,14 @@ class Divisao (models.Model):
         
         return saldo
     
-    def saldo_lci_lca(self, data=datetime.date.today()):
+    def saldo_lci_lca(self, data=None):
         from bagogold.bagogold.utils.taxas_indexacao import calcular_valor_atualizado_com_taxas_di
         """
         Calcula o saldo de operações de Letra de Crédito de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
+        if data == None:
+            data = datetime.date.today()
         historico_di = HistoricoTaxaDI.objects.all()
         
         # Computar compras
@@ -341,11 +369,13 @@ class Divisao (models.Model):
         
         return saldo
     
-    def saldo_outros_invest(self, data=datetime.date.today()):
+    def saldo_outros_invest(self, data=None):
         """
         Calcula o saldo de outros investimentos de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
+        if data == None:
+            data = datetime.date.today()
 #         saldo -= (DivisaoInvestimento.objects.filter(divisao=self, investimento__data_lte=data).aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
         
         investimentos = DivisaoInvestimento.objects.filter(divisao=self, investimento__data__lte=data, 
@@ -380,11 +410,14 @@ class Divisao (models.Model):
 
         return saldo
     
-    def saldo_td(self, data=datetime.date.today()):
+    def saldo_td(self, data=None):
         """
         Calcula o saldo de operações de Tesouro Direto de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
+        if data == None:
+            data = datetime.date.today()
+            
         for operacao_divisao in DivisaoOperacaoTD.objects.filter(divisao=self, operacao__data__lte=data).select_related('operacao'):
             operacao = operacao_divisao.operacao
             if operacao.tipo_operacao == 'C':
@@ -402,11 +435,13 @@ class Divisao (models.Model):
         return saldo
     
     
-    def saldo(self, data=datetime.date.today()):
+    def saldo(self, data=None):
         """
         Calcula o saldo total restante de uma divisão (dinheiro livre)
         """
         saldo = Decimal(0)
+        if data == None:
+            data = datetime.date.today()
         # Ações
         # Buy and hold
         saldo += self.saldo_acoes_bh(data=data)
