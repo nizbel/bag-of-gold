@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import datetime
 from decimal import Decimal
+from math import floor
 
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.db.models.aggregates import Count, Sum
 from django.urls.base import reverse
@@ -58,7 +60,7 @@ class ProventoOficialManager(models.Manager):
     def get_queryset(self):
         return super(ProventoOficialManager, self).get_queryset().filter(oficial_bovespa=True)
     
-class Provento (models.Model):
+class ProventoAcao (models.Model):
     ESCOLHAS_TIPO_PROVENTO_ACAO=(('A', "Ações"),
                             ('D', "Dividendos"),
                             ('J', "Juros sobre capital próprio"),)
@@ -222,4 +224,82 @@ class TaxaCustodiaAcao (models.Model):
     mes_vigencia = models.IntegerField(u'Mês de início de vigência')
     investidor = models.ForeignKey('Investidor')
     
+# Eventos
+class EventoAcao (models.Model):
+    acao = models.ForeignKey('Acao')
+    data = models.DateField(u'Data')
+    
+    class Meta():
+        abstract = True
+        
+class EventoAlteracaoAcao (EventoAcao):
+    nova_acao = models.ForeignKey('Acao', related_name='alteracao')
+    
+    class Meta:
+        unique_together=(('acao',))
+    
+class EventoAgrupamentoAcao (EventoAcao):
+    proporcao = models.DecimalField(u'Proporção de agrupamento', max_digits=13, decimal_places=12, validators=[MaxValueValidator(Decimal('0.999999999999'))])
+    valor_fracao = models.DecimalField(u'Valor para as frações', max_digits=6, decimal_places=2, default=Decimal('0.00'))
+    data_pgto_fracao = models.DateField(u'Data de pagamento para as frações', blank=True, null=True)
+    
+    class Meta:
+        unique_together=('acao', 'data')
+        
+    def qtd_apos(self, qtd_inicial):
+        return Decimal(floor(qtd_inicial * self.proporcao))
+    
+    def preco_medio_apos(self, preco_medio_inicial, qtd_inicial):
+        qtd_apos = self.qtd_apos(qtd_inicial)
+        return 0 if qtd_apos == 0 else preco_medio_inicial * qtd_inicial / qtd_apos
+    
+class EventoDesdobramentoAcao (EventoAcao):
+    proporcao = models.DecimalField(u'Proporção de desdobramento', max_digits=16, decimal_places=12, validators=[MinValueValidator(Decimal('1.000000000001'))])
+    valor_fracao = models.DecimalField(u'Valor para as frações', max_digits=6, decimal_places=2, default=Decimal('0.00'))
+    data_pgto_fracao = models.DateField(u'Data de pagamento para as frações', blank=True, null=True)
+    
+    class Meta:
+        unique_together=('acao', 'data')
+        
+    def qtd_apos(self, qtd_inicial):
+        return Decimal(floor(qtd_inicial * self.proporcao))
+    
+    def preco_medio_apos(self, preco_medio_inicial, qtd_inicial):
+        qtd_apos = self.qtd_apos(qtd_inicial)
+        return 0 if qtd_apos == 0 else preco_medio_inicial * qtd_inicial / qtd_apos
+    
+class EventoBonusAcao (EventoAcao):
+    proporcao = models.DecimalField(u'Proporção de desdobramento', max_digits=16, decimal_places=12, validators=[MinValueValidator(Decimal('1.000000000001'))])
+    valor_fracao = models.DecimalField(u'Valor para as frações', max_digits=6, decimal_places=2, default=Decimal('0.00'))
+    data_pgto_fracao = models.DateField(u'Data de pagamento para as frações', blank=True, null=True)
+    preco_unitario_acao = models.DecimalField(u'Preço unitário por ação', blank=True, null=True)
+    
+    class Meta:
+        unique_together=('acao', 'data')
+        
+    def qtd_apos(self, qtd_inicial):
+        return Decimal(floor(qtd_inicial * self.proporcao))
+    
+    def preco_medio_apos(self, preco_medio_inicial, qtd_inicial):
+        qtd_apos = self.qtd_apos(qtd_inicial)
+        return 0 if qtd_apos == 0 else preco_medio_inicial * qtd_inicial / qtd_apos
+    
+# Checkpoints
+class CheckpointFII(models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    fii = models.ForeignKey('FII')
+    investidor = models.ForeignKey('bagogold.Investidor')
+    quantidade = models.IntegerField(u'Quantidade no ano', validators=[MinValueValidator(0)])
+    preco_medio = models.DecimalField(u'Preço médio', max_digits=11, decimal_places=4)
+    
+    class Meta:
+        unique_together=('fii', 'ano', 'investidor')
+        
+class CheckpointProventosFII(models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    investidor = models.ForeignKey('bagogold.Investidor')
+    valor = models.DecimalField(u'Valor da poupança de proventos', max_digits=22, decimal_places=16)
+        
+    class Meta:
+        unique_together=('ano', 'investidor')
     
