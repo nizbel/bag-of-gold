@@ -20,69 +20,71 @@ from django.test import TestCase
 import datetime
 
 class CalcularQuantidadesFIITestCase(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
+        super(CalcularQuantidadesFIITestCase, cls).setUpClass()
         user = User.objects.create(username='test', password='test')
         # Guardar investidor
-        self.investidor = user.investidor
+        cls.investidor = user.investidor
         # Guardar divisão geral
-        self.divisao_geral = Divisao.objects.get(nome='Geral')
+        cls.divisao_geral = Divisao.objects.get(nome='Geral')
         
         empresa_1 = Empresa.objects.create(nome='BA', nome_pregao='FII BA')
-        self.fii_1 = FII.objects.create(ticker='BAPO11', empresa=empresa_1)
+        cls.fii_1 = FII.objects.create(ticker='BAPO11', empresa=empresa_1)
         empresa_2 = Empresa.objects.create(nome='BB', nome_pregao='FII BB')
-        self.fii_2 = FII.objects.create(ticker='BBPO11', empresa=empresa_2)
+        cls.fii_2 = FII.objects.create(ticker='BBPO11', empresa=empresa_2)
         empresa_3 = Empresa.objects.create(nome='BC', nome_pregao='FII BC')
-        self.fii_3 = FII.objects.create(ticker='BCPO11', empresa=empresa_3)
+        cls.fii_3 = FII.objects.create(ticker='BCPO11', empresa=empresa_3)
         empresa_4 = Empresa.objects.create(nome='BD', nome_pregao='FII BD')
-        self.fii_4 = FII.objects.create(ticker='BDPO11', empresa=empresa_4)
+        cls.fii_4 = FII.objects.create(ticker='BDPO11', empresa=empresa_4)
         empresa_5 = Empresa.objects.create(nome='BE', nome_pregao='FII BE')
-        self.fii_5 = FII.objects.create(ticker='BEPO11', empresa=empresa_5)
+        cls.fii_5 = FII.objects.create(ticker='BEPO11', empresa=empresa_5)
         empresa_6 = Empresa.objects.create(nome='BF', nome_pregao='FII BF')
-        self.fii_6 = FII.objects.create(ticker='BFPO11', empresa=empresa_6)
+        cls.fii_6 = FII.objects.create(ticker='BFPO11', empresa=empresa_6)
         
         # Desdobramento
-        OperacaoFII.objects.create(fii=self.fii_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=43, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=cls.fii_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=43, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
         # Agrupamento
-        OperacaoFII.objects.create(fii=self.fii_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=430, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=cls.fii_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=430, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
         # Desdobramento + Incorporação
-        OperacaoFII.objects.create(fii=self.fii_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=37, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
-        OperacaoFII.objects.create(fii=self.fii_4, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=271, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=cls.fii_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=37, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=cls.fii_4, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=271, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
         
-        OperacaoFII.objects.create(fii=self.fii_4, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 11, 11), quantidade=40, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
-        OperacaoFII.objects.create(fii=self.fii_4, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 11, 12), quantidade=50, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=cls.fii_4, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 11, 11), quantidade=40, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=cls.fii_4, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 11, 12), quantidade=50, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
         
         # Operação de venda
-        OperacaoFII.objects.create(fii=self.fii_6, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=20, preco_unitario=Decimal('90'), corretagem=100, emolumentos=100)
-        OperacaoFII.objects.create(fii=self.fii_6, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 11, 12), quantidade=20, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=cls.fii_6, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=20, preco_unitario=Decimal('90'), corretagem=100, emolumentos=100)
+        OperacaoFII.objects.create(fii=cls.fii_6, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 11, 12), quantidade=20, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
         
         for operacao in OperacaoFII.objects.all():
             DivisaoOperacaoFII.objects.create(divisao=Divisao.objects.get(investidor=user.investidor), operacao=operacao, quantidade=operacao.quantidade)
         
         # Operação extra para testes de divisão
-        operacao_divisao = OperacaoFII.objects.create(fii=self.fii_5, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=50, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
-        self.divisao_teste = Divisao.objects.create(investidor=user.investidor, nome=u'Divisão de teste')
-        DivisaoOperacaoFII.objects.create(divisao=self.divisao_teste, operacao=operacao_divisao, quantidade=operacao_divisao.quantidade)
+        operacao_divisao = OperacaoFII.objects.create(fii=cls.fii_5, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=50, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        cls.divisao_teste = Divisao.objects.create(investidor=user.investidor, nome=u'Divisão de teste')
+        DivisaoOperacaoFII.objects.create(divisao=cls.divisao_teste, operacao=operacao_divisao, quantidade=operacao_divisao.quantidade)
         
-        EventoDesdobramentoFII.objects.create(fii=self.fii_1, data=datetime.date(2017, 6, 3), proporcao=10)
-        EventoAgrupamentoFII.objects.create(fii=self.fii_2, data=datetime.date(2017, 6, 3), proporcao=Decimal('0.1'))
-        EventoDesdobramentoFII.objects.create(fii=self.fii_3, data=datetime.date(2017, 6, 3), proporcao=Decimal('9.3674360842'))
-        EventoIncorporacaoFII.objects.create(fii=self.fii_3, data=datetime.date(2017, 6, 3), novo_fii=self.fii_4)
+        EventoDesdobramentoFII.objects.create(fii=cls.fii_1, data=datetime.date(2017, 6, 3), proporcao=10)
+        EventoAgrupamentoFII.objects.create(fii=cls.fii_2, data=datetime.date(2017, 6, 3), proporcao=Decimal('0.1'))
+        EventoDesdobramentoFII.objects.create(fii=cls.fii_3, data=datetime.date(2017, 6, 3), proporcao=Decimal('9.3674360842'))
+        EventoIncorporacaoFII.objects.create(fii=cls.fii_3, data=datetime.date(2017, 6, 3), novo_fii=cls.fii_4)
         
-        EventoDesdobramentoFII.objects.create(fii=self.fii_5, data=datetime.date(2017, 6, 3), proporcao=10)
+        EventoDesdobramentoFII.objects.create(fii=cls.fii_5, data=datetime.date(2017, 6, 3), proporcao=10)
         
         # Proventos
-        ProventoFII.objects.create(fii=self.fii_1, data_ex=datetime.date(2016, 12, 31), data_pagamento=datetime.date(2017, 1, 14), valor_unitario=Decimal('0.98'),
+        ProventoFII.objects.create(fii=cls.fii_1, data_ex=datetime.date(2016, 12, 31), data_pagamento=datetime.date(2017, 1, 14), valor_unitario=Decimal('0.98'),
                                    tipo_provento='R', oficial_bovespa=True)
-        ProventoFII.objects.create(fii=self.fii_1, data_ex=datetime.date(2017, 1, 31), data_pagamento=datetime.date(2017, 2, 14), valor_unitario=Decimal('9.1'),
+        ProventoFII.objects.create(fii=cls.fii_1, data_ex=datetime.date(2017, 1, 31), data_pagamento=datetime.date(2017, 2, 14), valor_unitario=Decimal('9.1'),
                                    tipo_provento='A', oficial_bovespa=True)
-        ProventoFII.objects.create(fii=self.fii_2, data_ex=datetime.date(2017, 1, 31), data_pagamento=datetime.date(2017, 2, 14), valor_unitario=Decimal('9.8'),
+        ProventoFII.objects.create(fii=cls.fii_2, data_ex=datetime.date(2017, 1, 31), data_pagamento=datetime.date(2017, 2, 14), valor_unitario=Decimal('9.8'),
                                    tipo_provento='R', oficial_bovespa=True)
         
-        ProventoFII.objects.create(fii=self.fii_1, data_ex=datetime.date(2017, 7, 31), data_pagamento=datetime.date(2017, 8, 14), valor_unitario=Decimal('0.98'),
+        ProventoFII.objects.create(fii=cls.fii_1, data_ex=datetime.date(2017, 7, 31), data_pagamento=datetime.date(2017, 8, 14), valor_unitario=Decimal('0.98'),
                                    tipo_provento='R', oficial_bovespa=True)
-        ProventoFII.objects.create(fii=self.fii_1, data_ex=datetime.date(2017, 8, 31), data_pagamento=datetime.date(2017, 9, 14), valor_unitario=Decimal('9.1'),
+        ProventoFII.objects.create(fii=cls.fii_1, data_ex=datetime.date(2017, 8, 31), data_pagamento=datetime.date(2017, 9, 14), valor_unitario=Decimal('9.1'),
                                    tipo_provento='A', oficial_bovespa=True)
-        ProventoFII.objects.create(fii=self.fii_2, data_ex=datetime.date(2017, 8, 31), data_pagamento=datetime.date(2017, 9, 14), valor_unitario=Decimal('9.8'),
+        ProventoFII.objects.create(fii=cls.fii_2, data_ex=datetime.date(2017, 8, 31), data_pagamento=datetime.date(2017, 9, 14), valor_unitario=Decimal('9.8'),
                                    tipo_provento='R', oficial_bovespa=True)
         
         
