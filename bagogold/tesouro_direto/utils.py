@@ -87,6 +87,20 @@ def calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id):
     
     return qtd_titulos
 
+def calcular_valor_titulos_ate_dia_por_divisao(dia, divisao_id):
+    """
+    Calcula o valor dos títulos de uma divisão até dia determinado
+    
+    Parâmetros: Data
+                ID da divisão
+    Retorno: Valor dos títulos {titulo_id: valor}
+    """
+    qtd_titulos = calcular_qtd_titulos_ate_dia_por_divisao(dia, divisao_id)
+        
+    for titulo_id in qtd_titulos.keys():
+        qtd_titulos[titulo_id] = HistoricoTitulo.objects.filter(data__lte=dia, titulo__id=titulo_id).order_by('-data')[0].preco_venda * qtd_titulos[titulo_id]
+    return qtd_titulos
+
 def calcular_qtd_um_titulo_ate_dia_por_divisao(investidor, dia, titulo_id):
     """ 
     Calcula a quantidade de um título específico até dia determinado para cada divisão
