@@ -209,7 +209,7 @@ def detalhar_pendencias_usuario(request, id_usuario):
         usuario.percentual_progresso_validado = usuario.progresso_validado / usuario.progresso_tempo_total * 100
         
         # Adicionar lista de pagamentos feitos
-        usuario.pagamentos = PagamentoLeitura.objects.filter(investidor=usuario.investidor)
+        usuario.pagamentos = PagamentoLeitura.objects.filter(investidor=usuario.investidor).order_by('data')
 
     return TemplateResponse(request, 'gerador_proventos/detalhar_pendencias_usuario.html', {'usuario': usuario, 'graf_leituras': graf_leituras, 'graf_validacoes': graf_validacoes,
                                                                                             'graf_leituras_que_recusou': graf_leituras_que_recusou, 'graf_leituras_recusadas': graf_leituras_recusadas})
