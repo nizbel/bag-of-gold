@@ -421,7 +421,9 @@ class CheckpointEventoAposOperacaoTestCase(TestCase):
         self.assertEqual(calcular_qtd_fiis_ate_dia_por_ticker(self.investidor, datetime.date(2018, 2, 13), 'BBPO11'), 617)
 
 class AtualizarCheckpointAnualTestCase(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
+        super(AtualizarCheckpointAnualTestCase, cls).setUpClass()
         user = User.objects.create(username='test', password='test')
         user.investidor.data_ultimo_acesso = datetime.date(2016, 5, 11)
         user.investidor.save()
