@@ -61,18 +61,6 @@ class TesouroDiretoTestCase(TestCase):
         self.assertDictEqual(calcular_valor_td_ate_dia(investidor, datetime.date(2016, 9, 14)), qtd_titulos)
                          
 
-class ComandoPreencherHistoricoAnoAtualTDTestCase(TestCase):
-    def test_comando(self):
-        """Testa comando de preencher histórico para ano atual de Tesouro Direto"""
-
-        args = []
-        opts = {'test': True}
-        # Roda uma vez para preencher a tabela e outra para verificar o que foi inserido
-        call_command('preencher_historico_ano_atual_td', *args, **opts)
-        call_command('preencher_historico_ano_atual_td', *args, **opts)
-
-        self.assertTrue(Titulo.objects.filter().exists())
-        self.assertTrue(HistoricoTitulo.objects.filter().exists())
         
 class CalculoImpostoRendaTDTestCase(TestCase):
     def setUp(self):
