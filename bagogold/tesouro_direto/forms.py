@@ -49,7 +49,7 @@ class OperacaoTituloForm(LocalizedModelForm):
         data_vencimento = dados.get('titulo').data_vencimento
 #         print '%s %s %s' % (data_ex, data_pagamento, data_ex < data_pagamento)
         if (data > data_vencimento):
-            raise forms.ValidationError("Título não pode ter sido comprado após sua data de vencimento (%s)" % (dados.get('titulo').data_vencimento))
+            raise forms.ValidationError("Título não pode ter sido comprado após sua data de vencimento (%s)" % (dados.get('titulo').data_vencimento.strftime('%d/%m/%Y')))
         # Testa se não se trata de uma edição de compra para venda
         if dados.get('tipo_operacao') == 'V':
 
