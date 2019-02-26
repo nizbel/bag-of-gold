@@ -1,26 +1,27 @@
 # -*- coding: utf-8 -*-
 import datetime
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
-from django.db.models.expressions import F, Case, When, Value
-from django.template.loader import render_to_string
 from itertools import chain
 import json
 from operator import attrgetter
 
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.db.models.expressions import F, Case, When, Value
 from django.db.models.fields import CharField
 from django.http import HttpResponse
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
 from bagogold.bagogold.models.divisoes import Divisao, DivisaoOperacaoCDB_RDB, \
     TransferenciaEntreDivisoes, DivisaoOperacaoLCI_LCA, DivisaoOperacaoLetraCambio, \
     DivisaoOperacaoCriptomoeda, DivisaoTransferenciaCriptomoeda, \
-    DivisaoForkCriptomoeda
+    DivisaoForkCriptomoeda, DivisaoOperacaoTD
 from bagogold.cdb_rdb.utils import calcular_valor_cdb_rdb_ate_dia_por_divisao
+from bagogold.criptomoeda.utils import calcular_valor_moedas_ate_dia_por_divisao
 from bagogold.lc.utils import calcular_valor_lc_ate_dia_por_divisao
 from bagogold.lci_lca.utils import calcular_valor_lci_lca_ate_dia_por_divisao
-from bagogold.criptomoeda.utils import calcular_valor_moedas_ate_dia_por_divisao
+from bagogold.tesouro_direto.utils import calcular_valor_titulos_ate_dia_por_divisao
 
 
 @login_required
@@ -39,7 +40,7 @@ def linha_do_tempo(request, divisao_id):
                 eventos = linha_do_tempo_cdb_rdb(divisao)
             elif request.GET.get('investimento') == Divisao.INVESTIMENTO_LCI_LCA_CODIGO:
                 eventos = linha_do_tempo_lci_lca(divisao)
-            elif request.GET.get('investimento') == Divisao.INVESTIMENTO_LETRAS_CAMBIO_CODIGO:
+            elif request.GET.get('investimento') == Divisao.INVESTIMENTO_CRIPTOMOEDAS_CODIGO:
                 eventos = linha_do_tempo_criptomoedas(divisao)
             elif request.GET.get('investimento') == Divisao.INVESTIMENTO_TESOURO_DIRETO_CODIGO:
                 eventos = linha_do_tempo_tesouro_direto(divisao)
@@ -48,15 +49,31 @@ def linha_do_tempo(request, divisao_id):
                                             content_type = "application/json")
         
         else:
-            print request.GET.get('evento')
             data_evento = datetime.datetime.strptime(request.GET.get('evento'), '%d/%m/%Y').date()
             
-            if request.GET.get('investimento') == Divisao.INVESTIMENTO_CDB_RDB_CODIGO:
+            if request.GET.get('investimento') == Divisao.INVESTIMENTO_LETRAS_CAMBIO_CODIGO:
+                saldo = divisao.saldo_lc(data_evento)
+                investido = sum(calcular_valor_lc_ate_dia_por_divisao(data_evento, divisao.id).values())
+            
+            elif request.GET.get('investimento') == Divisao.INVESTIMENTO_CDB_RDB_CODIGO:
                 saldo = divisao.saldo_cdb_rdb(data_evento)
                 investido = sum(calcular_valor_cdb_rdb_ate_dia_por_divisao(data_evento, divisao.id).values())
-                return HttpResponse(json.dumps({'saldo': str(saldo), 'investido': str(investido), 'data': request.GET.get('evento').replace('/', ''),
-                                                'saldo_negativo': (saldo < 0)}), 
-                                            content_type = "application/json")
+            
+            elif request.GET.get('investimento') == Divisao.INVESTIMENTO_LCI_LCA_CODIGO:
+                saldo = divisao.saldo_lci_lca(data_evento)
+                investido = sum(calcular_valor_lci_lca_ate_dia_por_divisao(data_evento, divisao.id).values())
+            
+            elif request.GET.get('investimento') == Divisao.INVESTIMENTO_CRIPTOMOEDAS_CODIGO:
+                saldo = divisao.saldo_criptomoeda(data_evento)
+                investido = sum(calcular_valor_moedas_ate_dia_por_divisao(divisao.id, data_evento).values())
+            
+            elif request.GET.get('investimento') == Divisao.INVESTIMENTO_TESOURO_DIRETO_CODIGO:
+                saldo = divisao.saldo_td(data_evento)
+                investido = sum(calcular_valor_titulos_ate_dia_por_divisao(data_evento, divisao.id).values())
+                
+            return HttpResponse(json.dumps({'saldo': str(saldo), 'investido': str(investido), 'data': request.GET.get('evento').replace('/', ''),
+                                            'saldo_negativo': (saldo < 0)}), 
+                                        content_type = "application/json")
               
 
     # Preparar tipos de investimentos
@@ -173,9 +190,9 @@ def linha_do_tempo_criptomoedas(divisao):
         evento.data = datetime.date.today()
         eventos.append(evento)        
             
-    for evento in eventos:
-        evento.saldo = divisao.saldo_criptomoeda(evento.data)
-        evento.investido = sum(calcular_valor_moedas_ate_dia_por_divisao(divisao.id, evento.data).values())
+#     for evento in eventos:
+#         evento.saldo = divisao.saldo_criptomoeda(evento.data)
+#         evento.investido = sum(calcular_valor_moedas_ate_dia_por_divisao(divisao.id, evento.data).values())
         
     return eventos
 
@@ -219,9 +236,9 @@ def linha_do_tempo_lc(divisao):
         evento.data = datetime.date.today()
         eventos.append(evento)        
             
-    for evento in eventos:
-        evento.saldo = divisao.saldo_lc(evento.data)
-        evento.investido = sum(calcular_valor_lc_ate_dia_por_divisao(evento.data, divisao.id).values())
+#     for evento in eventos:
+#         evento.saldo = divisao.saldo_lc(evento.data)
+#         evento.investido = sum(calcular_valor_lc_ate_dia_por_divisao(evento.data, divisao.id).values())
         
     return eventos
 
@@ -265,9 +282,9 @@ def linha_do_tempo_lci_lca(divisao):
         evento.data = datetime.date.today()
         eventos.append(evento)        
             
-    for evento in eventos:
-        evento.saldo = divisao.saldo_lci_lca(evento.data)
-        evento.investido = sum(calcular_valor_lci_lca_ate_dia_por_divisao(evento.data, divisao.id).values())
+#     for evento in eventos:
+#         evento.saldo = divisao.saldo_lci_lca(evento.data)
+#         evento.investido = sum(calcular_valor_lci_lca_ate_dia_por_divisao(evento.data, divisao.id).values())
         
     return eventos
 
@@ -281,7 +298,7 @@ def linha_do_tempo_tesouro_direto(divisao):
     class Object(object):
         pass
     
-    operacoes_divisao = DivisaoOperacaoTesouroDireto.objects.filter(divisao=divisao).annotate(data=F('operacao__data')) \
+    operacoes_divisao = DivisaoOperacaoTD.objects.filter(divisao=divisao).annotate(data=F('operacao__data')) \
         .annotate(titulo=Case(When(operacao__tipo_operacao='C', then=Value(u'Operação de compra', CharField())),
                               When(operacao__tipo_operacao='V', then=Value(u'Operação de venda', CharField())), output_field=CharField()))
     for operacao_divisao in operacoes_divisao:
@@ -317,8 +334,8 @@ def linha_do_tempo_tesouro_direto(divisao):
         evento.data = datetime.date.today()
         eventos.append(evento)        
             
-    for evento in eventos:
-        evento.saldo = divisao.saldo_td(evento.data)
-        evento.investido = sum(calcular_valor_tesouro_direto_ate_dia_por_divisao(evento.data, divisao.id).values())
+#     for evento in eventos:
+#         evento.saldo = divisao.saldo_td(evento.data)
+#         evento.investido = sum(calcular_valor_tesouro_direto_ate_dia_por_divisao(evento.data, divisao.id).values())
         
     return eventos
