@@ -29,6 +29,8 @@ class Command(BaseCommand):
                     titulo.save()
         except:
             if settings.ENV == 'DEV':
+                if options['test']:
+                    raise
                 print traceback.format_exc()
             elif settings.ENV == 'PROD':
                 mail_admins(u'Erro em Preencher histórico para TD no ano atual', traceback.format_exc().decode('utf-8'))
