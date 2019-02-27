@@ -20,7 +20,6 @@ class Command(BaseCommand):
             if len(valores_diarios) > 0:
                 valores_existentes = ValorDiarioTitulo.objects.filter(data_hora=valores_diarios[0].data_hora) \
                     .values_list('titulo', flat=True)
-                print valores_existentes
                 valores_diarios = [valor_diario for valor_diario in valores_diarios if valor_diario.titulo.id not in valores_existentes]
             
             for valor_diario in valores_diarios:

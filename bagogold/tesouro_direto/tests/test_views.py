@@ -13,6 +13,10 @@ from bagogold.bagogold.models.divisoes import DivisaoOperacaoTD
 
 class DetalharTituloTestCase(TestCase):
     def setUp(self):
+        self.assertTrue(Titulo.objects.all().exists())
+    
+    @classmethod
+    def setUpTestData(cls):
         # Criar títulos
         criar_titulos_teste()
         
@@ -141,17 +145,18 @@ def criar_titulos_teste():
     
 class ViewInserirOperacaoTDTestCase(TestCase):
     """Testa a view inserir_operacao_td"""
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         nizbel = User.objects.create_user('nizbel', 'nizbel@teste.com', 'nizbel')
-        self.investidor = nizbel.investidor
+        cls.investidor = nizbel.investidor
         
         multi_divisoes = User.objects.create_user('teste', 'teste@teste.com', 'teste')
-        self.investidor_multi_div = multi_divisoes.investidor
+        cls.investidor_multi_div = multi_divisoes.investidor
         
         # Criar título
-        self.titulo = Titulo.objects.create(data_vencimento=datetime.date(2025, 1, 1), tipo=u'LTN', data_inicio=datetime.date(2018, 2, 7))
+        cls.titulo = Titulo.objects.create(data_vencimento=datetime.date(2025, 1, 1), tipo=u'LTN', data_inicio=datetime.date(2018, 2, 7))
         
-        self.url_inserir_operacao = 'tesouro_direto:inserir_operacao_td'
+        cls.url_inserir_operacao = 'tesouro_direto:inserir_operacao_td'
     
     def test_acesso_usuario_deslogado(self):
         """Testa redirecionamento para tela de login caso usuário não esteja logado"""
