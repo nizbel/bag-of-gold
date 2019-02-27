@@ -12,8 +12,8 @@ from bagogold.fii.utils import calcular_variacao_percentual_fii_por_periodo
 class CalcularVariacaoPercentualFIIPeriodoTestCase(TestCase):
     """Testa a função calcular_variacao_percentual_fii_por_periodo"""
     @classmethod
-    def setUpClass(cls):
-        super(CalcularVariacaoPercentualFIIPeriodoTestCase, cls).setUpClass()
+    def setUpTestData(cls):
+        super(CalcularVariacaoPercentualFIIPeriodoTestCase, cls).setUpTestData()
         empresa_1 = Empresa.objects.create(nome='BA', nome_pregao='FII BA')
         cls.fii_1 = FII.objects.create(ticker='BAPO11', empresa=empresa_1)
         

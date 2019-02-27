@@ -16,8 +16,8 @@ from django.test.utils import freeze_time
 
 class ViewAcompanhamentoFIITestCase (TestCase):
     @classmethod
-    def setUpClass(cls):
-        super(ViewAcompanhamentoFIITestCase, cls).setUpClass()
+    def setUpTestData(cls):
+        super(ViewAcompanhamentoFIITestCase, cls).setUpTestData()
         nizbel = User.objects.create_user('nizbel', 'nizbel@teste.com', 'nizbel')
         
         empresa = Empresa.objects.create(nome='Teste', nome_pregao='TEST')
@@ -133,8 +133,8 @@ class ViewAcompanhamentoFIITestCase (TestCase):
 
 class ViewDetalharFIITestCase (TestCase):
     @classmethod
-    def setUpClass(cls):
-        super(ViewDetalharFIITestCase, cls).setUpClass()
+    def setUpTestData(cls):
+        super(ViewDetalharFIITestCase, cls).setUpTestData()
         nizbel = User.objects.create_user('nizbel', 'nizbel@teste.com', 'nizbel')
         user_vendido = User.objects.create_user('vendido', 'vendido@teste.com', 'vendido')
 
@@ -303,8 +303,8 @@ class ViewHistoricoFIITestCase (TestCase):
         
 class ViewInserirOperacaoTestCase(TestCase):
     @classmethod
-    def setUpClass(cls):
-        super(ViewInserirOperacaoTestCase, cls).setUpClass()
+    def setUpTestData(cls):
+        super(ViewInserirOperacaoTestCase, cls).setUpTestData()
         user = User.objects.create_user('teste', 'teste@teste.com', 'teste')
         cls.investidor = user.investidor
         

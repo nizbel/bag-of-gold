@@ -21,8 +21,8 @@ import datetime
 
 class CalcularQuantidadesFIITestCase(TestCase):
     @classmethod
-    def setUpClass(cls):
-        super(CalcularQuantidadesFIITestCase, cls).setUpClass()
+    def setUpTestData(cls):
+        super(CalcularQuantidadesFIITestCase, cls).setUpTestData()
         user = User.objects.create(username='test', password='test')
         # Guardar investidor
         cls.investidor = user.investidor
@@ -422,8 +422,8 @@ class CheckpointEventoAposOperacaoTestCase(TestCase):
 
 class AtualizarCheckpointAnualTestCase(TestCase):
     @classmethod
-    def setUpClass(cls):
-        super(AtualizarCheckpointAnualTestCase, cls).setUpClass()
+    def setUpTestData(cls):
+        super(AtualizarCheckpointAnualTestCase, cls).setUpTestData()
         user = User.objects.create(username='test', password='test')
         user.investidor.data_ultimo_acesso = datetime.date(2016, 5, 11)
         user.investidor.save()
