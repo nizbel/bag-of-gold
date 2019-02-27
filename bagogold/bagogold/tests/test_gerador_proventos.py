@@ -7,6 +7,7 @@ from urllib2 import URLError
 import boto3
 from django.contrib.auth.models import User
 from django.core.files import File
+from django.db import transaction
 from django.test import TestCase
 
 from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento, \
@@ -702,19 +703,21 @@ class GeradorProventosCopiarProventosTestCase(TestCase):
 
 class LeitorProventosEstruturadosTestCase(TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
+        super(LeitorProventosEstruturadosTestCase, cls).setUpTestData()
         # Empresa para FII
-        self.empresa_bbpo = Empresa.objects.create(nome='Fundo BBPO', nome_pregao='BBPO')
-        self.fii_bbpo = FII.objects.create(empresa=self.empresa_bbpo, ticker='BBPO11')
+        cls.empresa_bbpo = Empresa.objects.create(nome='Fundo BBPO', nome_pregao='BBPO')
+        cls.fii_bbpo = FII.objects.create(empresa=cls.empresa_bbpo, ticker='BBPO11')
         
         # Documento da empresa, já existe em media
-        self.documento = DocumentoProventoBovespa()
-        self.documento.empresa = self.empresa_bbpo
-        self.documento.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8679'
-        self.documento.tipo = 'F'
-        self.documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO
-        self.documento.protocolo = '8679'
-        self.documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        cls.documento = DocumentoProventoBovespa()
+        cls.documento.empresa = cls.empresa_bbpo
+        cls.documento.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8679'
+        cls.documento.tipo = 'F'
+        cls.documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO
+        cls.documento.protocolo = '8679'
+        cls.documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
         conteudo = StringIO('<?xml version="1.0" encoding="UTF-8" standalone="yes"?> \
 <DadosEconomicoFinanceiros xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"> \
     <DadosGerais> \
@@ -740,9 +743,11 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         <Amortizacao tipo=""/> \
     </InformeRendimentos> \
 </DadosEconomicoFinanceiros>')
-        self.documento.documento.save('%s-%s.%s' % (self.documento.ticker_empresa(), self.documento.protocolo, 'xml'), File(conteudo))
+        cls.documento.documento.save('%s-%s.%s' % (cls.documento.ticker_empresa(), cls.documento.protocolo, 'xml'), File(conteudo))
         
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
+        super(LeitorProventosEstruturadosTestCase, cls).tearDownClass()
         DocumentoProventoBovespa.objects.all().delete()
 
     def test_falhar_por_tipo_fii(self):
@@ -751,6 +756,7 @@ class LeitorProventosEstruturadosTestCase(TestCase):
 #             documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
             self.documento.tipo = 'A'
             ler_provento_estruturado_fii(self.documento)
+        self.documento.tipo = 'F'
              
     def test_falhar_por_tipo_documento_fii(self):
         """Testa se a função joga erro para arquivo que não seja de FII"""
@@ -758,6 +764,7 @@ class LeitorProventosEstruturadosTestCase(TestCase):
 #             documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
             self.documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS
             ler_provento_estruturado_fii(self.documento)
+        self.documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO
              
     def test_falhar_por_nao_pendente(self):
         """Testa se a função joga erro para arquivo que não esteja pendente"""
@@ -778,6 +785,8 @@ class LeitorProventosEstruturadosTestCase(TestCase):
             self.documento.empresa = outra_empresa
              
             ler_provento_estruturado_fii(self.documento)
+        
+        self.documento.empresa = self.empresa_bbpo
              
     def test_leitura_com_sucesso_fii(self):
         """Testa se provento e descrição de provento são criados"""
