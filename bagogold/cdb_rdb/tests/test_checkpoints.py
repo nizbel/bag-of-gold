@@ -21,6 +21,7 @@ import datetime
 class CalcularQuantidadesCDB_RDBTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
+        super(CalcularQuantidadesCDB_RDBTestCase, cls).setUpTestData()
         user = User.objects.create(username='test', password='test')
          
         cls.cdb_1 = CDB_RDB.objects.create(nome="CDB 1", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_DI)
@@ -370,7 +371,9 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
 #         self.assertTrue(fim_novo < fim_antigo)
          
 class AtualizarCheckpointAnualTestCase(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
+        super(AtualizarCheckpointAnualTestCase, cls).setUpTestData()
         user = User.objects.create(username='test', password='test')
         user.investidor.data_ultimo_acesso = datetime.date(2016, 5, 11)
         user.investidor.save()
