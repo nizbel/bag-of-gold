@@ -396,9 +396,9 @@ class ListarDivisoesTestCase(TestCase):
                                          data_registro=data_30_dias_atras, situacao=FundoInvestimento.SITUACAO_FUNCIONAMENTO_NORMAL,
                                          tipo_prazo=FundoInvestimento.PRAZO_LONGO, classe=FundoInvestimento.CLASSE_FUNDO_MULTIMERCADO,
                                          exclusivo_qualificados=False, slug=criar_slug_fundo_investimento_valido('Fundo teste'))
-        HistoricoValorCotas.objects.create(fundo_investimento=fundo, valor_cotas=5, data=data_30_dias_atras)
-        HistoricoValorCotas.objects.create(fundo_investimento=fundo, valor_cotas=6, data=data_10_dias_atras)
-        HistoricoValorCotas.objects.create(fundo_investimento=fundo, valor_cotas=7, data=datetime.date.today())
+        HistoricoValorCotas.objects.create(fundo_investimento=fundo, valor_cota=5, data=data_30_dias_atras)
+        HistoricoValorCotas.objects.create(fundo_investimento=fundo, valor_cota=6, data=data_10_dias_atras)
+        HistoricoValorCotas.objects.create(fundo_investimento=fundo, valor_cota=7, data=datetime.date.today())
         
         compra = OperacaoFundoInvestimento.objects.create(fundo_investimento=fundo, investidor=usuario_sem_investimentos, quantidade=200,
                                                  valor=1000, data=data_30_dias_atras, tipo_operacao='C')
