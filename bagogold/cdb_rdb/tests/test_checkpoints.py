@@ -19,21 +19,22 @@ from django.test import TestCase
 import datetime
  
 class CalcularQuantidadesCDB_RDBTestCase(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         user = User.objects.create(username='test', password='test')
          
-        cdb_1 = CDB_RDB.objects.create(nome="CDB 1", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_DI)
+        cls.cdb_1 = CDB_RDB.objects.create(nome="CDB 1", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_DI)
         # TODO regularizar testes de IPCA
-        cdb_2 = CDB_RDB.objects.create(nome="CDB 2", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_IPCA)
-        cdb_3 = CDB_RDB.objects.create(nome="CDB 3", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_PREFIXADO)
+        cls.cdb_2 = CDB_RDB.objects.create(nome="CDB 2", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_IPCA)
+        cls.cdb_3 = CDB_RDB.objects.create(nome="CDB 3", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_PREFIXADO)
         
-        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_1, porcentagem=100)
-        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_2, porcentagem=5)
-        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_3, porcentagem=10)
+        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cls.cdb_1, porcentagem=100)
+        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cls.cdb_2, porcentagem=5)
+        HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cls.cdb_3, porcentagem=10)
         
-        HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cdb_1, vencimento=1080)
-        HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cdb_2, vencimento=1080)
-        HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cdb_3, vencimento=1080)
+        HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cls.cdb_1, vencimento=1080)
+        HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cls.cdb_2, vencimento=1080)
+        HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cls.cdb_3, vencimento=1080)
          
         # Históricos DI e IPCA
         # Data final é 14/02/2018 mas atualizações só contam até data anterior para manter DI e prefixado pareados
@@ -60,22 +61,22 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
                 HistoricoTaxaDI.objects.create(data=data, taxa=Decimal(12.13))
         
         # Operações de compra
-        compra_1 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=2000)
-        compra_2 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=1000)
-        compra_3 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=2000)
-        compra_4 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=1000)
-        compra_5 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=2000)
-        compra_6 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=1000)
-        compra_7 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=3000)
+        compra_1 = OperacaoCDB_RDB.objects.create(cdb_rdb=cls.cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=2000)
+        compra_2 = OperacaoCDB_RDB.objects.create(cdb_rdb=cls.cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=1000)
+        compra_3 = OperacaoCDB_RDB.objects.create(cdb_rdb=cls.cdb_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=2000)
+        compra_4 = OperacaoCDB_RDB.objects.create(cdb_rdb=cls.cdb_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=1000)
+        compra_5 = OperacaoCDB_RDB.objects.create(cdb_rdb=cls.cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=2000)
+        compra_6 = OperacaoCDB_RDB.objects.create(cdb_rdb=cls.cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=1000)
+        compra_7 = OperacaoCDB_RDB.objects.create(cdb_rdb=cls.cdb_3, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=3000)
          
         # Operações de venda
-        venda_1 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_1, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=500)
+        venda_1 = OperacaoCDB_RDB.objects.create(cdb_rdb=cls.cdb_1, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=500)
         OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra_2, operacao_venda=venda_1)
-        venda_2 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_2, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=500)
+        venda_2 = OperacaoCDB_RDB.objects.create(cdb_rdb=cls.cdb_2, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=500)
         OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra_4, operacao_venda=venda_2)
-        venda_3 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=500)
+        venda_3 = OperacaoCDB_RDB.objects.create(cdb_rdb=cls.cdb_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=500)
         OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra_6, operacao_venda=venda_3)
-        venda_4 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=3000)
+        venda_4 = OperacaoCDB_RDB.objects.create(cdb_rdb=cls.cdb_3, investidor=user.investidor, tipo_operacao='V', data=datetime.date(2017, 6, 15), quantidade=3000)
         OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra_7, operacao_venda=venda_4)
          
         # Criar operação na divisão geral
@@ -84,7 +85,7 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
             DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_geral, operacao=operacao, quantidade=operacao.quantidade)
          
         # Operação extra para testes de divisão
-        operacao_divisao = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=3000)
+        operacao_divisao = OperacaoCDB_RDB.objects.create(cdb_rdb=cls.cdb_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 5, 11), quantidade=3000)
         divisao_teste = Divisao.objects.create(investidor=user.investidor, nome=u'Divisão de teste')
         DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_teste, operacao=operacao_divisao, quantidade=2000)
         DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_geral, operacao=operacao_divisao, quantidade=1000)
@@ -93,11 +94,9 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
     def test_calculo_qtd_cdb_por_operacao(self):
         """Calcula quantidade de CDBs do usuário individualmente"""
         investidor = Investidor.objects.get(user__username='test')
-        cdb_1 = CDB_RDB.objects.get(nome="CDB 1")
-        cdb_3 = CDB_RDB.objects.get(nome="CDB 3")
         
-        for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, tipo_operacao='C').exclude(cdb_rdb=CDB_RDB.objects.get(nome="CDB 2")):
-            if operacao.cdb_rdb == cdb_1:
+        for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, tipo_operacao='C').exclude(cdb_rdb=self.cdb_2):
+            if operacao.cdb_rdb == self.cdb_1:
                 data = datetime.date(2017, 5, 11)
                 self.assertAlmostEqual(calcular_valor_operacao_cdb_rdb_ate_dia(operacao, data), operacao.quantidade * Decimal('1.00042'), delta=Decimal('0.01'))
                 data = datetime.date(2017, 6, 15)
@@ -106,7 +105,7 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
                 data = datetime.date(2018, 2, 13)
                 self.assertAlmostEqual(calcular_valor_operacao_cdb_rdb_ate_dia(operacao, data), operacao.qtd_disponivel_venda_na_data(data) \
                                        * Decimal('1.06363295'), delta=Decimal('0.01'))
-            elif operacao.cdb_rdb == cdb_3:
+            elif operacao.cdb_rdb == self.cdb_3:
                 data = datetime.date(2017, 5, 11)
                 self.assertAlmostEqual(calcular_valor_operacao_cdb_rdb_ate_dia(operacao, data), operacao.quantidade \
                                        * pow((1+Decimal('0.1')), (Decimal(1)/252)), delta=Decimal('0.01'))
@@ -175,16 +174,15 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
     def test_verificar_checkpoints_apagados(self):
         """Testa se checkpoints são apagados caso quantidades de CDB do usuário se tornem zero"""
         investidor = Investidor.objects.get(user__username='test')
-        cdb = CDB_RDB.objects.get(nome='CDB 1')
         divisao_geral = Divisao.objects.get(nome='Geral', investidor=investidor)
         
-        compra = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb, investidor=investidor, tipo_operacao='C', data=datetime.date(2017, 8, 11), quantidade=3000)
+        compra = OperacaoCDB_RDB.objects.create(cdb_rdb=self.cdb_1, investidor=investidor, tipo_operacao='C', data=datetime.date(2017, 8, 11), quantidade=3000)
         divisao_compra = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_geral, operacao=compra, quantidade=compra.quantidade)
         self.assertTrue(CheckpointCDB_RDB.objects.filter(operacao=compra).exists())
         self.assertTrue(CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__operacao=compra).exists())
          
         # Apagar checkpoint por venda
-        venda = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb, investidor=investidor, tipo_operacao='V', data=datetime.date(2017, 8, 15), quantidade=3000)
+        venda = OperacaoCDB_RDB.objects.create(cdb_rdb=self.cdb_1, investidor=investidor, tipo_operacao='V', data=datetime.date(2017, 8, 15), quantidade=3000)
         OperacaoVendaCDB_RDB.objects.create(operacao_compra=compra, operacao_venda=venda)
         divisao_venda = DivisaoOperacaoCDB_RDB.objects.create(divisao=divisao_geral, operacao=venda, quantidade=venda.quantidade)
         self.assertFalse(CheckpointCDB_RDB.objects.filter(operacao=compra).exists())
@@ -206,11 +204,9 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
     def test_verificar_qtd_atualizada(self):
         """Testa cálculos de quantidade atualizada"""
         investidor = Investidor.objects.get(user__username='test')
-        cdb_1 = CDB_RDB.objects.get(nome="CDB 1")
-        cdb_3 = CDB_RDB.objects.get(nome="CDB 3")
         
-        for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, tipo_operacao='C').exclude(cdb_rdb=CDB_RDB.objects.get(nome="CDB 2")):
-            if operacao.cdb_rdb == cdb_1:
+        for operacao in OperacaoCDB_RDB.objects.filter(investidor=investidor, tipo_operacao='C').exclude(cdb_rdb=self.cdb_2):
+            if operacao.cdb_rdb == self.cdb_1:
                 data = datetime.date(2017, 12, 31)
                 valor_operacao_fim_2017 = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, data)
                 if valor_operacao_fim_2017 > 0:
@@ -226,7 +222,7 @@ class CalcularQuantidadesCDB_RDBTestCase(TestCase):
                 else:
                     self.assertFalse(CheckpointCDB_RDB.objects.filter(operacao=operacao, ano=2017).exists())
                     self.assertFalse(CheckpointDivisaoCDB_RDB.objects.filter(divisao_operacao__operacao=operacao, ano=2017).exists())
-            elif operacao.cdb_rdb == cdb_3:
+            elif operacao.cdb_rdb == self.cdb_3:
                 data = datetime.date(2017, 12, 31)
                 qtd_dias_uteis = Decimal(qtd_dias_uteis_no_periodo(operacao.data, data))
                 valor_operacao_fim_2017 = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, data)
