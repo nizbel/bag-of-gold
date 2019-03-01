@@ -102,6 +102,7 @@ class BuscarHistoricoRecenteTestCase(TestCase):
         boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=nome_arq)
         
     def test_processar_historico_recente_bovespa(self):
+        """Testa o processamento de histórico recente"""
         ultima_data_util = ultimo_dia_util()
         nome_arq = buscar_historico_recente_bovespa(ultima_data_util)
 #         try:
