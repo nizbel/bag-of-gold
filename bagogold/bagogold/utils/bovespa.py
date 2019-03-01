@@ -94,6 +94,12 @@ def processar_historico_recente_bovespa(arquivo):
     try:
         dados_arquivo = arquivo['Body']
         tree = etree.parse(dados_arquivo)
+        
+        # Lista de ações
+        acoes = Acao.objects.all()
+        # Lista de FIIs
+        fiis = FII.objects.all()
+        
         with transaction.atomic():
             namespace = '{urn:bvmf.217.01.xsd}'
             if len(tree.findall('.//%sPricRpt' % namespace)) == 0:
@@ -106,11 +112,21 @@ def processar_historico_recente_bovespa(arquivo):
                     preco = Decimal(element.find('.//%sLastPric' % namespace).text)
                     data = element.find('.//%sDt' % namespace).text
 #                     print ticker, preco
-                    if Acao.objects.filter(ticker=ticker).exists() and not HistoricoAcao.objects.filter(data=data, acao=Acao.objects.get(ticker=ticker), preco_unitario=preco, oficial_bovespa=True).exists():
-                        hist = HistoricoAcao.objects.create(data=data, acao=Acao.objects.get(ticker=ticker), preco_unitario=preco, oficial_bovespa=True)
+#                     if Acao.objects.filter(ticker=ticker).exists() and not HistoricoAcao.objects.filter(data=data, acao=Acao.objects.get(ticker=ticker), preco_unitario=preco, oficial_bovespa=True).exists():
+#                         hist = HistoricoAcao.objects.create(data=data, acao=Acao.objects.get(ticker=ticker), preco_unitario=preco, oficial_bovespa=True)
+                    for acao in acoes:
+                        if acao.ticker == ticker:
+                            if not HistoricoAcao.objects.filter(data=data, acao=acao, preco_unitario=preco, oficial_bovespa=True).exists():
+                                hist = HistoricoAcao.objects.create(data=data, acao=acao, preco_unitario=preco, oficial_bovespa=True)
+                            break
 #                         print ticker, hist.data
-                    elif FII.objects.filter(ticker=ticker).exists() and not HistoricoFII.objects.filter(data=data, fii=FII.objects.get(ticker=ticker), preco_unitario=preco, oficial_bovespa=True).exists():
-                        hist = HistoricoFII.objects.create(data=data, fii=FII.objects.get(ticker=ticker), preco_unitario=preco, oficial_bovespa=True)
+#                     elif FII.objects.filter(ticker=ticker).exists() and not HistoricoFII.objects.filter(data=data, fii=FII.objects.get(ticker=ticker), preco_unitario=preco, oficial_bovespa=True).exists():
+#                         hist = HistoricoFII.objects.create(data=data, fii=FII.objects.get(ticker=ticker), preco_unitario=preco, oficial_bovespa=True)
+                    else:
+                        for fii in fiis:
+                            if fii.ticker == ticker:
+                                if not HistoricoFII.objects.filter(data=data, fii=fii, preco_unitario=preco, oficial_bovespa=True).exists():
+                                    hist = HistoricoFII.objects.create(data=data, fii=fii, preco_unitario=preco, oficial_bovespa=True)
 #                         print ticker, hist.data
     except:
         raise
