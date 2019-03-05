@@ -15,32 +15,34 @@ from django.test.utils import freeze_time
 
 
 class ViewAcompanhamentoFIITestCase (TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
+        super(ViewAcompanhamentoFIITestCase, cls).setUpTestData()
         nizbel = User.objects.create_user('nizbel', 'nizbel@teste.com', 'nizbel')
         
         empresa = Empresa.objects.create(nome='Teste', nome_pregao='TEST')
         
         # FII sem histórico sem proventos
-        self.fii_1 = FII.objects.create(ticker='TEST11', empresa=empresa)
+        cls.fii_1 = FII.objects.create(ticker='TEST11', empresa=empresa)
         # FII com histórico com proventos
-        self.fii_2 = FII.objects.create(ticker='TSTE11', empresa=empresa)
+        cls.fii_2 = FII.objects.create(ticker='TSTE11', empresa=empresa)
         # FII sem histórico com proventos
-        self.fii_3 = FII.objects.create(ticker='TSTT11', empresa=empresa)
+        cls.fii_3 = FII.objects.create(ticker='TSTT11', empresa=empresa)
         # FII com histórico sem proventos
-        self.fii_4 = FII.objects.create(ticker='TSST11', empresa=empresa)
+        cls.fii_4 = FII.objects.create(ticker='TSST11', empresa=empresa)
         
         for data in [datetime.date.today() - datetime.timedelta(days=x) for x in range(365)]:
             if data >= datetime.date.today() - datetime.timedelta(days=3):
-                HistoricoFII.objects.create(fii=self.fii_2, preco_unitario=1200, data=data)
-                HistoricoFII.objects.create(fii=self.fii_4, preco_unitario=1200, data=data)
+                HistoricoFII.objects.create(fii=cls.fii_2, preco_unitario=1200, data=data)
+                HistoricoFII.objects.create(fii=cls.fii_4, preco_unitario=1200, data=data)
             else:
-                HistoricoFII.objects.create(fii=self.fii_2, preco_unitario=120, data=data)
-                HistoricoFII.objects.create(fii=self.fii_4, preco_unitario=120, data=data)
+                HistoricoFII.objects.create(fii=cls.fii_2, preco_unitario=120, data=data)
+                HistoricoFII.objects.create(fii=cls.fii_4, preco_unitario=120, data=data)
                 
         for data in [datetime.date.today() - datetime.timedelta(days=30*x) for x in range(1, 7)]:
-            ProventoFII.objects.create(fii=self.fii_2, valor_unitario=Decimal('0.9'), data_ex=data, data_pagamento=data+datetime.timedelta(days=7),
+            ProventoFII.objects.create(fii=cls.fii_2, valor_unitario=Decimal('0.9'), data_ex=data, data_pagamento=data+datetime.timedelta(days=7),
                                        oficial_bovespa=True, tipo_provento=ProventoFII.TIPO_PROVENTO_RENDIMENTO)
-            ProventoFII.objects.create(fii=self.fii_3, valor_unitario=Decimal('0.9'), data_ex=data, data_pagamento=data+datetime.timedelta(days=7),
+            ProventoFII.objects.create(fii=cls.fii_3, valor_unitario=Decimal('0.9'), data_ex=data, data_pagamento=data+datetime.timedelta(days=7),
                                        oficial_bovespa=True, tipo_provento=ProventoFII.TIPO_PROVENTO_RENDIMENTO)
                                        
     def test_usuario_deslogado(self):
@@ -130,35 +132,37 @@ class ViewAcompanhamentoFIITestCase (TestCase):
         
 
 class ViewDetalharFIITestCase (TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
+        super(ViewDetalharFIITestCase, cls).setUpTestData()
         nizbel = User.objects.create_user('nizbel', 'nizbel@teste.com', 'nizbel')
         user_vendido = User.objects.create_user('vendido', 'vendido@teste.com', 'vendido')
 
         empresa = Empresa.objects.create(nome='Teste', nome_pregao='TEST')
         
-        self.fii_1 = FII.objects.create(ticker='TEST11', empresa=empresa)
-        self.fii_2 = FII.objects.create(ticker='TSTE11', empresa=empresa)
+        cls.fii_1 = FII.objects.create(ticker='TEST11', empresa=empresa)
+        cls.fii_2 = FII.objects.create(ticker='TSTE11', empresa=empresa)
         
         for data in [datetime.date.today() - datetime.timedelta(days=x) for x in range(365)]:
             if data >= datetime.date.today() - datetime.timedelta(days=3):
-                HistoricoFII.objects.create(fii=self.fii_2, preco_unitario=1200, data=data)
+                HistoricoFII.objects.create(fii=cls.fii_2, preco_unitario=1200, data=data)
             else:
-                HistoricoFII.objects.create(fii=self.fii_2, preco_unitario=120, data=data)
+                HistoricoFII.objects.create(fii=cls.fii_2, preco_unitario=120, data=data)
         
         for data in [datetime.date.today() - datetime.timedelta(days=30*x) for x in range(1, 7)]:
-            ProventoFII.objects.create(fii=self.fii_2, valor_unitario=Decimal('0.9'), data_ex=data, data_pagamento=data+datetime.timedelta(days=7),
+            ProventoFII.objects.create(fii=cls.fii_2, valor_unitario=Decimal('0.9'), data_ex=data, data_pagamento=data+datetime.timedelta(days=7),
                                        oficial_bovespa=True)
         
-        EventoAgrupamentoFII.objects.create(fii=self.fii_2, data=datetime.date.today() - datetime.timedelta(days=3), proporcao=Decimal('0.1'))
+        EventoAgrupamentoFII.objects.create(fii=cls.fii_2, data=datetime.date.today() - datetime.timedelta(days=3), proporcao=Decimal('0.1'))
         
-        OperacaoFII.objects.create(fii=self.fii_2, investidor=nizbel.investidor, data=datetime.date.today() - datetime.timedelta(days=130),
+        OperacaoFII.objects.create(fii=cls.fii_2, investidor=nizbel.investidor, data=datetime.date.today() - datetime.timedelta(days=130),
                                    quantidade=5, preco_unitario=120, corretagem=10, emolumentos=Decimal('0.1'), tipo_operacao='C')
-        OperacaoFII.objects.create(fii=self.fii_2, investidor=nizbel.investidor, data=datetime.date.today() - datetime.timedelta(days=80),
+        OperacaoFII.objects.create(fii=cls.fii_2, investidor=nizbel.investidor, data=datetime.date.today() - datetime.timedelta(days=80),
                                    quantidade=5, preco_unitario=120, corretagem=10, emolumentos=Decimal('0.1'), tipo_operacao='C')
         
-        OperacaoFII.objects.create(fii=self.fii_2, investidor=user_vendido.investidor, data=datetime.date.today() - datetime.timedelta(days=130),
+        OperacaoFII.objects.create(fii=cls.fii_2, investidor=user_vendido.investidor, data=datetime.date.today() - datetime.timedelta(days=130),
                                    quantidade=5, preco_unitario=120, corretagem=10, emolumentos=Decimal('0.1'), tipo_operacao='C')
-        OperacaoFII.objects.create(fii=self.fii_2, investidor=user_vendido.investidor, data=datetime.date.today() - datetime.timedelta(days=80),
+        OperacaoFII.objects.create(fii=cls.fii_2, investidor=user_vendido.investidor, data=datetime.date.today() - datetime.timedelta(days=80),
                                    quantidade=5, preco_unitario=120, corretagem=10, emolumentos=Decimal('0.1'), tipo_operacao='V')
     
     def test_usuario_deslogado_fii_vazio(self):
@@ -298,14 +302,16 @@ class ViewHistoricoFIITestCase (TestCase):
         self.assertEqual(dados['lucro_percentual'], Decimal('-19.2') / dados['total_gasto'] * 100)
         
 class ViewInserirOperacaoTestCase(TestCase):
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
+        super(ViewInserirOperacaoTestCase, cls).setUpTestData()
         user = User.objects.create_user('teste', 'teste@teste.com', 'teste')
-        self.investidor = user.investidor
+        cls.investidor = user.investidor
         
         empresa = Empresa.objects.create(nome='BB Progressivo', nome_pregao='BBPO')
-        self.fii = FII.objects.create(ticker='BBPO11', empresa=empresa)
+        cls.fii = FII.objects.create(ticker='BBPO11', empresa=empresa)
         
-        self.divisao_geral = Divisao.objects.get(investidor=self.investidor)
+        cls.divisao_geral = Divisao.objects.get(investidor=cls.investidor)
         
     def test_acesso(self):
         """Testa acesso a tela de inserir rendimentos"""

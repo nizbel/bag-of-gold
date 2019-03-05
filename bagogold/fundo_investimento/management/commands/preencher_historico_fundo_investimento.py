@@ -64,12 +64,12 @@ class Command(BaseCommand):
             
             # Com a flag --aws, buscar arquivos no S3
             else:
-                with transaction.atomic():
-                    resposta = boto3.client('s3').list_objects_v2(Bucket=AWS_STORAGE_BUCKET_NAME, Prefix=CAMINHO_FUNDO_INVESTIMENTO_HISTORICO)
-                    # Ler todos os arquivos csv
-                    for arquivo in resposta['Contents']:
-                        if arquivo['Key'].endswith('.csv'):
+                resposta = boto3.client('s3').list_objects_v2(Bucket=AWS_STORAGE_BUCKET_NAME, Prefix=CAMINHO_FUNDO_INVESTIMENTO_HISTORICO)
+                # Ler todos os arquivos csv
+                for arquivo in resposta['Contents']:
+                    if arquivo['Key'].endswith('.csv'):
 #                             print arquivo['Key']
+                        with transaction.atomic():
                             # Preparar arquivo para processamento
                             arquivo_csv = boto3.client('s3').get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=arquivo['Key'])['Body'].read().splitlines(True)
                             

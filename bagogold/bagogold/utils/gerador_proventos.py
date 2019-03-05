@@ -648,7 +648,7 @@ def ler_provento_estruturado_fii(documento_fii):
     if documento_fii.tipo != 'F':
         raise ValueError('Documento deve ser de um FII')
     if documento_fii.tipo_documento != DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO:
-        raise ValueError('Documento deve ser do %s' % (DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO))
+        raise ValueError('Documento deve ser %s' % (DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO))
     
     # Documento deve estar pendente de leitura
     if not PendenciaDocumentoProvento.objects.filter(documento=documento_fii).exists():

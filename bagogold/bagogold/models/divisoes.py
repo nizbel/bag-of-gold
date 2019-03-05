@@ -159,6 +159,7 @@ class Divisao (models.Model):
         if data == None:
             data = datetime.date.today()
         historico_di = HistoricoTaxaDI.objects.all()
+        
         # Computar compras
         saldo -= (DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='C').aggregate(qtd_total=Sum('quantidade'))['qtd_total'] or 0)
         for venda_divisao in DivisaoOperacaoCDB_RDB.objects.filter(divisao=self, operacao__data__lte=data, operacao__tipo_operacao='V') \

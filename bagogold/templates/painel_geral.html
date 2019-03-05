@@ -149,9 +149,9 @@
 											{% for provento in proventos_acoes_recebidos_hoje %}
 											<a href="{% url 'acoes:geral:detalhar_provento_acao' provento.id %}" class="list-group-item">
 												<div class="row">
-													<span class="col-md-4">{{provento.acao.ticker}}</span>
-													<span class="col-md-5">R$ {{provento.quantia_a_receber}}</span>
-													<span class="col-md-3 text-right">{{provento.data_pagamento|date:"d/m"}}
+													<span class="col-xs-4">{{provento.acao.ticker}}</span>
+													<span class="col-xs-5 no-space">R$ {{provento.quantia_a_receber}}</span>
+													<span class="col-xs-3 text-right">{{provento.data_pagamento|date:"d/m"}}
 												</div>
 											</a>
 											{% endfor %}
@@ -174,9 +174,9 @@
 											{% for provento in proventos_acoes_a_receber %}
 											<a href="{% url 'acoes:geral:detalhar_provento_acao' provento.id %}" class="list-group-item">
 												<div class="row">
-													<span class="col-md-4">{{provento.acao.ticker}}</span>
-													<span class="col-md-5">R$ {{provento.quantia_a_receber}}</span>
-													<span class="col-md-3 text-right">{{provento.data_pagamento|date:"d/m"}}
+													<span class="col-xs-4">{{provento.acao.ticker}}</span>
+													<span class="col-xs-5 no-space">R$ {{provento.quantia_a_receber}}</span>
+													<span class="col-xs-3 text-right">{{provento.data_pagamento|date:"d/m"}}
 												</div>
 											</a>
 											{% endfor %}
@@ -198,9 +198,9 @@
 											{% for provento in proventos_acoes_futuros %}
 											<a href="{% url 'acoes:geral:detalhar_provento_acao' provento.id %}" class="list-group-item">
 												<div class="row">
-													<span class="col-md-4">{{provento.acao.ticker}}</span>
-													<span class="col-md-5">R$ {{provento.quantia_a_receber}}</span>
-													<span class="col-md-3 text-right">{{provento.data_ex|date:"d/m"}}
+													<span class="col-xs-4">{{provento.acao.ticker}}</span>
+													<span class="col-xs-5 no-space">R$ {{provento.quantia_a_receber}}</span>
+													<span class="col-xs-3 text-right">{{provento.data_ex|date:"d/m"}}
 												</div>
 											</a>
 											{% endfor %}
@@ -224,9 +224,9 @@
 											{% for provento in proventos_fiis_recebidos_hoje %}
 											<a href="{% url 'fii:detalhar_provento_fii' provento.id %}" class="list-group-item">
 												<div class="row">
-													<span class="col-md-4">{{provento.fii.ticker}}</span>
-													<span class="col-md-5">R$ {{provento.quantia_a_receber}}</span>
-													<span class="col-md-3 text-right">{{provento.data_pagamento|date:"d/m"}}
+													<span class="col-xs-4">{{provento.fii.ticker}}</span>
+													<span class="col-xs-5 no-space">R$ {{provento.quantia_a_receber}}</span>
+													<span class="col-xs-3 text-right">{{provento.data_pagamento|date:"d/m"}}
 												</div>
 											</a>
 											{% endfor %}
@@ -248,9 +248,9 @@
 											{% for provento in proventos_fiis_a_receber %}
 											<a href="{% url 'fii:detalhar_provento_fii' provento.id %}" class="list-group-item">
 												<div class="row">
-													<span class="col-md-4">{{provento.fii.ticker}}</span>
-													<span class="col-md-5">R$ {{provento.quantia_a_receber}}</span>
-													<span class="col-md-3 text-right">{{provento.data_pagamento|date:"d/m"}}
+													<span class="col-xs-4">{{provento.fii.ticker}}</span>
+													<span class="col-xs-5 no-space">R$ {{provento.quantia_a_receber}}</span>
+													<span class="col-xs-3 text-right">{{provento.data_pagamento|date:"d/m"}}
 												</div>
 											</a>
 											{% endfor %}
@@ -272,9 +272,9 @@
 											{% for provento in proventos_fiis_futuros %}
 											<a href="{% url 'fii:detalhar_provento_fii' provento.id %}" class="list-group-item">
 												<div class="row">
-													<span class="col-md-4">{{provento.fii.ticker}}</span>
-													<span class="col-md-5">R$ {{provento.quantia_a_receber}}</span>
-													<span class="col-md-3 text-right">{{provento.data_ex|date:"d/m"}}
+													<span class="col-xs-4">{{provento.fii.ticker}}</span>
+													<span class="col-xs-5 no-space">R$ {{provento.quantia_a_receber}}</span>
+													<span class="col-xs-3 text-right">{{provento.data_ex|date:"d/m"}}
 												</div>
 											</a>
 											{% endfor %}

@@ -702,19 +702,21 @@ class GeradorProventosCopiarProventosTestCase(TestCase):
 
 class LeitorProventosEstruturadosTestCase(TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
+        super(LeitorProventosEstruturadosTestCase, cls).setUpTestData()
         # Empresa para FII
-        self.empresa_bbpo = Empresa.objects.create(nome='Fundo BBPO', nome_pregao='BBPO')
-        self.fii_bbpo = FII.objects.create(empresa=self.empresa_bbpo, ticker='BBPO11')
+        cls.empresa_bbpo = Empresa.objects.create(nome='Fundo BBPO', nome_pregao='BBPO')
+        cls.fii_bbpo = FII.objects.create(empresa=cls.empresa_bbpo, ticker='BBPO11')
         
         # Documento da empresa, já existe em media
-        self.documento = DocumentoProventoBovespa()
-        self.documento.empresa = self.empresa_bbpo
-        self.documento.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8679'
-        self.documento.tipo = 'F'
-        self.documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO
-        self.documento.protocolo = '8679'
-        self.documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        cls.documento = DocumentoProventoBovespa()
+        cls.documento.empresa = cls.empresa_bbpo
+        cls.documento.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8679'
+        cls.documento.tipo = 'F'
+        cls.documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO
+        cls.documento.protocolo = '8679'
+        cls.documento.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
         conteudo = StringIO('<?xml version="1.0" encoding="UTF-8" standalone="yes"?> \
 <DadosEconomicoFinanceiros xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"> \
     <DadosGerais> \
@@ -740,9 +742,11 @@ class LeitorProventosEstruturadosTestCase(TestCase):
         <Amortizacao tipo=""/> \
     </InformeRendimentos> \
 </DadosEconomicoFinanceiros>')
-        self.documento.documento.save('%s-%s.%s' % (self.documento.ticker_empresa(), self.documento.protocolo, 'xml'), File(conteudo))
+        cls.documento.documento.save('%s-%s.%s' % (cls.documento.ticker_empresa(), cls.documento.protocolo, 'xml'), File(conteudo))
         
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
+        super(LeitorProventosEstruturadosTestCase, cls).tearDownClass()
         DocumentoProventoBovespa.objects.all().delete()
 
     def test_falhar_por_tipo_fii(self):
@@ -751,6 +755,7 @@ class LeitorProventosEstruturadosTestCase(TestCase):
 #             documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
             self.documento.tipo = 'A'
             ler_provento_estruturado_fii(self.documento)
+        self.documento.tipo = 'F'
              
     def test_falhar_por_tipo_documento_fii(self):
         """Testa se a função joga erro para arquivo que não seja de FII"""
@@ -758,6 +763,7 @@ class LeitorProventosEstruturadosTestCase(TestCase):
 #             documento = DocumentoProventoBovespa.objects.get(protocolo='8679')
             self.documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS
             ler_provento_estruturado_fii(self.documento)
+        self.documento.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO
              
     def test_falhar_por_nao_pendente(self):
         """Testa se a função joga erro para arquivo que não esteja pendente"""
@@ -778,6 +784,8 @@ class LeitorProventosEstruturadosTestCase(TestCase):
             self.documento.empresa = outra_empresa
              
             ler_provento_estruturado_fii(self.documento)
+        
+        self.documento.empresa = self.empresa_bbpo
              
     def test_leitura_com_sucesso_fii(self):
         """Testa se provento e descrição de provento são criados"""
@@ -1265,7 +1273,8 @@ class ReiniciarDocumentosFIITestCase(TestCase):
 
 class ReiniciarDocumentosAcaoTestCase(TestCase):
 
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
         # Investidor
         user_1 = User.objects.create(username='tester1')
         user_2 = User.objects.create(username='tester2')
@@ -1277,34 +1286,34 @@ class ReiniciarDocumentosAcaoTestCase(TestCase):
         
         # Documentos de ações
         # Documento da empresa 2 
-        documento_acao_1 = DocumentoProventoBovespa()
-        documento_acao_1.empresa = empresa_2
-        documento_acao_1.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8690'
-        documento_acao_1.tipo = 'A'
-        documento_acao_1.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_ACIONISTAS
-        documento_acao_1.protocolo = '8690'
-        documento_acao_1.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
-        documento_acao_1.save()
+        cls.documento_acao_1 = DocumentoProventoBovespa()
+        cls.documento_acao_1.empresa = empresa_2
+        cls.documento_acao_1.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8690'
+        cls.documento_acao_1.tipo = 'A'
+        cls.documento_acao_1.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_ACIONISTAS
+        cls.documento_acao_1.protocolo = '8690'
+        cls.documento_acao_1.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        cls.documento_acao_1.save()
         
         # Responsáveis
-        InvestidorLeituraDocumento.objects.create(investidor=user_1.investidor, documento=documento_acao_1, decisao='C')
-        InvestidorValidacaoDocumento.objects.create(investidor=user_2.investidor, documento=documento_acao_1)
-        PendenciaDocumentoProvento.objects.filter(documento=documento_acao_1).delete()
+        InvestidorLeituraDocumento.objects.create(investidor=user_1.investidor, documento=cls.documento_acao_1, decisao='C')
+        InvestidorValidacaoDocumento.objects.create(investidor=user_2.investidor, documento=cls.documento_acao_1)
+        PendenciaDocumentoProvento.objects.filter(documento=cls.documento_acao_1).delete()
         
         # Documento da empresa 2
-        documento_acao_2 = DocumentoProventoBovespa()
-        documento_acao_2.empresa = empresa_2
-        documento_acao_2.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8691'
-        documento_acao_2.tipo = 'A'
-        documento_acao_2.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_ACIONISTAS
-        documento_acao_2.protocolo = '8691'
-        documento_acao_2.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
-        documento_acao_2.save()
+        cls.documento_acao_2 = DocumentoProventoBovespa()
+        cls.documento_acao_2.empresa = empresa_2
+        cls.documento_acao_2.url = 'https://fnet.bmfbovespa.com.br/fnet/publico/visualizarDocumento?id=8691'
+        cls.documento_acao_2.tipo = 'A'
+        cls.documento_acao_2.tipo_documento = DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_ACIONISTAS
+        cls.documento_acao_2.protocolo = '8691'
+        cls.documento_acao_2.data_referencia = datetime.datetime.strptime('03/03/2016', '%d/%m/%Y')
+        cls.documento_acao_2.save()
         
         # Responsáveis
-        InvestidorLeituraDocumento.objects.create(investidor=user_1.investidor, documento=documento_acao_2, decisao='C')
-        InvestidorValidacaoDocumento.objects.create(investidor=user_2.investidor, documento=documento_acao_2)
-        PendenciaDocumentoProvento.objects.filter(documento=documento_acao_2).delete()
+        InvestidorLeituraDocumento.objects.create(investidor=user_1.investidor, documento=cls.documento_acao_2, decisao='C')
+        InvestidorValidacaoDocumento.objects.create(investidor=user_2.investidor, documento=cls.documento_acao_2)
+        PendenciaDocumentoProvento.objects.filter(documento=cls.documento_acao_2).delete()
         
         # Documento da empresa 2 (não descreve proventos)
         documento_acao_3 = DocumentoProventoBovespa()
@@ -1322,37 +1331,37 @@ class ReiniciarDocumentosAcaoTestCase(TestCase):
         PendenciaDocumentoProvento.objects.filter(documento=documento_acao_3).delete()
                                                                                      
         # Provento em ações com 1 versão
-        provento_acao_1 = Provento.objects.create(tipo_provento='A', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 6, 4), 
+        cls.provento_acao_1 = Provento.objects.create(tipo_provento='A', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 6, 4), 
                                                   valor_unitario=Decimal('50'), acao=acao_1, oficial_bovespa=True)
-        acao_provento_acao_1 = AcaoProvento.objects.create(acao_recebida=acao_1, provento=provento_acao_1)
-        descricao_1_provento_acao_1 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_acao_1.tipo_provento, data_ex=provento_acao_1.data_ex, acao=acao_1,
-                                                                                          data_pagamento=provento_acao_1.data_pagamento, valor_unitario=provento_acao_1.valor_unitario)
+        acao_provento_acao_1 = AcaoProvento.objects.create(acao_recebida=acao_1, provento=cls.provento_acao_1)
+        descricao_1_provento_acao_1 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=cls.provento_acao_1.tipo_provento, data_ex=cls.provento_acao_1.data_ex, acao=acao_1,
+                                                                                          data_pagamento=cls.provento_acao_1.data_pagamento, valor_unitario=cls.provento_acao_1.valor_unitario)
         acao_descricao_1_provento_acao_1 = AcaoProventoAcaoDescritoDocumentoBovespa.objects.create(acao_recebida=acao_1, provento=descricao_1_provento_acao_1)
-        ProventoAcaoDocumento.objects.create(provento=provento_acao_1, versao=1, descricao_provento=descricao_1_provento_acao_1, documento=documento_acao_1)
+        ProventoAcaoDocumento.objects.create(provento=cls.provento_acao_1, versao=1, descricao_provento=descricao_1_provento_acao_1, documento=cls.documento_acao_1)
         
         # Provento em ações com 2 versões (ações em 1 e em 2)
-        provento_acao_2 = Provento.objects.create(tipo_provento='A', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 7, 4), 
+        cls.provento_acao_2 = Provento.objects.create(tipo_provento='A', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 7, 4), 
                                                   valor_unitario=Decimal('50'), acao=acao_1, oficial_bovespa=True)
-        acao_provento_acao_2 = AcaoProvento.objects.create(acao_recebida=acao_1, provento=provento_acao_2)
-        descricao_1_provento_acao_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_acao_2.tipo_provento, data_ex=provento_acao_2.data_ex, acao=acao_1,
-                                                                                          data_pagamento=provento_acao_2.data_pagamento, valor_unitario=Decimal('100'))
+        acao_provento_acao_2 = AcaoProvento.objects.create(acao_recebida=acao_1, provento=cls.provento_acao_2)
+        descricao_1_provento_acao_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=cls.provento_acao_2.tipo_provento, data_ex=cls.provento_acao_2.data_ex, acao=acao_1,
+                                                                                          data_pagamento=cls.provento_acao_2.data_pagamento, valor_unitario=Decimal('100'))
         acao_descricao_1_provento_acao_2 = AcaoProventoAcaoDescritoDocumentoBovespa.objects.create(acao_recebida=acao_2, provento=descricao_1_provento_acao_2)
-        ProventoAcaoDocumento.objects.create(provento=provento_acao_2, versao=1, descricao_provento=descricao_1_provento_acao_2, documento=documento_acao_1)
-        descricao_2_provento_acao_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_acao_2.tipo_provento, data_ex=provento_acao_2.data_ex, acao=acao_1,
-                                                                                          data_pagamento=provento_acao_2.data_pagamento, valor_unitario=provento_acao_2.valor_unitario)
+        ProventoAcaoDocumento.objects.create(provento=cls.provento_acao_2, versao=1, descricao_provento=descricao_1_provento_acao_2, documento=cls.documento_acao_1)
+        descricao_2_provento_acao_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=cls.provento_acao_2.tipo_provento, data_ex=cls.provento_acao_2.data_ex, acao=acao_1,
+                                                                                          data_pagamento=cls.provento_acao_2.data_pagamento, valor_unitario=cls.provento_acao_2.valor_unitario)
         acao_descricao_2_provento_acao_2 = AcaoProventoAcaoDescritoDocumentoBovespa.objects.create(acao_recebida=acao_1, provento=descricao_2_provento_acao_2)
-        ProventoAcaoDocumento.objects.create(provento=provento_acao_2, versao=2, descricao_provento=descricao_2_provento_acao_2, documento=documento_acao_2)
+        ProventoAcaoDocumento.objects.create(provento=cls.provento_acao_2, versao=2, descricao_provento=descricao_2_provento_acao_2, documento=cls.documento_acao_2)
         
         # Provento em ações com 2 versões (ações em 1)
-        provento_acao_3 = Provento.objects.create(tipo_provento='D', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 8, 4), 
+        cls.provento_acao_3 = Provento.objects.create(tipo_provento='D', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 8, 4), 
                                                   valor_unitario=Decimal('5.00'), acao=acao_1, oficial_bovespa=True)
-        descricao_1_provento_acao_3 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento='A', data_ex=provento_acao_3.data_ex, acao=acao_1,
-                                                                                          data_pagamento=provento_acao_3.data_pagamento, valor_unitario=Decimal('100'))
+        descricao_1_provento_acao_3 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento='A', data_ex=cls.provento_acao_3.data_ex, acao=acao_1,
+                                                                                          data_pagamento=cls.provento_acao_3.data_pagamento, valor_unitario=Decimal('100'))
         acao_descricao_1_provento_acao_3 = AcaoProventoAcaoDescritoDocumentoBovespa.objects.create(acao_recebida=acao_2, provento=descricao_1_provento_acao_3)
-        ProventoAcaoDocumento.objects.create(provento=provento_acao_3, versao=1, descricao_provento=descricao_1_provento_acao_3, documento=documento_acao_1)
-        descricao_2_provento_acao_3 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_acao_3.tipo_provento, data_ex=provento_acao_3.data_ex, acao=acao_1,
-                                                                                          data_pagamento=provento_acao_3.data_pagamento, valor_unitario=provento_acao_3.valor_unitario)
-        ProventoAcaoDocumento.objects.create(provento=provento_acao_3, versao=2, descricao_provento=descricao_2_provento_acao_3, documento=documento_acao_2)
+        ProventoAcaoDocumento.objects.create(provento=cls.provento_acao_3, versao=1, descricao_provento=descricao_1_provento_acao_3, documento=cls.documento_acao_1)
+        descricao_2_provento_acao_3 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=cls.provento_acao_3.tipo_provento, data_ex=cls.provento_acao_3.data_ex, acao=acao_1,
+                                                                                          data_pagamento=cls.provento_acao_3.data_pagamento, valor_unitario=cls.provento_acao_3.valor_unitario)
+        ProventoAcaoDocumento.objects.create(provento=cls.provento_acao_3, versao=2, descricao_provento=descricao_2_provento_acao_3, documento=cls.documento_acao_2)
         
         # Provento em ações com 2 versões (ações em 2)
         provento_acao_4 = Provento.objects.create(tipo_provento='A', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 9, 4), 
@@ -1360,11 +1369,11 @@ class ReiniciarDocumentosAcaoTestCase(TestCase):
         acao_provento_acao_4 = AcaoProvento.objects.create(acao_recebida=acao_1, provento=provento_acao_4)
         descricao_1_provento_acao_4 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento='D', data_ex=provento_acao_4.data_ex, acao=acao_1,
                                                                                           data_pagamento=provento_acao_4.data_pagamento, valor_unitario=Decimal('5.00'))
-        ProventoAcaoDocumento.objects.create(provento=provento_acao_4, versao=1, descricao_provento=descricao_1_provento_acao_4, documento=documento_acao_1)
+        ProventoAcaoDocumento.objects.create(provento=provento_acao_4, versao=1, descricao_provento=descricao_1_provento_acao_4, documento=cls.documento_acao_1)
         descricao_2_provento_acao_4 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_acao_4.tipo_provento, data_ex=provento_acao_4.data_ex, acao=acao_1,
                                                                                           data_pagamento=provento_acao_4.data_pagamento, valor_unitario=provento_acao_4.valor_unitario)
         acao_descricao_2_provento_acao_4 = AcaoProventoAcaoDescritoDocumentoBovespa.objects.create(acao_recebida=acao_1, provento=descricao_2_provento_acao_4)
-        ProventoAcaoDocumento.objects.create(provento=provento_acao_4, versao=2, descricao_provento=descricao_2_provento_acao_4, documento=documento_acao_2)
+        ProventoAcaoDocumento.objects.create(provento=provento_acao_4, versao=2, descricao_provento=descricao_2_provento_acao_4, documento=cls.documento_acao_2)
         
         # Provento jscp com 1 versão
         provento_jscp_1 = Provento.objects.create(tipo_provento='J', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 6, 4), 
@@ -1372,7 +1381,7 @@ class ReiniciarDocumentosAcaoTestCase(TestCase):
         # Versão do provento ação
         descricao_1_provento_jscp_1 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_jscp_1.tipo_provento, data_ex=provento_jscp_1.data_ex, 
                                                                                           data_pagamento=provento_jscp_1.data_pagamento, valor_unitario=provento_jscp_1.valor_unitario, acao=acao_1)
-        ProventoAcaoDocumento.objects.create(provento=provento_jscp_1, descricao_provento=descricao_1_provento_jscp_1, documento=documento_acao_1, versao=1)
+        ProventoAcaoDocumento.objects.create(provento=provento_jscp_1, descricao_provento=descricao_1_provento_jscp_1, documento=cls.documento_acao_1, versao=1)
         
         # Provento jscp com 2 versões
         provento_jscp_2 = Provento.objects.create(tipo_provento='J', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 5, 4), 
@@ -1380,10 +1389,10 @@ class ReiniciarDocumentosAcaoTestCase(TestCase):
         # Versões do provento ação
         descricao_1_provento_jscp_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_jscp_2.tipo_provento, data_ex=provento_jscp_2.data_ex, 
                                                                                           data_pagamento=provento_jscp_2.data_pagamento, valor_unitario=Decimal('5.00'), acao=acao_1)
-        ProventoAcaoDocumento.objects.create(provento=provento_jscp_2, descricao_provento=descricao_1_provento_jscp_2, documento=documento_acao_1, versao=1)
+        ProventoAcaoDocumento.objects.create(provento=provento_jscp_2, descricao_provento=descricao_1_provento_jscp_2, documento=cls.documento_acao_1, versao=1)
         descricao_2_provento_jscp_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_jscp_2.tipo_provento, data_ex=provento_jscp_2.data_ex, 
                                                                                           data_pagamento=provento_jscp_2.data_pagamento, valor_unitario=provento_jscp_2.valor_unitario, acao=acao_1)
-        ProventoAcaoDocumento.objects.create(provento=provento_jscp_2, descricao_provento=descricao_2_provento_jscp_2, documento=documento_acao_2, versao=2)
+        ProventoAcaoDocumento.objects.create(provento=provento_jscp_2, descricao_provento=descricao_2_provento_jscp_2, documento=cls.documento_acao_2, versao=2)
 
         # Provento jscp com selic com 1 versão
         provento_selic_1 = Provento.objects.create(tipo_provento='J', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 7, 4), 
@@ -1394,7 +1403,7 @@ class ReiniciarDocumentosAcaoTestCase(TestCase):
                                                                                            data_pagamento=provento_selic_1.data_pagamento, valor_unitario=provento_selic_1.valor_unitario, acao=acao_1)
         atualizacao_1_provento_selic_1 = SelicProventoAcaoDescritoDocBovespa.objects.create(provento=descricao_1_provento_selic_1, data_inicio=atualizacao_selic_1.data_inicio, 
                                                                                             data_fim=atualizacao_selic_1.data_fim)
-        ProventoAcaoDocumento.objects.create(provento=provento_selic_1, descricao_provento=descricao_1_provento_selic_1, documento=documento_acao_1, versao=1)
+        ProventoAcaoDocumento.objects.create(provento=provento_selic_1, descricao_provento=descricao_1_provento_selic_1, documento=cls.documento_acao_1, versao=1)
         
         # Provento jscp com selic com 2 versões (Selic 1 e 2)
         provento_selic_2 = Provento.objects.create(tipo_provento='J', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 8, 4), 
@@ -1405,12 +1414,12 @@ class ReiniciarDocumentosAcaoTestCase(TestCase):
                                                                                            data_pagamento=provento_selic_2.data_pagamento, valor_unitario=Decimal('5.00'), acao=acao_1)
         atualizacao_1_provento_selic_2 = SelicProventoAcaoDescritoDocBovespa.objects.create(provento=descricao_1_provento_selic_2, data_inicio=datetime.date(2015, 12, 31), 
                                                                                             data_fim=atualizacao_selic_2.data_fim)
-        ProventoAcaoDocumento.objects.create(provento=provento_selic_2, descricao_provento=descricao_1_provento_selic_2, documento=documento_acao_1, versao=1)
+        ProventoAcaoDocumento.objects.create(provento=provento_selic_2, descricao_provento=descricao_1_provento_selic_2, documento=cls.documento_acao_1, versao=1)
         descricao_2_provento_selic_2 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_selic_2.tipo_provento, data_ex=provento_selic_2.data_ex, 
                                                                                            data_pagamento=provento_selic_2.data_pagamento, valor_unitario=provento_selic_2.valor_unitario, acao=acao_1)
         atualizacao_2_provento_selic_2 = SelicProventoAcaoDescritoDocBovespa.objects.create(provento=descricao_2_provento_selic_2, data_inicio=atualizacao_selic_2.data_inicio, 
                                                                                             data_fim=atualizacao_selic_2.data_fim)
-        ProventoAcaoDocumento.objects.create(provento=provento_selic_2, descricao_provento=descricao_2_provento_selic_2, documento=documento_acao_2, versao=2)
+        ProventoAcaoDocumento.objects.create(provento=provento_selic_2, descricao_provento=descricao_2_provento_selic_2, documento=cls.documento_acao_2, versao=2)
         
         # Provento jscp com selic com 2 versões (Selic 1)
         provento_selic_3 = Provento.objects.create(tipo_provento='J', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 9, 4), 
@@ -1419,10 +1428,10 @@ class ReiniciarDocumentosAcaoTestCase(TestCase):
         descricao_1_provento_selic_3 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_selic_3.tipo_provento, data_ex=provento_selic_3.data_ex, 
                                                                                            data_pagamento=provento_selic_3.data_pagamento, valor_unitario=Decimal('5.00'), acao=acao_1)
         atualizacao_1_provento_selic_3 = SelicProventoAcaoDescritoDocBovespa.objects.create(provento=descricao_1_provento_selic_3, data_inicio=datetime.date(2015, 12, 31), data_fim=provento_selic_3.data_pagamento)
-        ProventoAcaoDocumento.objects.create(provento=provento_selic_3, descricao_provento=descricao_1_provento_selic_3, documento=documento_acao_1, versao=1)
+        ProventoAcaoDocumento.objects.create(provento=provento_selic_3, descricao_provento=descricao_1_provento_selic_3, documento=cls.documento_acao_1, versao=1)
         descricao_2_provento_selic_3 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_selic_3.tipo_provento, data_ex=provento_selic_3.data_ex, 
                                                                                            data_pagamento=provento_selic_3.data_pagamento, valor_unitario=provento_selic_3.valor_unitario, acao=acao_1)
-        ProventoAcaoDocumento.objects.create(provento=provento_selic_3, descricao_provento=descricao_2_provento_selic_3, documento=documento_acao_2, versao=2)
+        ProventoAcaoDocumento.objects.create(provento=provento_selic_3, descricao_provento=descricao_2_provento_selic_3, documento=cls.documento_acao_2, versao=2)
         
         # Provento jscp com selic com 2 versões (Selic 2)
         provento_selic_4 = Provento.objects.create(tipo_provento='J', data_ex=datetime.date(2016, 4, 4), data_pagamento=datetime.date(2016, 10, 4), 
@@ -1431,32 +1440,38 @@ class ReiniciarDocumentosAcaoTestCase(TestCase):
         # Versões do provento ação
         descricao_1_provento_selic_4 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_selic_4.tipo_provento, data_ex=provento_selic_4.data_ex, 
                                                                                            data_pagamento=provento_selic_4.data_pagamento, valor_unitario=Decimal('5.00'), acao=acao_1)
-        ProventoAcaoDocumento.objects.create(provento=provento_selic_4, descricao_provento=descricao_1_provento_selic_4, documento=documento_acao_1, versao=1)
+        ProventoAcaoDocumento.objects.create(provento=provento_selic_4, descricao_provento=descricao_1_provento_selic_4, documento=cls.documento_acao_1, versao=1)
         descricao_2_provento_selic_4 = ProventoAcaoDescritoDocumentoBovespa.objects.create(tipo_provento=provento_selic_4.tipo_provento, data_ex=provento_selic_4.data_ex, 
                                                                                            data_pagamento=provento_selic_4.data_pagamento, valor_unitario=provento_selic_4.valor_unitario, acao=acao_1)
         atualizacao_2_provento_selic_4 = SelicProventoAcaoDescritoDocBovespa.objects.create(provento=descricao_2_provento_selic_4, data_inicio=atualizacao_selic_4.data_inicio, 
                                                                                             data_fim=atualizacao_selic_4.data_fim)
-        ProventoAcaoDocumento.objects.create(provento=provento_selic_4, descricao_provento=descricao_2_provento_selic_4, documento=documento_acao_2, versao=2)
+        ProventoAcaoDocumento.objects.create(provento=provento_selic_4, descricao_provento=descricao_2_provento_selic_4, documento=cls.documento_acao_2, versao=2)
         
-    def tearDown(self):
+    @classmethod
+    def tearDownClass(cls):
+        super(ReiniciarDocumentosAcaoTestCase, cls).tearDownClass()
         DocumentoProventoBovespa.objects.all().delete()
         
     def test_reiniciar_documento_acao_1(self):
         """Testa reiniciar documento de Ação de protocolo 8690"""
-        documento = DocumentoProventoBovespa.objects.get(protocolo='8690')
+#         documento = DocumentoProventoBovespa.objects.get(protocolo='8690')
+        documento = self.documento_acao_1
         self.assertFalse(PendenciaDocumentoProvento.objects.filter(documento=documento).exists())
         # Provento ação 1
-        provento_acao_1 = Provento.objects.get(tipo_provento='A', data_pagamento=datetime.date(2016, 6, 4))
+#         provento_acao_1 = Provento.objects.get(tipo_provento='A', data_pagamento=datetime.date(2016, 6, 4))
+        provento_acao_1 = self.provento_acao_1
         self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_1).count(), 1)
         provento_acao_1_documento = ProventoAcaoDocumento.objects.get(provento=provento_acao_1)
         self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento=provento_acao_1_documento.descricao_provento).count(), 1)
         # Provento ação 2
-        provento_acao_2 = Provento.objects.get(tipo_provento='A', data_pagamento=datetime.date(2016, 7, 4))
+#         provento_acao_2 = Provento.objects.get(tipo_provento='A', data_pagamento=datetime.date(2016, 7, 4))
+        provento_acao_2 = self.provento_acao_2
         self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_2).count(), 1)
         self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_2).count(), 2)
         self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_2).count(), 2)
         # Provento ação 3
-        provento_acao_3 = Provento.objects.get(tipo_provento='D', data_pagamento=datetime.date(2016, 8, 4))
+#         provento_acao_3 = Provento.objects.get(tipo_provento='D', data_pagamento=datetime.date(2016, 8, 4))
+        provento_acao_3 = self.provento_acao_3
         self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_3).count(), 0)
         self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_3).count(), 2)
         self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_3).count(), 1)
@@ -1567,20 +1582,24 @@ class ReiniciarDocumentosAcaoTestCase(TestCase):
         
     def test_reiniciar_documento_acao_2(self):
         """Testa reiniciar documento de Ação de protocolo 8691"""
-        documento = DocumentoProventoBovespa.objects.get(protocolo='8691')
+#         documento = DocumentoProventoBovespa.objects.get(protocolo='8691')
+        documento = self.documento_acao_2
         self.assertFalse(PendenciaDocumentoProvento.objects.filter(documento=documento).exists())
         # Provento ação 1
-        provento_acao_1 = Provento.objects.get(tipo_provento='A', data_pagamento=datetime.date(2016, 6, 4))
+#         provento_acao_1 = Provento.objects.get(tipo_provento='A', data_pagamento=datetime.date(2016, 6, 4))
+        provento_acao_1 = self.provento_acao_1
         self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_1).count(), 1)
         provento_acao_1_documento = ProventoAcaoDocumento.objects.get(provento=provento_acao_1)
         self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento=provento_acao_1_documento.descricao_provento).count(), 1)
         # Provento ação 2
-        provento_acao_2 = Provento.objects.get(tipo_provento='A', data_pagamento=datetime.date(2016, 7, 4))
+#         provento_acao_2 = Provento.objects.get(tipo_provento='A', data_pagamento=datetime.date(2016, 7, 4))
+        provento_acao_2 = self.provento_acao_2
         self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_2).count(), 1)
         self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_2).count(), 2)
         self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_2).count(), 2)
         # Provento ação 3
-        provento_acao_3 = Provento.objects.get(tipo_provento='D', data_pagamento=datetime.date(2016, 8, 4))
+#         provento_acao_3 = Provento.objects.get(tipo_provento='D', data_pagamento=datetime.date(2016, 8, 4))
+        provento_acao_3 = self.provento_acao_3
         self.assertEqual(AcaoProvento.objects.filter(provento=provento_acao_3).count(), 0)
         self.assertEqual(ProventoAcaoDocumento.objects.filter(provento=provento_acao_3).count(), 2)
         self.assertEqual(AcaoProventoAcaoDescritoDocumentoBovespa.objects.filter(provento__proventoacaodocumento__provento=provento_acao_3).count(), 1)
@@ -1717,3 +1736,4 @@ class ReiniciarDocumentosAcaoTestCase(TestCase):
         self.assertEqual(proventos_antes, list(Provento.objects.all()))
         self.assertEqual(documentos_proventos_antes, list(ProventoAcaoDocumento.objects.all()))
         self.assertEqual(descricoes_acoes, list(ProventoAcaoDescritoDocumentoBovespa.objects.all()))
+        
