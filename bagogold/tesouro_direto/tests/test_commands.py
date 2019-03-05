@@ -6,7 +6,7 @@ from urllib2 import Request, urlopen
 from django.core.management import call_command
 from django.test import TestCase
 
-from bagogold.tesouro_direto.models import Titulo, HistoricoTitulo,\
+from bagogold.tesouro_direto.models import Titulo, HistoricoTitulo, \
     ValorDiarioTitulo
 
 
@@ -28,8 +28,8 @@ class ComandoPreencherValoresDiariosTDTestCase(TestCase):
         self.assertTrue(Titulo.objects.all().exists())
     
     @classmethod
-    def setUpClass(cls):
-        super(ComandoPreencherValoresDiariosTDTestCase, cls).setUpClass()
+    def setUpTestData(cls):
+        super(ComandoPreencherValoresDiariosTDTestCase, cls).setUpTestData()
         # Popular títulos
         td_url = 'http://www.tesouro.fazenda.gov.br/tesouro-direto-precos-e-taxas-dos-titulos'
         req = Request(td_url)

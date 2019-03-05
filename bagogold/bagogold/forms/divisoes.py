@@ -694,6 +694,7 @@ class DivisaoOperacaoFundoInvestimentoFormSet(forms.models.BaseInlineFormSet):
                         # Verificar em caso de venda
                         if self.instance.tipo_operacao == 'V':
                             fundos_disponiveis = calcular_qtd_cotas_ate_dia_por_divisao(self.instance.data, form_divisao.cleaned_data['divisao'].id)
+                            print fundos_disponiveis, form_divisao.cleaned_data['divisao'], form_divisao.cleaned_data['divisao'].id
                             qtd_disponivel_divisao = fundos_disponiveis[form_divisao.cleaned_data['divisao'].id] if form_divisao.cleaned_data['divisao'] in fundos_disponiveis else 0 
                             if qtd_disponivel_divisao < div_qtd:
                                 raise forms.ValidationError('Venda de quantidade acima da disponível para divisão %s, disponível: R$ %s' % (form_divisao.cleaned_data['divisao'], qtd_disponivel_divisao))
