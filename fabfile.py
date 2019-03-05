@@ -373,4 +373,12 @@ def atualizar_fundos_investimento():
             data_atual -= datetime.timedelta(days=1)
         except:
             pass
+        
+def atualizar_historico_fundo_investimento_aws():
+    require('config')
+    if env.config != 'PROD_EC2_SUPPORT':
+        print u'Ambiente incorreto'
+        return
+    
+    run('docker run --add-host=database:%s nizbel/bagofgold:cron python manage.py preencher_historico_fundo_investimento --aws' % (IP_MAIN))
     
