@@ -21,7 +21,7 @@ from bagogold.bagogold.signals.divisao_cdb_rdb import \
 from bagogold.bagogold.signals.divisao_fii import gerar_checkpoint_divisao_fii, \
     gerar_checkpoint_divisao_proventos_fii
 from bagogold.bagogold.signals.divisao_lc import gerar_checkpoint_divisao_lc
-from bagogold.acoes.utils import calcular_qtd_acoes_ate_dia, \
+from bagogold.acoes.utils import calcular_qtd_acoes_ate_dia_por_ticker, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.debentures.utils import calcular_qtd_debentures_ate_dia
 from bagogold.cdb_rdb.models import OperacaoCDB_RDB, CheckpointCDB_RDB
@@ -318,7 +318,7 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=None):
     acoes_investidor = buscar_acoes_investidor_na_data(investidor, data_atual)
     # Cálculo de quantidade
 #     for acao in Acao.objects.filter(id__in=acoes_investidor):
-#         acao_qtd = calcular_qtd_acoes_ate_dia(investidor, acao.ticker, data_atual, considerar_trade=True)
+#         acao_qtd = calcular_qtd_acoes_ate_dia_por_ticker(investidor, acao.ticker, data_atual, considerar_trade=True)
 #         if acao_qtd > 0:
 #             if ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).exists():
 #                 acao_valor = ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
@@ -326,7 +326,7 @@ def buscar_totais_atuais_investimentos(investidor, data_atual=None):
 #                 acao_valor = HistoricoAcao.objects.filter(acao__ticker=acao.ticker).order_by('-data')[0].preco_unitario
 #             totais_atuais['Ações'] += (acao_qtd * acao_valor)
     lista_acoes = list(Acao.objects.filter(id__in=acoes_investidor))
-    qtd_acoes = {acao.id: calcular_qtd_acoes_ate_dia(investidor, acao.ticker, data_atual, considerar_trade=True) for acao in lista_acoes}
+    qtd_acoes = {acao.id: calcular_qtd_acoes_ate_dia_por_ticker(investidor, acao.ticker, data_atual, considerar_trade=True) for acao in lista_acoes}
     lista_valores_diarios = ValorDiarioAcao.objects.filter(acao__in=lista_acoes, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('acao__id', '-data_hora').distinct('acao__id')
     lista_historicos = HistoricoAcao.objects.filter(acao__in=lista_acoes, data__lte=data_atual).order_by('acao__id', '-data').distinct('acao__id')
     lista_valores = {valor.acao_id: valor.preco_unitario for valor in lista_valores_diarios}
@@ -431,7 +431,7 @@ def buscar_proventos_a_receber(investidor, fonte_provento=''):
 #         for acao in Acao.objects.filter(id__in=acoes_investidor):
         proventos_a_pagar = Provento.objects.filter(acao__id__in=acoes_investidor, data_ex__lte=data_atual, data_pagamento__gte=data_atual, tipo_provento__in=['D', 'J']).select_related('acao')
         for provento in proventos_a_pagar:
-            qtd_acoes = calcular_qtd_acoes_ate_dia(investidor, provento.acao.ticker, provento.data_ex - datetime.timedelta(days=1), considerar_trade=True) 
+            qtd_acoes = calcular_qtd_acoes_ate_dia_por_ticker(investidor, provento.acao.ticker, provento.data_ex - datetime.timedelta(days=1), considerar_trade=True) 
             if qtd_acoes > 0:
                 provento.quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
                 proventos_a_receber.append(provento)
@@ -473,7 +473,7 @@ def buscar_proventos_a_receber_data_ex_futura(investidor):
 #     for acao in Acao.objects.filter(id__in=acoes_investidor):
     proventos_a_pagar = Provento.objects.filter(acao__id__in=acoes_investidor, data_ex__gt=data_atual, tipo_provento__in=['D', 'J']).select_related('acao')
     for provento in proventos_a_pagar:
-        qtd_acoes = calcular_qtd_acoes_ate_dia(investidor, provento.acao.ticker, data_atual, considerar_trade=True) 
+        qtd_acoes = calcular_qtd_acoes_ate_dia_por_ticker(investidor, provento.acao.ticker, data_atual, considerar_trade=True) 
         if qtd_acoes > 0:
             provento.quantia_a_receber = (qtd_acoes * provento.valor_unitario) if provento.tipo_provento == 'D' else (qtd_acoes * provento.valor_unitario * Decimal(0.85))
             proventos_a_receber.append(provento)

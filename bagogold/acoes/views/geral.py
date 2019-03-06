@@ -4,7 +4,7 @@ from bagogold.bagogold.models.acoes import Acao, ValorDiarioAcao, HistoricoAcao,
     Provento, OperacaoAcao, AcaoProvento
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorValidacaoDocumento, ProventoAcaoDocumento
-from bagogold.acoes.utils import calcular_qtd_acoes_ate_dia, \
+from bagogold.acoes.utils import calcular_qtd_acoes_ate_dia_por_ticker, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_acoes_investidor_na_data, \
     buscar_proventos_a_receber
@@ -31,7 +31,7 @@ def detalhar_provento(request, provento_id):
     # Se usuário autenticado, mostrar dados do recebimento do provento
     if request.user.is_authenticated():
         provento.pago = datetime.date.today() > provento.data_pagamento
-        provento.qtd_na_data_ex = calcular_qtd_acoes_ate_dia(request.user.investidor, provento.acao.ticker, provento.data_ex, False)
+        provento.qtd_na_data_ex = calcular_qtd_acoes_ate_dia_por_ticker(request.user.investidor, provento.acao.ticker, provento.data_ex, False)
         if provento.tipo_provento != 'A':
             provento.valor_recebido = (provento.qtd_na_data_ex * provento.valor_unitario).quantize(Decimal('0.01'), rounding=ROUND_FLOOR)
         else:
@@ -136,7 +136,7 @@ def estatisticas_acao(request, ticker=None):
                 elif item.tipo_provento == 'A':
                     provento_acao = item.acaoprovento_set.all()[0]
                     if provento_acao.acao_recebida.ticker == ticker:
-                        acoes_recebidas = int((calcular_qtd_acoes_ate_dia(investidor, item.acao.ticker, item.data) * item.valor_unitario ) / 100 )
+                        acoes_recebidas = int((calcular_qtd_acoes_ate_dia_por_ticker(investidor, item.acao.ticker, item.data) * item.valor_unitario ) / 100 )
                         qtd_acoes += acoes_recebidas
                     if item.acao.ticker == ticker:
                         if provento_acao.valor_calculo_frac > 0:
@@ -301,7 +301,7 @@ def sobre(request):
         acoes_investidor = buscar_acoes_investidor_na_data(request.user.investidor)
         # Cálculo de quantidade
         for acao in Acao.objects.filter(id__in=acoes_investidor):
-            acao_qtd = calcular_qtd_acoes_ate_dia(request.user.investidor, acao.ticker, data_atual, considerar_trade=True)
+            acao_qtd = calcular_qtd_acoes_ate_dia_por_ticker(request.user.investidor, acao.ticker, data_atual, considerar_trade=True)
             if acao_qtd > 0:
                 if ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).exists():
                     acao_valor = ValorDiarioAcao.objects.filter(acao__ticker=acao.ticker, data_hora__day=data_atual.day, data_hora__month=data_atual.month).order_by('-data_hora')[0].preco_unitario
