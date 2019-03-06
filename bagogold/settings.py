@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     'bagogold.bagogold',
     'bagogold.pendencias',
     'bagogold.blog',
+    'bagogold.acoes',
     'bagogold.cdb_rdb',
     'bagogold.cri_cra',
     'bagogold.fii',
