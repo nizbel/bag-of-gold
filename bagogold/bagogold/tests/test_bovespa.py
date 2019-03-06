@@ -10,7 +10,7 @@ from bagogold.bagogold.models.acoes import Acao, Provento, \
     AtualizacaoSelicProvento, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
-from bagogold.bagogold.utils.acoes import verificar_tipo_acao
+from bagogold.acoes.utils import verificar_tipo_acao
 from bagogold.bagogold.utils.bovespa import buscar_historico_recente_bovespa, \
     processar_historico_recente_bovespa
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \

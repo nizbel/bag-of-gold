@@ -172,7 +172,7 @@ def calcular_provento_por_mes(investidor, proventos, operacoes, data_inicio=None
 #             qtd_acoes = operacoes.filter(acao=provento.acao, data__lt=provento.data_ex).aggregate(qtd_acoes=Sum(
 #                         Case(When(tipo_operacao='C', then=F('quantidade')), When(tipo_operacao='V', then=(F('quantidade')*-1)),
 #                               output_field=IntegerField())))['qtd_acoes']
-            qtd_acoes = quantidade_acoes_ate_dia(investidor, provento.acao.ticker, provento.data_ex - datetime.timedelta(days=1))
+            qtd_acoes = calcular_qtd_acoes_ate_dia(investidor, provento.acao.ticker, provento.data_ex - datetime.timedelta(days=1))
             # TODO adicionar frações de proventos em ações
             if provento.tipo_provento == 'D':
                 total_mes_div += qtd_acoes * provento.valor_unitario
@@ -228,7 +228,7 @@ def calcular_media_proventos_6_meses(investidor, proventos, operacoes, data_inic
 #             qtd_acoes = operacoes.filter(acao=provento.acao, data__lt=provento.data_ex).aggregate(qtd_acoes=Sum(
 #                         Case(When(tipo_operacao='C', then=F('quantidade')), When(tipo_operacao='V', then=(F('quantidade')*-1)),
 #                               output_field=IntegerField())))['qtd_acoes']
-            qtd_acoes = quantidade_acoes_ate_dia(investidor, provento.acao.ticker, provento.data_ex - datetime.timedelta(days=1))
+            qtd_acoes = calcular_qtd_acoes_ate_dia(investidor, provento.acao.ticker, provento.data_ex - datetime.timedelta(days=1))
             if provento.tipo_provento == 'D':
                 total_mes += qtd_acoes * provento.valor_unitario
             elif provento.tipo_provento == 'J':
@@ -281,7 +281,7 @@ def calcular_lucro_trade_ate_data(investidor, data):
         
     return lucro_acumulado
 
-def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
+def calcular_qtd_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
     """ 
     Calcula a quantidade de ações até dia determinado
     
@@ -318,7 +318,7 @@ def quantidade_acoes_ate_dia(investidor, ticker, dia, considerar_trade=False):
             if item.acao_ticker == ticker:
                 qtd_acoes += int(item.provento.valor_unitario * qtd_acoes / 100)
             else:
-                qtd_acoes += int(item.provento.valor_unitario * quantidade_acoes_ate_dia(investidor, item.acao_ticker, item.data, considerar_trade) / 100)
+                qtd_acoes += int(item.provento.valor_unitario * calcular_qtd_acoes_ate_dia(investidor, item.acao_ticker, item.data, considerar_trade) / 100)
     
     return qtd_acoes
 
