@@ -26,9 +26,9 @@ from bagogold.bagogold.forms.taxa_custodia_acao import TaxaCustodiaAcaoForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, \
     ValorDiarioAcao, Provento, UsoProventosOperacaoAcao, TaxaCustodiaAcao, Acao
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao, Divisao
-from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
+from bagogold.acoes.utils import calcular_provento_por_mes, \
     calcular_media_proventos_6_meses, calcular_operacoes_sem_proventos_por_mes, \
-    calcular_uso_proventos_por_mes, quantidade_acoes_ate_dia, \
+    calcular_uso_proventos_por_mes, calcular_qtd_acoes_ate_dia, \
     calcular_poupanca_prov_acao_ate_dia
 # from bagogold.bagogold.utils.divisoes import calcular_saldo_geral_acoes_bh
 from bagogold.bagogold.utils.investidores import buscar_acoes_investidor_na_data
@@ -163,7 +163,7 @@ def evolucao_posicao(request):
         
         data_30_dias_atras = datetime.date.today() - datetime.timedelta(days=30)
         # Preencher valores históricos
-        for acao in [acao for acao in acoes_investidor if quantidade_acoes_ate_dia(investidor, acao.ticker, datetime.date.today())]:
+        for acao in [acao for acao in acoes_investidor if calcular_qtd_acoes_ate_dia(investidor, acao.ticker, datetime.date.today())]:
 #             data_formatada = str(calendar.timegm(historico.data.timetuple()) * 1000)
             historico_30_dias = HistoricoAcao.objects.filter(acao=acao, data__range=[data_30_dias_atras, datetime.date.today() - datetime.timedelta(days=1)]).order_by('data')
             graf_evolucao[acao.ticker] = [(str(calendar.timegm(historico.data.timetuple()) * 1000), float(historico.preco_unitario)) for historico in historico_30_dias]
@@ -593,7 +593,7 @@ def painel(request):
     # Cálculo de quantidade
     for acao in Acao.objects.filter(id__in=acoes_investidor):
         acoes[acao.ticker] = Object()
-        acoes[acao.ticker].quantidade = quantidade_acoes_ate_dia(investidor, acao.ticker, datetime.date.today())
+        acoes[acao.ticker].quantidade = calcular_qtd_acoes_ate_dia(investidor, acao.ticker, datetime.date.today())
         if acoes[acao.ticker].quantidade == 0:
             del acoes[acao.ticker]
         else:

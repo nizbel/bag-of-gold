@@ -97,7 +97,7 @@ class Divisao (models.Model):
     
     def saldo_acoes_bh(self, data=None):
         from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao
-        from bagogold.bagogold.utils.acoes import \
+        from bagogold.acoes.utils import \
             calcular_poupanca_prov_acao_ate_dia_por_divisao
         """
         Calcula o saldo de operações de ações Buy and Hold de uma divisão (dinheiro livre)
