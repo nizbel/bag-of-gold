@@ -26,7 +26,7 @@ from bagogold.bagogold.forms.taxa_custodia_acao import TaxaCustodiaAcaoForm
 from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, \
     ValorDiarioAcao, Provento, UsoProventosOperacaoAcao, TaxaCustodiaAcao, Acao
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao, Divisao
-from bagogold.acoes.utils import calcular_provento_por_mes, \
+from bagogold.bagogold.utils.acoes import calcular_provento_por_mes, \
     calcular_media_proventos_6_meses, calcular_operacoes_sem_proventos_por_mes, \
     calcular_uso_proventos_por_mes, calcular_qtd_acoes_ate_dia_por_ticker, \
     calcular_poupanca_prov_acao_ate_dia

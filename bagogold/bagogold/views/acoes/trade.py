@@ -9,7 +9,7 @@ from bagogold.bagogold.models.acoes import OperacaoAcao, OperacaoCompraVenda, \
     UsoProventosOperacaoAcao
 from bagogold.bagogold.models.divisoes import Divisao, \
     TransferenciaEntreDivisoes, DivisaoOperacaoAcao
-from bagogold.acoes.utils import calcular_lucro_trade_ate_data, \
+from bagogold.bagogold.utils.acoes import calcular_lucro_trade_ate_data, \
     calcular_poupanca_prov_acao_ate_dia
 from decimal import Decimal
 from django.contrib import messages

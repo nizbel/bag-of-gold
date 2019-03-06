@@ -14,7 +14,7 @@ from mechanize._form import ControlNotFoundError
 
 from bagogold.bagogold.models.acoes import HistoricoAcao, Acao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.acoes.utils import verificar_tipo_acao
+from bagogold.bagogold.utils.acoes import verificar_tipo_acao
 from bagogold.fii.models import FII, HistoricoFII
 from bagogold.settings import CAMINHO_HISTORICO_RECENTE_ACOES_FIIS
 from conf.settings_local import AWS_STORAGE_BUCKET_NAME
