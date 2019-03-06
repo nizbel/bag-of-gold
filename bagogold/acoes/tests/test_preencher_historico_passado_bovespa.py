@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import logging
-
 import boto3
 from django.test.testcases import TestCase
 
