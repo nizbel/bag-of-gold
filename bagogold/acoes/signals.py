@@ -242,8 +242,8 @@ def preparar_checkpointacao_evento_delete(sender, instance, **kwargs):
               
               
 def gerar_checkpoint_acao(investidor, acao, ano):
-    quantidade = calcular_qtd_acaos_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), acao.ticker)
-    preco_medio = calcular_preco_medio_acaos_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), acao.ticker)
+    quantidade = calcular_qtd_acoes_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), acao.ticker)
+    preco_medio = calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, datetime.date(ano, 12, 31), acao.ticker)
     if CheckpointAcao.objects.filter(investidor=investidor, acao=acao, ano=ano-1).exclude(quantidade=0).exists() or quantidade != 0:
         CheckpointAcao.objects.update_or_create(investidor=investidor, acao=acao, ano=ano, 
                                            defaults={'quantidade': quantidade, 'preco_medio': preco_medio})
