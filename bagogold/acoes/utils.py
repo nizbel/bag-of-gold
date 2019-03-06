@@ -17,7 +17,7 @@ from bagogold.acoes.models import EventoAlteracaoAcao, EventoBonusAcao, \
     EventoAcao, CheckpointAcao, ProventoAcao, EventoAgrupamentoAcao, \
     EventoDesdobramentoAcao
 from bagogold.acoes.models import UsoProventosOperacaoAcao, \
-    OperacaoAcao, AcaoProvento, Provento
+    OperacaoAcao, AcaoProvento, ProventoAcao
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.models.empresa import Empresa
 
@@ -399,7 +399,7 @@ def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
     # Remover valores repetidos
 #     acoes = list(set(operacoes.values_list('acao', flat=True)))
 
-    proventos = Provento.objects.filter(acao__in=list(set(operacoes.values_list('acao', flat=True))), data_pagamento__lte=dia).annotate(acao_ticker=F('acao__ticker')) \
+    proventos = ProventoAcao.objects.filter(acao__in=list(set(operacoes.values_list('acao', flat=True))), data_pagamento__lte=dia).annotate(acao_ticker=F('acao__ticker')) \
         .annotate(data=F('data_ex')).order_by('data').prefetch_related('acaoprovento_set')
      
     lista_conjunta = sorted(chain(proventos, operacoes),
@@ -427,7 +427,7 @@ def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
                 acoes[item_lista.acao_ticker] -= item_lista.quantidade
         
         # Verifica se é recebimento de proventos
-        elif isinstance(item_lista, Provento):
+        elif isinstance(item_lista, ProventoAcao):
             if acoes[item_lista.acao_ticker] > 0:
                 if item_lista.tipo_provento in ['D', 'J']:
                     total_recebido = acoes[item_lista.acao_ticker] * item_lista.valor_unitario
@@ -466,7 +466,7 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
     # Remover valores repetidos
 #     acoes = list(set(operacoes.values_list('acao', flat=True)))
     
-    proventos = Provento.objects.filter(acao__ticker__in=list(set(operacoes.values_list('acao_ticker', flat=True))), data_pagamento__lte=dia) \
+    proventos = ProventoAcao.objects.filter(acao__ticker__in=list(set(operacoes.values_list('acao_ticker', flat=True))), data_pagamento__lte=dia) \
         .annotate(data=F('data_ex')).annotate(acao_ticker=F('acao__ticker')).order_by('data')
      
     lista_conjunta = sorted(chain(proventos, operacoes),
@@ -494,7 +494,7 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
                 acoes[item_lista.acao_ticker] -= item_lista.quantidade
         
         # Verifica se é recebimento de proventos
-        elif isinstance(item_lista, Provento):
+        elif isinstance(item_lista, ProventoAcao):
             if acoes[item_lista.acao_ticker] > 0:
                 if item_lista.tipo_provento in ['D', 'J']:
                     total_recebido = acoes[item_lista.acao_ticker] * item_lista.valor_unitario

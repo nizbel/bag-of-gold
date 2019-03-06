@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.acoes.models import Acao, Provento, AcaoProvento, \
+from bagogold.acoes.models import Acao, ProventoAcao, AcaoProvento, \
     OperacaoAcao, UsoProventosOperacaoAcao, OperacaoCompraVenda, HistoricoAcao, \
     ValorDiarioAcao, TaxaCustodiaAcao
 from django.contrib import admin
@@ -7,7 +7,7 @@ from django.contrib import admin
 
 admin.site.register(Acao)
 
-class ProventoAdmin(admin.ModelAdmin):
+class ProventoAcaoAdmin(admin.ModelAdmin):
     search_fields = ['acao__ticker']
     list_display = ('acao', 'tipo_provento', 'valor_unitario', 'data_ex', 'data_pagamento')
     
@@ -21,7 +21,7 @@ class ProventoAdmin(admin.ModelAdmin):
             qs = qs.order_by(*ordering)
         return qs
     
-admin.site.register(Provento, ProventoAdmin)
+admin.site.register(ProventoAcao, ProventoAcaoAdmin)
 
 admin.site.register(AcaoProvento)
     
