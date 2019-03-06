@@ -9,11 +9,12 @@ from django.test import TestCase
 
 from bagogold.acoes.models import OperacaoAcao, EventoDesdobramentoAcao,\
     EventoAgrupamentoAcao, EventoBonusAcao, EventoAlteracaoAcao
-from bagogold.bagogold.models.acoes import Acao, Provento, \
+from bagogold.acoes.models import Acao, Provento, \
     AtualizacaoSelicProvento, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
-from bagogold.acoes.utils import verificar_tipo_acao
+from bagogold.acoes.utils import verificar_tipo_acao,\
+    calcular_qtd_acoes_ate_dia_por_ticker
 from bagogold.bagogold.utils.bovespa import buscar_historico_recente_bovespa, \
     processar_historico_recente_bovespa
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
@@ -174,9 +175,25 @@ class EventosAcoesTestCase(TestCase):
         
         # Empresa 4
         EventoAlteracaoAcao.objects.create(acao=cls.acao_tble, nova_acao=cls.acao_egie, data=data_20_dias_atras)
-        EventoBonusAcao.objects.create(acao=cls.acao_egie, data=data_10_dias_atras, proporcao=Decimal('0.2'))
+        EventoBonusAcao.objects.create(acao=cls.acao_egie, data=data_10_dias_atras, proporcao=Decimal('0.25'))
         
     def test_qtd_acao_empresa_1(self):
+        """Testa quantidade de ações de empresa que passou por agrupamento e desdobramento"""
+        self.assertEqual(calcular_qtd_acoes_ate_dia_por_ticker(self.investidor, self.acao_bbas.ticker, datetime.date.today()), 100)
         
+    def test_qtd_acao_empresa_2(self):
+        """Testa quantidade de ações de empresa que passou por alteração com desdobramento"""
+        self.assertEqual(calcular_qtd_acoes_ate_dia_por_ticker(self.investidor, self.acao_ambv.ticker, datetime.date.today()), 0)
+        self.assertEqual(calcular_qtd_acoes_ate_dia_por_ticker(self.investidor, self.acao_abev.ticker, datetime.date.today()), 500)
+        
+    def test_qtd_acao_empresa_3(self):
+        """Testa quantidade de ações de empresa que passou por alteração com agrupamento"""
+        self.assertEqual(calcular_qtd_acoes_ate_dia_por_ticker(self.investidor, self.acao_vale_5.ticker, datetime.date.today()), 0)
+        self.assertEqual(calcular_qtd_acoes_ate_dia_por_ticker(self.investidor, self.acao_vale_3.ticker, datetime.date.today()), 193)
+        
+    def test_qtd_acao_empresa_4(self):
+        """Testa quantidade de ações de empresa que passou por alteração e bônus"""
+        self.assertEqual(calcular_qtd_acoes_ate_dia_por_ticker(self.investidor, self.acao_tble.ticker, datetime.date.today()), 0)
+        self.assertEqual(calcular_qtd_acoes_ate_dia_por_ticker(self.investidor, self.acao_egie.ticker, datetime.date.today()), 125)
         
         
