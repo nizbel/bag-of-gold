@@ -10,8 +10,8 @@ from bagogold.acoes.models import ProventoAcao, OperacaoAcao, CheckpointProvento
     CheckpointAcao, EventoAgrupamentoAcao, EventoDesdobramentoAcao, \
     EventoAlteracaoAcao, EventoBonusAcao, UsoProventosOperacaoAcao
 from bagogold.acoes.utils import calcular_poupanca_prov_acao_ate_dia, \
-    calcular_qtd_acaos_ate_dia_por_ticker, \
-    calcular_preco_medio_acaos_ate_dia_por_ticker
+    calcular_qtd_acoes_ate_dia_por_ticker, \
+    calcular_preco_medio_acoes_ate_dia_por_ticker
   
   
 # Preparar checkpoints para alterações em proventos de ações
