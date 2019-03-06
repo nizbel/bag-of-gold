@@ -19,9 +19,12 @@ import datetime
 
 class TelaInicioTestCase(TestCase):
     
-    def setUp(self):
+    @classmethod
+    def setUpTestData(cls):
+        super(TelaInicioTestCase, cls).setUpTestData()
         # Investidor
         user = User.objects.create(username='tester')
+        cls.investidor = user.investidor
         
         # Divisão
         divisao1 = Divisao.objects.create(investidor=user.investidor, nome='Teste 1')
@@ -78,28 +81,22 @@ class TelaInicioTestCase(TestCase):
     #####################################################################
     def test_buscar_ultimas_cinco_operacoes_deve_trazer_cinco(self):
         """Busca últimas 5 operações"""
-        investidor = Investidor.objects.get(user__username='tester')
-        
-        self.assertTrue(len(buscar_ultimas_operacoes(investidor, 5)) == 5)
+        self.assertTrue(len(buscar_ultimas_operacoes(self.investidor, 5)) == 5)
         
     def test_buscar_ultimas_dez_operacoes_deve_trazer_sete(self):
         """Testar se buscar últimas 10 operações traz apenas as 7"""
-        investidor = Investidor.objects.get(user__username='tester')
-        
-        self.assertTrue(len(buscar_ultimas_operacoes(investidor, 10)) == 7)
+        self.assertTrue(len(buscar_ultimas_operacoes(self.investidor, 10)) == 7)
     
     def test_buscar_ultimas_cinco_operacoes_nao_deve_trazer_duas(self):
         """Verificar se últimas operações não incluem operações com data de 2 dias atrás"""
-        investidor = Investidor.objects.get(user__username='tester')
-        ultimas_operacoes = buscar_ultimas_operacoes(investidor, 5)
+        ultimas_operacoes = buscar_ultimas_operacoes(self.investidor, 5)
         
         self.assertNotIn(OperacaoAcao.objects.get(data=datetime.date(2016, 10, 26) - datetime.timedelta(days=2)), ultimas_operacoes)
         self.assertNotIn(OperacaoFII.objects.get(data=datetime.date(2016, 10, 26) - datetime.timedelta(days=2)), ultimas_operacoes)
         
     def test_buscar_ultimas_operacoes_deve_ser_ordenado_decrescente_por_data(self):
         """Verificar se últimas operações está ordenado de maneira decrescente por data"""
-        investidor = Investidor.objects.get(user__username='tester')
-        ultimas_operacoes = buscar_ultimas_operacoes(investidor, 5)
+        ultimas_operacoes = buscar_ultimas_operacoes(self.investidor, 5)
         
         data = ultimas_operacoes[0].data
         for operacao in ultimas_operacoes[1:]:
@@ -111,9 +108,7 @@ class TelaInicioTestCase(TestCase):
     #####################################################################
     def test_buscar_valores_atuais_deve_conter_todos_tipos_de_investimento(self):
         """Testar se traz todos os tipos de investimentos"""
-        investidor = Investidor.objects.get(user__username='tester')
-        
-        valores_atuais = buscar_totais_atuais_investimentos(investidor)
+        valores_atuais = buscar_totais_atuais_investimentos(self.investidor)
         
         self.assertIn('Ações', valores_atuais.keys())
         self.assertIn('CDB/RDB', valores_atuais.keys())
@@ -124,9 +119,7 @@ class TelaInicioTestCase(TestCase):
         
     def test_buscar_valores_atuais_deve_ter_valores_nao_zerados(self):
         """Testar se traz valores diferentes de zero para os investimentos que o investidor possui"""
-        investidor = Investidor.objects.get(user__username='tester')
-        
-        valores_atuais = buscar_totais_atuais_investimentos(investidor)
+        valores_atuais = buscar_totais_atuais_investimentos(self.investidor)
         
         self.assertNotEqual(valores_atuais['Ações'], Decimal(0))
         self.assertNotEqual(valores_atuais['FII'], Decimal(0))
@@ -134,10 +127,9 @@ class TelaInicioTestCase(TestCase):
         
     def test_buscar_valores_atuais_deve_ter_valores_zerados(self):
         """Testar se traz 0 para os investimentos que o investidor não possui"""
-        investidor = Investidor.objects.get(user__username='tester')
-        
-        valores_atuais = buscar_totais_atuais_investimentos(investidor)
+        valores_atuais = buscar_totais_atuais_investimentos(self.investidor)
         
         self.assertEqual(valores_atuais['CDB/RDB'], Decimal(0))
         self.assertEqual(valores_atuais['Fundos de Inv.'], Decimal(0))
         self.assertEqual(valores_atuais['Tesouro Direto'], Decimal(0))
+        
