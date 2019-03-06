@@ -5,10 +5,9 @@ from math import floor
 
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models.aggregates import Count, Sum
+from django.db.models.aggregates import Count
 from django.urls.base import reverse
 
-from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
 
 
@@ -285,17 +284,17 @@ class EventoBonusAcao (EventoAcao):
         return 0 if qtd_apos == 0 else preco_medio_inicial * qtd_inicial / qtd_apos
     
 # Checkpoints
-class CheckpointFII(models.Model):
+class CheckpointAcao(models.Model):
     ano = models.SmallIntegerField(u'Ano')
-    fii = models.ForeignKey('FII')
+    acao = models.ForeignKey('Acao')
     investidor = models.ForeignKey('bagogold.Investidor')
     quantidade = models.IntegerField(u'Quantidade no ano', validators=[MinValueValidator(0)])
     preco_medio = models.DecimalField(u'Preço médio', max_digits=11, decimal_places=4)
     
     class Meta:
-        unique_together=('fii', 'ano', 'investidor')
+        unique_together=('acao', 'ano', 'investidor')
         
-class CheckpointProventosFII(models.Model):
+class CheckpointProventosAcao(models.Model):
     ano = models.SmallIntegerField(u'Ano')
     investidor = models.ForeignKey('bagogold.Investidor')
     valor = models.DecimalField(u'Valor da poupança de proventos', max_digits=22, decimal_places=16)
