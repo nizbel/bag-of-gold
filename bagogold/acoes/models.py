@@ -30,7 +30,7 @@ class Acao (models.Model):
     }
     
     ticker = models.CharField(u'Ticker da ação', max_length=10)
-    empresa = models.ForeignKey('Empresa') 
+    empresa = models.ForeignKey('bagogold.Empresa', related_name='acao_novo') 
     """
     Tipos 3 (ON), 4 (PN), 5 (PNA), 6 (PNB), 7 (PNC), 8 (PND), 11 (UNT)
     """
@@ -115,7 +115,7 @@ class AcaoProvento (models.Model):
     acao_recebida = models.ForeignKey('Acao', verbose_name='Ação')
     data_pagamento_frac = models.DateField(u'Data do pagamento de frações', blank=True, null=True)
     valor_calculo_frac = models.DecimalField(u'Valor para cálculo das frações', max_digits=14, decimal_places=10, default=0)
-    provento = models.ForeignKey('Provento', limit_choices_to={'tipo_provento': 'A'})
+    provento = models.ForeignKey('ProventoAcao', limit_choices_to={'tipo_provento': 'A'})
     
     def __unicode__(self):
         return u'Ações de %s, com frações de R$%s a receber em %s' % (self.acao_recebida.ticker, self.valor_calculo_frac, self.data_pagamento_frac)
@@ -127,7 +127,7 @@ class AtualizacaoSelicProvento (models.Model):
     valor_rendimento = models.DecimalField(u'Valor do rendimento', max_digits=19, decimal_places=15, blank=True, null=True)
     data_inicio = models.DateField(u'Data de início')
     data_fim = models.DateField(u'Data de fim')
-    provento = models.OneToOneField('Provento')
+    provento = models.OneToOneField('ProventoAcao')
     
     def __unicode__(self):
         if self.valor_rendimento:
@@ -147,6 +147,14 @@ class AtualizacaoSelicProvento (models.Model):
         return calcular_valor_atualizado_com_taxas_selic(taxas_dos_dias, self.provento.valor_unitario) - self.provento.valor_unitario
     
 class OperacaoAcao (models.Model):
+    DESTINACAO_BH = 'B'
+    DESCRICAO_DESTINACAO_BH = 'Buy and Hold'
+    DESTINACAO_TRADE = 'T'
+    DESCRICAO_DESTINACAO_TRADE = 'Trading'
+    
+    ESCOLHAS_DESTINACAO = ((DESTINACAO_BH, DESCRICAO_DESTINACAO_BH),
+                           (DESTINACAO_TRADE, DESCRICAO_DESTINACAO_TRADE))
+    
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
     quantidade = models.IntegerField(u'Quantidade') 
     data = models.DateField(u'Data', blank=True, null=True)
@@ -158,8 +166,8 @@ class OperacaoAcao (models.Model):
     """
     B = Buy and Hold; T = Trading
     """
-    destinacao = models.CharField(u'Destinação', max_length=1)
-    investidor = models.ForeignKey('Investidor')
+    destinacao = models.CharField(u'Destinação', max_length=1, choices=ESCOLHAS_DESTINACAO)
+    investidor = models.ForeignKey('bagogold.Investidor', related_name='op_acao_novo')
      
     def __unicode__(self):
         return '(' + self.tipo_operacao + ') ' +str(self.quantidade) + ' ' + self.acao.ticker + ' a R$' + str(self.preco_unitario) + ' em ' + str(self.data.strftime('%d/%m/%Y'))
@@ -183,7 +191,7 @@ class OperacaoAcao (models.Model):
 class UsoProventosOperacaoAcao (models.Model):
     operacao = models.ForeignKey('OperacaoAcao', verbose_name='Operação')
     qtd_utilizada = models.DecimalField(u'Quantidade de proventos utilizada', max_digits=11, decimal_places=2)
-    divisao_operacao = models.OneToOneField('DivisaoOperacaoAcao')
+    divisao_operacao = models.OneToOneField('bagogold.DivisaoOperacaoAcao', related_name='uso_prov_op_acao_novo')
 
     def __unicode__(self):
         return 'R$ ' + str(self.qtd_utilizada) + ' em ' + self.divisao_operacao.divisao.nome + ' para ' + unicode(self.divisao_operacao.operacao)
@@ -221,7 +229,7 @@ class TaxaCustodiaAcao (models.Model):
     valor_mensal = models.DecimalField(u'Valor mensal', max_digits=11, decimal_places=2)
     ano_vigencia = models.IntegerField(u'Ano de início de vigência')
     mes_vigencia = models.IntegerField(u'Mês de início de vigência')
-    investidor = models.ForeignKey('Investidor')
+    investidor = models.ForeignKey('bagogold.Investidor', related_name='tx_custodia_novo')
     
 # Eventos
 class EventoAcao (models.Model):
@@ -271,7 +279,7 @@ class EventoBonusAcao (EventoAcao):
     proporcao = models.DecimalField(u'Proporção de desdobramento', max_digits=16, decimal_places=12, validators=[MinValueValidator(Decimal('1.000000000001'))])
     valor_fracao = models.DecimalField(u'Valor para as frações', max_digits=6, decimal_places=2, default=Decimal('0.00'))
     data_pgto_fracao = models.DateField(u'Data de pagamento para as frações', blank=True, null=True)
-    preco_unitario_acao = models.DecimalField(u'Preço unitário por ação', blank=True, null=True)
+    preco_unitario_acao = models.DecimalField(u'Preço unitário por ação', blank=True, null=True, max_digits=11, decimal_places=2)
     
     class Meta:
         unique_together=('acao', 'data')
