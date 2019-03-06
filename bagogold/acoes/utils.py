@@ -1,19 +1,26 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import UsoProventosOperacaoAcao, \
+import calendar
+import datetime
+from decimal import Decimal
+from itertools import chain
+from operator import attrgetter
+import re
+from urllib2 import Request, urlopen, HTTPError, URLError
+
+from django.db.models import Sum, Case, When, IntegerField, F
+from django.db.models.expressions import Value
+from django.db.models.fields import DecimalField, CharField
+from django.db.models.query_utils import Q
+import mechanize
+
+from bagogold.acoes.models import EventoAlteracaoAcao, EventoBonusAcao, \
+    EventoAcao, CheckpointAcao, ProventoAcao, EventoAgrupamentoAcao, \
+    EventoDesdobramentoAcao
+from bagogold.acoes.models import UsoProventosOperacaoAcao, \
     OperacaoAcao, AcaoProvento, Provento
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 from bagogold.bagogold.models.empresa import Empresa
-from decimal import Decimal
-from django.db.models import Sum, Case, When, IntegerField, F
-from itertools import chain
-from operator import attrgetter
-from urllib2 import Request, urlopen, HTTPError, URLError
-import calendar
-import datetime
-import mechanize
-import re
-from bagogold.acoes.models import EventoAlteracaoAcao, EventoBonusAcao,\
-    EventoAcao
+
 
 def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes, data_inicio=None, data_fim=None):
     """ 
@@ -283,7 +290,7 @@ def calcular_lucro_trade_ate_data(investidor, data):
         
     return lucro_acumulado
 
-def calcular_qtd_acoes_ate_dia_por_ticker(investidor, ticker, dia, considerar_trade=False):
+def calcular_qtd_acoes_ate_dia_por_ticker(investidor, ticker, dia, considerar_trade=False, ignorar_alteracao_id=None):
     """ 
     Calcula a quantidade de ações até dia determinado
     
@@ -320,7 +327,7 @@ def calcular_qtd_acoes_ate_dia_por_ticker(investidor, ticker, dia, considerar_tr
             if item.acao_ticker == ticker:
                 qtd_acoes += int(item.provento.valor_unitario * qtd_acoes / 100)
             else:
-                qtd_acoes += int(item.provento.valor_unitario * calcular_qtd_acoes_ate_dia_por_ticker(investidor, item.acao_ticker, item.data, considerar_trade) / 100)
+                qtd_acoes += int(item.provento.valor_unitario * calcular_qtd_acoes_ate_dia_por_ticker(investidor, item.acao_ticker, item.data, considerar_trade, ignorar_alteracao_id) / 100)
     
     return qtd_acoes
 
@@ -508,6 +515,71 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
     
     return total_proventos.quantize(Decimal('0.01'))
 
+def calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, dia, ticker, ignorar_alteracao_id=None):
+    """ 
+    Calcula o preço médio de ua ação do investidor em dia determinado
+    
+    Parâmetros: Investidor
+                Ticker da ação
+                Dia final
+                Id da incorporação a ser ignorada
+    Retorno: Preço médio da ação
+    """
+    if CheckpointAcao.objects.filter(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0).exists():
+        info_acao = CheckpointAcao.objects.get(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0)
+        qtd_acao = info_acao.quantidade
+        preco_medio_acao = info_acao.preco_medio
+    else:
+        qtd_acao = 0
+        preco_medio_acao = 0
+    
+    operacoes = OperacaoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor) \
+        .annotate(custo_total=(Case(When(tipo_operacao='C', then=F('quantidade')*F('preco_unitario') + F('corretagem') + F('emolumentos')), output_field=DecimalField()))) \
+        .annotate(tipo=Value(u'Operação', output_field=CharField()))
+             
+    # Verificar agrupamentos e desdobramentos
+    agrupamentos = EventoAgrupamentoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(tipo=Value(u'Agrupamento', output_field=CharField()))
+
+    desdobramentos = EventoDesdobramentoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]).annotate(tipo=Value(u'Desdobramento', output_field=CharField()))
+    
+    alteracoes = EventoAlteracaoAcao.objects.filter(Q(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]) | Q(nova_acao__ticker=ticker, data__lte=dia)) \
+        .exclude(id=ignorar_alteracao_id).annotate(tipo=Value(u'Alteração', output_field=CharField()))
+    
+    # TODO adicionar bonus
+    
+    lista_conjunta = sorted(chain(agrupamentos, desdobramentos, alteracoes, operacoes), key=attrgetter('data'))
+    
+    for elemento in lista_conjunta:
+        if elemento.tipo == 'Operação':
+            if elemento.tipo_operacao == 'C':
+                preco_medio_acao = (qtd_acao * preco_medio_acao + elemento.custo_total) / (qtd_acao + elemento.quantidade)
+                qtd_acao += elemento.quantidade
+                
+            elif elemento.tipo_operacao == 'V':
+                qtd_acao -= elemento.quantidade
+                if qtd_acao == 0:
+                    preco_medio_acao = 0
+        elif elemento.tipo == 'Amortização':
+            if qtd_acao > 0:
+                preco_medio_acao -= elemento.valor_unitario
+        elif elemento.tipo == 'Agrupamento':
+            preco_medio_acao = elemento.preco_medio_apos(preco_medio_acao, qtd_acao)
+            qtd_acao = elemento.qtd_apos(qtd_acao)
+        elif elemento.tipo == 'Desdobramento':
+            preco_medio_acao = elemento.preco_medio_apos(preco_medio_acao, qtd_acao)
+            qtd_acao = elemento.qtd_apos(qtd_acao)
+        elif elemento.tipo == 'Alteração':
+            if elemento.acao.ticker == ticker:
+                qtd_acao = 0
+                preco_medio_acao = 0
+            elif elemento.nova_acao.ticker == ticker:
+                qtd_incorporada = calcular_qtd_acoes_ate_dia_por_ticker(investidor, elemento.data, elemento.acao.ticker, elemento.id)
+                if qtd_incorporada + qtd_acao > 0:
+                    preco_medio_acao = (calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, elemento.data, elemento.acao.ticker, elemento.id) * qtd_incorporada + \
+                                        qtd_acao * preco_medio_acao) / (qtd_incorporada + qtd_acao)
+                    qtd_acao += qtd_incorporada
+        
+    return preco_medio_acao
 
 def verificar_tipo_acao(ticker):
     categoria = int(re.search('\d+', ticker).group(0))
@@ -679,7 +751,5 @@ def listar_acoes_com_evento_periodo(acao_tickers, data_inicio, data_fim):
     # Adicionar recebimentos por bônus
     lista_tickers.extend(EventoBonusAcao.objects.filter(nova_acao__ticker__in=acao_tickers, data__range=[data_inicio, data_fim]) \
                          .values_list('nova_acao__ticker', flat=True))
-    
-    eventos_bonus = EventoBonusAcao.objects.filter(nova_acao__ticker__in=acao_tickers, data__range=[data_inicio, data_fim])
     
     return list(set(lista_tickers))
