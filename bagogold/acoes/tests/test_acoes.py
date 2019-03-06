@@ -179,6 +179,8 @@ class EventosAcoesTestCase(TestCase):
         
     def test_qtd_acao_empresa_1(self):
         """Testa quantidade de ações de empresa que passou por agrupamento e desdobramento"""
+        data_15_dias_atras = datetime.date.today() - datetime.timedelta(days=15)
+        self.assertEqual(calcular_qtd_acoes_ate_dia_por_ticker(self.investidor, self.acao_bbas.ticker, data_15_dias_atras), 20)
         self.assertEqual(calcular_qtd_acoes_ate_dia_por_ticker(self.investidor, self.acao_bbas.ticker, datetime.date.today()), 100)
         
     def test_qtd_acao_empresa_2(self):
