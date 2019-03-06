@@ -9,7 +9,7 @@ from django.test import TestCase
 
 from bagogold.acoes.models import OperacaoAcao, EventoDesdobramentoAcao,\
     EventoAgrupamentoAcao, EventoBonusAcao, EventoAlteracaoAcao
-from bagogold.acoes.models import Acao, Provento, \
+from bagogold.acoes.models import Acao, ProventoAcao, \
     AtualizacaoSelicProvento, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
@@ -39,10 +39,10 @@ class CalcularAtualizacaoProventoSelicTestCase(TestCase):
     def setUp(self):
         empresa = Empresa.objects.create(nome='BB', nome_pregao='BBAS')
         acao = Acao.objects.create(ticker='BBAS3', empresa=empresa)
-        provento_1 = Provento.objects.create(data_ex=datetime.date(2017, 3, 2), data_pagamento=datetime.date(2017, 3, 10), acao=acao,
+        provento_1 = ProventoAcao.objects.create(data_ex=datetime.date(2017, 3, 2), data_pagamento=datetime.date(2017, 3, 10), acao=acao,
                                            valor_unitario=Decimal('0.13676821544'), tipo_provento='J', oficial_bovespa=True)
         
-        provento_2 = Provento.objects.create(data_ex=datetime.date(2017, 3, 2), data_pagamento=datetime.date(2017, 3, 10), acao=acao,
+        provento_2 = ProventoAcao.objects.create(data_ex=datetime.date(2017, 3, 2), data_pagamento=datetime.date(2017, 3, 10), acao=acao,
                                            valor_unitario=Decimal('0.02531542157'), tipo_provento='J', oficial_bovespa=True)
         
         data = datetime.date(2016, 6, 1)
@@ -63,7 +63,7 @@ class CalcularAtualizacaoProventoSelicTestCase(TestCase):
     def test_verificar_valor_rendimentos(self):
         """Verifica se os valores alcançados são iguais aos pegos na bovespa"""
         # Provento 1 deve ser próximo a 0,00319717853
-        provento = Provento.objects.get(valor_unitario__gt=Decimal('0.1'))
+        provento = ProventoAcao.objects.get(valor_unitario__gt=Decimal('0.1'))
         atualizacao = AtualizacaoSelicProvento(provento=provento)
         atualizacao.data_inicio = datetime.date(2016, 6, 30)
         atualizacao.data_fim = datetime.date(2016, 8, 30)
@@ -77,7 +77,7 @@ class CalcularAtualizacaoProventoSelicTestCase(TestCase):
         self.assertAlmostEqual(atualizacao.valor_rendimento, Decimal('0.00319717853'), delta=Decimal('0.00000000001'))
         
         # Provento 2 deve ser próximo a 0,00059183169
-        provento = Provento.objects.get(valor_unitario__lt=Decimal('0.1'))
+        provento = ProventoAcao.objects.get(valor_unitario__lt=Decimal('0.1'))
         atualizacao = AtualizacaoSelicProvento(provento=provento)
         atualizacao.data_inicio = datetime.date(2016, 12, 30)
         atualizacao.data_fim = datetime.date(2017, 3, 9)
