@@ -4,7 +4,7 @@ from django.test.testcases import TestCase
 
 from bagogold.bagogold.management.commands.preencher_historico_passado_bovespa import listar_documentos_historico_acoes_fiis, \
     processar_historico_acao_fii
-from bagogold.bagogold.models.acoes import Acao, HistoricoAcao
+from bagogold.acoes.models import Acao, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.fii.models import FII, HistoricoFII
 from bagogold.settings import CAMINHO_HISTORICO_ACOES_FIIS

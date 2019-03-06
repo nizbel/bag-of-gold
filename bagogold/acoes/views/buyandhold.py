@@ -23,7 +23,7 @@ from bagogold.bagogold.forms.divisoes import DivisaoOperacaoAcaoFormSet
 from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm, \
     UsoProventosOperacaoAcaoForm
 from bagogold.bagogold.forms.taxa_custodia_acao import TaxaCustodiaAcaoForm
-from bagogold.bagogold.models.acoes import OperacaoAcao, HistoricoAcao, \
+from bagogold.acoes.models import OperacaoAcao, HistoricoAcao, \
     ValorDiarioAcao, Provento, UsoProventosOperacaoAcao, TaxaCustodiaAcao, Acao
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao, Divisao
 from bagogold.acoes.utils import calcular_provento_por_mes, \
