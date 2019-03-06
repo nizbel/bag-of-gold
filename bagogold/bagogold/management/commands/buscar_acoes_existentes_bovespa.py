@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.acoes import Acao
 from bagogold.bagogold.models.empresa import Empresa
-from bagogold.acoes.utils import buscar_ticker_acoes,\
+from bagogold.bagogold.utils.acoes import buscar_ticker_acoes,\
     verificar_tipo_acao
 from django.core.management.base import BaseCommand
 

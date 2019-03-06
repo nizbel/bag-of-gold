@@ -4,7 +4,7 @@ from bagogold.bagogold.models.acoes import Acao, ValorDiarioAcao, HistoricoAcao,
     Provento, OperacaoAcao, AcaoProvento
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorValidacaoDocumento, ProventoAcaoDocumento
-from bagogold.acoes.utils import calcular_qtd_acoes_ate_dia_por_ticker, \
+from bagogold.bagogold.utils.acoes import calcular_qtd_acoes_ate_dia_por_ticker, \
     calcular_poupanca_prov_acao_ate_dia
 from bagogold.bagogold.utils.investidores import buscar_acoes_investidor_na_data, \
     buscar_proventos_a_receber
