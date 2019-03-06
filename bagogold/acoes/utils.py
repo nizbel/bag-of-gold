@@ -515,7 +515,7 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
     
     return total_proventos.quantize(Decimal('0.01'))
 
-def calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, dia, ticker, ignorar_alteracao_id=None):
+def calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, ticker, dia, ignorar_alteracao_id=None):
     """ 
     Calcula o preço médio de ua ação do investidor em dia determinado
     
@@ -573,9 +573,9 @@ def calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, dia, ticker, ignor
                 qtd_acao = 0
                 preco_medio_acao = 0
             elif elemento.nova_acao.ticker == ticker:
-                qtd_incorporada = calcular_qtd_acoes_ate_dia_por_ticker(investidor, elemento.data, elemento.acao.ticker, elemento.id)
+                qtd_incorporada = calcular_qtd_acoes_ate_dia_por_ticker(investidor, elemento.acao.ticker, elemento.data, elemento.id)
                 if qtd_incorporada + qtd_acao > 0:
-                    preco_medio_acao = (calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, elemento.data, elemento.acao.ticker, elemento.id) * qtd_incorporada + \
+                    preco_medio_acao = (calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, elemento.acao.ticker, elemento.data, elemento.id) * qtd_incorporada + \
                                         qtd_acao * preco_medio_acao) / (qtd_incorporada + qtd_acao)
                     qtd_acao += qtd_incorporada
         
