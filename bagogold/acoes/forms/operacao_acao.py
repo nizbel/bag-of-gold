@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.bagogold.models.acoes import OperacaoAcao, \
+from bagogold.acoes.models import OperacaoAcao, \
     UsoProventosOperacaoAcao, AtualizacaoSelicProvento
 from decimal import Decimal
 from django import forms

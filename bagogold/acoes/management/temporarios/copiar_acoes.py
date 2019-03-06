@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
-from bagogold.bagogold.models.acoes import Acao as Acao_old, \
+from bagogold.acoes.models import Acao as Acao_old, \
     OperacaoAcao as OperacaoAcao_old, Provento as ProventoAcao_old, \
     UsoProventosOperacaoAcao as UsoProventosOperacaoAcao_old, \
     ValorDiarioAcao as ValorDiarioAcao_old, \

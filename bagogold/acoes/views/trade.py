@@ -5,7 +5,7 @@ from bagogold.bagogold.forms.operacao_acao import OperacaoAcaoForm, \
     UsoProventosOperacaoAcaoForm
 from bagogold.bagogold.forms.operacao_compra_venda import \
     OperacaoCompraVendaForm
-from bagogold.bagogold.models.acoes import OperacaoAcao, OperacaoCompraVenda, \
+from bagogold.acoes.models import OperacaoAcao, OperacaoCompraVenda, \
     UsoProventosOperacaoAcao
 from bagogold.bagogold.models.divisoes import Divisao, \
     TransferenciaEntreDivisoes, DivisaoOperacaoAcao

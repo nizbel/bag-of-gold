@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.decorators import adiciona_titulo_descricao
-from bagogold.bagogold.models.acoes import Acao, ValorDiarioAcao, HistoricoAcao, \
+from bagogold.acoes.models import Acao, ValorDiarioAcao, HistoricoAcao, \
     Provento, OperacaoAcao, AcaoProvento
 from bagogold.bagogold.models.gerador_proventos import \
     InvestidorValidacaoDocumento, ProventoAcaoDocumento

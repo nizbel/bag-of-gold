@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from bagogold.bagogold.forms.utils import LocalizedModelForm
-from bagogold.bagogold.models.acoes import OperacaoCompraVenda, OperacaoAcao
+from bagogold.acoes.models import OperacaoCompraVenda, OperacaoAcao
 from django import forms
 from django.db.models import Sum
 from django.forms import widgets

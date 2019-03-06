@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from bagogold.bagogold.models.acoes import Acao, Provento, AcaoProvento, \
+from bagogold.acoes.models import Acao, Provento, AcaoProvento, \
     OperacaoAcao, UsoProventosOperacaoAcao, OperacaoCompraVenda, HistoricoAcao, \
     ValorDiarioAcao, TaxaCustodiaAcao
 from django.contrib import admin
