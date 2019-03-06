@@ -12,6 +12,8 @@ import calendar
 import datetime
 import mechanize
 import re
+from bagogold.acoes.models import EventoAlteracaoAcao, EventoBonusAcao,\
+    EventoAcao
 
 def calcular_operacoes_sem_proventos_por_mes(investidor, operacoes, data_inicio=None, data_fim=None):
     """ 
@@ -601,3 +603,83 @@ def buscar_ticker_acoes(empresa_url, tentativa):
             return tickers[0].split('|')
         else:
             return ''
+        
+def verificar_se_existe_evento_para_acao(acao_ticker, data_limite=None):
+    """
+    Verifica se existe evento para ação até data (data inclusive)
+    
+    Parâmetros: Ticker da ação
+                Data
+    Retorno: True caso exista, senão False
+    """
+    # Preparar data
+    if data_limite == None:
+        data_limite = datetime.date.today()
+        
+    # Verificar se há evento, se outra ação foi alterada para esta ou se esta ação foi recebida como bonus por outra
+    return any([classe.objects.filter(acao__ticker=acao_ticker, data__lte=data_limite).exists() for classe in EventoAcao.__subclasses__()]) \
+        or EventoAlteracaoAcao.objects.filter(nova_acao__ticker=acao_ticker, data__lte=data_limite).exists() \
+        or EventoBonusAcao.objects.filter(nova_acao__ticker=acao_ticker, data__lte=data_limite).exists()
+        
+def verificar_se_existe_evento_para_acao_periodo(acao_ticker, data_inicio, data_fim):
+    """
+    Verifica se existe evento para ação no período (datas inclusive)
+    
+    Parâmetros: Ticker da ação
+                Data de início
+                Data de fim
+    Retorno: True caso exista, senão False
+    """
+    # Verificar se há evento, se outra ação foi alterada para esta ou se esta ação foi recebida como bonus por outra
+#     return any([classe.objects.filter(fii__ticker=fii_ticker, data__range=[data_inicio, data_fim]).exists() for classe in EventoFII.__subclasses__()]) \
+#         or EventoIncorporacaoFII.objects.filter(novo_fii__ticker=fii_ticker, data__range=[data_inicio, data_fim]).exists()
+    for classe in EventoAcao.__subclasses__():
+        if classe.objects.filter(acao__ticker=acao_ticker, data__range=[data_inicio, data_fim]).exists():
+            return True
+    if EventoAlteracaoAcao.objects.filter(nova_acao__ticker=acao_ticker, data__range=[data_inicio, data_fim]).exists():
+        return True
+    return EventoBonusAcao.objects.filter(nova_acao__ticker=acao_ticker, data__range=[data_inicio, data_fim]).exists()
+        
+def verificar_se_existe_evento_para_acoes_periodo(acao_tickers, data_inicio, data_fim):
+    """
+    Verifica se existe evento para ações no período (datas inclusive)
+    
+    Parâmetros: Lista de tickers de ações
+                Data de início
+                Data de fim
+    Retorno: True caso exista, senão False
+    """
+    # Verificar se há evento, se outra ação foi alterada para esta ou se esta ação foi recebida como bonus por outra
+#     return any([classe.objects.filter(fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists() for classe in EventoFII.__subclasses__()]) \
+#         or EventoIncorporacaoFII.objects.filter(novo_fii__ticker__in=fii_tickers, data__range=[data_inicio, data_fim]).exists()
+    for classe in EventoAcao.__subclasses__():
+        if classe.objects.filter(acao__ticker__in=acao_tickers, data__range=[data_inicio, data_fim]).exists():
+            return True
+    if EventoAlteracaoAcao.objects.filter(nova_acao__ticker__in=acao_tickers, data__range=[data_inicio, data_fim]).exists():
+        return True
+    return EventoBonusAcao.objects.filter(nova_acao__ticker__in=acao_tickers, data__range=[data_inicio, data_fim]).exists()
+
+def listar_acoes_com_evento_periodo(acao_tickers, data_inicio, data_fim):
+    """
+    Lista os tickers de ações que possuem algum evento no período informado
+    
+    Parâmetros: Lista de tickers de ações
+                Data de início
+                Data de fim
+    Retorno: Lista com os tickers de ações
+    """
+    lista_tickers = list()
+    for classe in EventoAcao.__subclasses__():
+        lista_tickers.extend(classe.objects.filter(acao__ticker__in=acao_tickers, data__range=[data_inicio, data_fim]) \
+                             .values_list('acao__ticker', flat=True))
+    # Adicionar recebimentos por alteração
+    lista_tickers.extend(EventoAlteracaoAcao.objects.filter(nova_acao__ticker__in=acao_tickers, data__range=[data_inicio, data_fim]) \
+                         .values_list('nova_acao__ticker', flat=True))
+    
+    # Adicionar recebimentos por bônus
+    lista_tickers.extend(EventoBonusAcao.objects.filter(nova_acao__ticker__in=acao_tickers, data__range=[data_inicio, data_fim]) \
+                         .values_list('nova_acao__ticker', flat=True))
+    
+    eventos_bonus = EventoBonusAcao.objects.filter(nova_acao__ticker__in=acao_tickers, data__range=[data_inicio, data_fim])
+    
+    return list(set(lista_tickers))
