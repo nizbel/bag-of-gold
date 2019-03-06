@@ -3,14 +3,17 @@ import datetime
 from decimal import Decimal
 
 import boto3
+from django.contrib.auth.models import User
 from django.db.models.aggregates import Count
 from django.test import TestCase
 
+from bagogold.acoes.models import OperacaoAcao, EventoDesdobramentoAcao,\
+    EventoAgrupamentoAcao, EventoBonusAcao, EventoAlteracaoAcao
 from bagogold.bagogold.models.acoes import Acao, Provento, \
     AtualizacaoSelicProvento, HistoricoAcao
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
-from bagogold.bagogold.utils.acoes import verificar_tipo_acao
+from bagogold.acoes.utils import verificar_tipo_acao
 from bagogold.bagogold.utils.bovespa import buscar_historico_recente_bovespa, \
     processar_historico_recente_bovespa
 from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
@@ -111,3 +114,69 @@ class CalcularAtualizacaoProventoSelicTestCase(TestCase):
 #         boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=nome_arq)
 #         self.assertTrue(HistoricoAcao.objects.all().count() > 0)
 #         self.assertTrue(HistoricoFII.objects.all().count() > 0)
+
+class EventosAcoesTestCase(TestCase):
+    # TODO Testar frações e pagamentos de frações
+    @classmethod
+    def setUpTestData(cls):
+        super(EventosAcoesTestCase, cls).setUpTestData()
+        
+        usuario = User.objects.create(username='test', password='test')
+        cls.investidor = usuario.investidor
+        
+        # Agrupamento e Desdobramento
+        empresa_1 = Empresa.objects.create(nome_pregao='BBAS', nome='Banco do Brasil')
+        cls.acao_bbas = Acao.objects.create(ticker='BBAS3', empresa=empresa_1)
+        
+        # Alteração com desdobramento
+        empresa_2 = Empresa.objects.create(nome_pregao='ABEV', nome='Ambev')
+        cls.acao_abev = Acao.objects.create(ticker='ABEV3', empresa=empresa_2)
+        cls.acao_ambv = Acao.objects.create(ticker='AMBV4', empresa=empresa_2)
+        
+        # Alteração com agrupamento
+        empresa_3 = Empresa.objects.create(nome_pregao='VALE', nome='Vale')
+        cls.acao_vale_3 = Acao.objects.create(ticker='VALE3', empresa=empresa_3)
+        cls.acao_vale_5 = Acao.objects.create(ticker='VALE5', empresa=empresa_3)
+        
+        # Alteração e Bônus
+        empresa_4 = Empresa.objects.create(nome_pregao='EGIE', nome='Engie')
+        cls.acao_tble = Acao.objects.create(ticker='TBLE3', empresa=empresa_4)
+        cls.acao_egie = Acao.objects.create(ticker='EGIE3', empresa=empresa_4)
+        
+        # Operações do investidor
+        data_10_dias_atras = datetime.date.today() - datetime.timedelta(days=10)
+        data_20_dias_atras = datetime.date.today() - datetime.timedelta(days=20)
+        data_30_dias_atras = datetime.date.today() - datetime.timedelta(days=30)
+        
+        OperacaoAcao.objects.create(acao=cls.acao_bbas, quantidade=100, preco_unitario=30, corretagem=10, emolumentos=1, data=data_30_dias_atras, 
+                                    tipo_operacao='C', investidor=cls.investidor)
+        OperacaoAcao.objects.create(acao=cls.acao_ambv, quantidade=100, preco_unitario=80, corretagem=10, emolumentos=1, data=data_30_dias_atras, 
+                                    tipo_operacao='C', investidor=cls.investidor)
+        OperacaoAcao.objects.create(acao=cls.acao_vale_5, quantidade=100, preco_unitario=30, corretagem=10, emolumentos=1, data=data_30_dias_atras, 
+                                    tipo_operacao='C', investidor=cls.investidor)
+        OperacaoAcao.objects.create(acao=cls.acao_vale_3, quantidade=100, preco_unitario=30, corretagem=10, emolumentos=1, data=data_30_dias_atras, 
+                                    tipo_operacao='C', investidor=cls.investidor)
+        OperacaoAcao.objects.create(acao=cls.acao_tble, quantidade=100, preco_unitario=30, corretagem=10, emolumentos=1, data=data_30_dias_atras, 
+                                    tipo_operacao='C', investidor=cls.investidor)
+        
+        # Eventos
+        # Empresa 1
+        EventoAgrupamentoAcao.objects.create(acao=cls.acao_bbas, data=data_20_dias_atras, proporcao=Decimal('0.2'))
+        EventoDesdobramentoAcao.objects.create(acao=cls.acao_bbas, data=data_10_dias_atras, proporcao=Decimal('5'))
+        
+        # Empresa 2
+        EventoDesdobramentoAcao.objects.create(acao=cls.acao_ambv, data=data_10_dias_atras, proporcao=Decimal('5'))
+        EventoAlteracaoAcao.objects.create(acao=cls.acao_ambv, nova_acao=cls.acao_abev, data=data_10_dias_atras)
+        
+        # Empresa 3
+        EventoAgrupamentoAcao.objects.create(acao=cls.acao_vale_5, data=data_10_dias_atras, proporcao=Decimal('0.9342'))
+        EventoAlteracaoAcao.objects.create(acao=cls.acao_vale_5, nova_acao=cls.acao_vale_3, data=data_10_dias_atras)
+        
+        # Empresa 4
+        EventoAlteracaoAcao.objects.create(acao=cls.acao_tble, nova_acao=cls.acao_egie, data=data_20_dias_atras)
+        EventoBonusAcao.objects.create(acao=cls.acao_egie, data=data_10_dias_atras, proporcao=Decimal('0.2'))
+        
+    def test_qtd_acao_empresa_1(self):
+        
+        
+        
