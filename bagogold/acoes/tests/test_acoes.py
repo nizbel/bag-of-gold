@@ -150,15 +150,15 @@ class EventosAcoesTestCase(TestCase):
         data_30_dias_atras = datetime.date.today() - datetime.timedelta(days=30)
         
         OperacaoAcao.objects.create(acao=cls.acao_bbas, quantidade=100, preco_unitario=30, corretagem=10, emolumentos=1, data=data_30_dias_atras, 
-                                    tipo_operacao='C', investidor=cls.investidor, destinacao='B')
+                                    tipo_operacao='C', investidor=cls.investidor, destinacao=OperacaoAcao.DESTINACAO_BH)
         OperacaoAcao.objects.create(acao=cls.acao_ambv, quantidade=100, preco_unitario=80, corretagem=10, emolumentos=1, data=data_30_dias_atras, 
-                                    tipo_operacao='C', investidor=cls.investidor, destinacao='B')
+                                    tipo_operacao='C', investidor=cls.investidor, destinacao=OperacaoAcao.DESTINACAO_BH)
         OperacaoAcao.objects.create(acao=cls.acao_vale_5, quantidade=100, preco_unitario=30, corretagem=10, emolumentos=1, data=data_30_dias_atras, 
-                                    tipo_operacao='C', investidor=cls.investidor, destinacao='B')
+                                    tipo_operacao='C', investidor=cls.investidor, destinacao=OperacaoAcao.DESTINACAO_BH)
         OperacaoAcao.objects.create(acao=cls.acao_vale_3, quantidade=100, preco_unitario=30, corretagem=10, emolumentos=1, data=data_30_dias_atras, 
-                                    tipo_operacao='C', investidor=cls.investidor, destinacao='B')
+                                    tipo_operacao='C', investidor=cls.investidor, destinacao=OperacaoAcao.DESTINACAO_BH)
         OperacaoAcao.objects.create(acao=cls.acao_tble, quantidade=100, preco_unitario=30, corretagem=10, emolumentos=1, data=data_30_dias_atras, 
-                                    tipo_operacao='C', investidor=cls.investidor, destinacao='B')
+                                    tipo_operacao='C', investidor=cls.investidor, destinacao=OperacaoAcao.DESTINACAO_BH)
         
         # Eventos
         # Empresa 1

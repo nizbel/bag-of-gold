@@ -15,7 +15,7 @@ import mechanize
 
 from bagogold.acoes.models import EventoAlteracaoAcao, EventoBonusAcao, \
     EventoAcao, CheckpointAcao, ProventoAcao, EventoAgrupamentoAcao, \
-    EventoDesdobramentoAcao
+    EventoDesdobramentoAcao, EventoBonusAcaoRecebida
 from bagogold.acoes.models import UsoProventosOperacaoAcao, \
     OperacaoAcao, AcaoProvento, ProventoAcao
 from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
@@ -290,7 +290,7 @@ def calcular_lucro_trade_ate_data(investidor, data):
         
     return lucro_acumulado
 
-def calcular_qtd_acoes_ate_dia_por_ticker(investidor, ticker, dia, considerar_trade=False, ignorar_alteracao_id=None):
+def calcular_qtd_acoes_ate_dia_por_ticker(investidor, ticker, dia, considerar_trade=False, ignorar_alteracao_id=None, verificar_evento=True):
     """ 
     Calcula a quantidade de ações até dia determinado
     
@@ -298,36 +298,96 @@ def calcular_qtd_acoes_ate_dia_por_ticker(investidor, ticker, dia, considerar_tr
                 Ticker da ação
                 Dia final
                 Levar trades em consideração
+                ID de alteração a ser ignorada
+                Verificar se houve evento para ação no período?
     Retorno: Quantidade de ações
     """
-    if considerar_trade:
-        operacoes = OperacaoAcao.objects.filter(investidor=investidor, acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
+#     if considerar_trade:
+#         operacoes = OperacaoAcao.objects.filter(investidor=investidor, acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
+#     else:
+#         operacoes = OperacaoAcao.objects.filter(investidor=investidor, destinacao='B', acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
+#     # Pega os proventos em ações recebidos por outras ações
+#     proventos_em_acoes = AcaoProvento.objects.filter(provento__oficial_bovespa=True, acao_recebida__ticker=ticker, provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True) \
+#         .annotate(acao_ticker=F('provento__acao__ticker')).annotate(data=F('provento__data_ex')).order_by('data').select_related('provento')
+# #     for provento in proventos_em_acoes:
+# #         provento.data = provento.provento.data_ex
+#     
+#     lista_conjunta = sorted(chain(proventos_em_acoes, operacoes), key=attrgetter('data'))
+#     
+#     qtd_acoes = 0
+#     
+#     for item in lista_conjunta:
+#         if isinstance(item, OperacaoAcao): 
+#             # Verificar se se trata de compra ou venda
+#             if item.tipo_operacao == 'C':
+#                 qtd_acoes += item.quantidade
+#                 
+#             elif item.tipo_operacao == 'V':
+#                 qtd_acoes -= item.quantidade
+#         
+#         elif isinstance(item, AcaoProvento): 
+#             if item.acao_ticker == ticker:
+#                 qtd_acoes += int(item.provento.valor_unitario * qtd_acoes / 100)
+#             else:
+#                 qtd_acoes += int(item.provento.valor_unitario * calcular_qtd_acoes_ate_dia_por_ticker(investidor, item.acao_ticker, item.data, considerar_trade, ignorar_alteracao_id) / 100)
+    
+    if verificar_evento and not verificar_se_existe_evento_para_acao_periodo(ticker, dia.replace(month=1).replace(day=1), dia):
+        if CheckpointAcao.objects.filter(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0).exists():
+            qtd_acoes = CheckpointAcao.objects.get(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0).quantidade
+        else:
+            qtd_acoes = 0
+        qtd_acoes += (OperacaoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor).exclude(data__isnull=True) \
+            .aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+                                      When(tipo_operacao='V', then=F('quantidade')*-1),
+                                      output_field=DecimalField())))['total'] or 0)
     else:
-        operacoes = OperacaoAcao.objects.filter(investidor=investidor, destinacao='B', acao__ticker=ticker, data__lte=dia).exclude(data__isnull=True).order_by('data')
-    # Pega os proventos em ações recebidos por outras ações
-    proventos_em_acoes = AcaoProvento.objects.filter(provento__oficial_bovespa=True, acao_recebida__ticker=ticker, provento__data_ex__lte=dia).exclude(provento__data_ex__isnull=True) \
-        .annotate(acao_ticker=F('provento__acao__ticker')).annotate(data=F('provento__data_ex')).order_by('data').select_related('provento')
-#     for provento in proventos_em_acoes:
-#         provento.data = provento.provento.data_ex
-    
-    lista_conjunta = sorted(chain(proventos_em_acoes, operacoes), key=attrgetter('data'))
-    
-    qtd_acoes = 0
-    
-    for item in lista_conjunta:
-        if isinstance(item, OperacaoAcao): 
-            # Verificar se se trata de compra ou venda
-            if item.tipo_operacao == 'C':
-                qtd_acoes += item.quantidade
-                
-            elif item.tipo_operacao == 'V':
-                qtd_acoes -= item.quantidade
+        if CheckpointAcao.objects.filter(investidor=investidor, ano=dia.year-1, acao__ticker=ticker).exists():
+            qtd_acoes = CheckpointAcao.objects.get(investidor=investidor, ano=dia.year-1, acao__ticker=ticker).quantidade
+        else:
+            qtd_acoes = 0
+        operacoes = OperacaoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor).exclude(data__isnull=True) \
+            .annotate(qtd_final=(Case(When(tipo_operacao='C', then=F('quantidade')),
+                                      When(tipo_operacao='V', then=F('quantidade')*-1),
+                                      output_field=DecimalField()))).annotate(tipo=Value(u'Operação', output_field=CharField())).select_related('acao')
+                                      
+                                      
+        # Verificar agrupamentos e desdobramentos
+        agrupamentos = EventoAgrupamentoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]) \
+            .annotate(tipo=Value(u'Agrupamento', output_field=CharField())).select_related('acao')
+
+        desdobramentos = EventoDesdobramentoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]) \
+            .annotate(tipo=Value(u'Desdobramento', output_field=CharField())) \
+            .select_related('acao')
+            
+        bonificacoes = EventoBonusAcao.objects.filter(Q(acao__ticker=ticker, eventobonusacaorecebida__isnull=True, data__range=[dia.replace(month=1).replace(day=1), dia]) \
+                                                        | Q(eventobonusacaorecebida__acao_recebida__ticker=ticker, data__lte=dia)) \
+            .annotate(tipo=Value(u'Bonificação', output_field=CharField())).select_related('acao', 'eventobonusacaorecebida__acao_recebida')
+            
         
-        elif isinstance(item, AcaoProvento): 
-            if item.acao_ticker == ticker:
-                qtd_acoes += int(item.provento.valor_unitario * qtd_acoes / 100)
-            else:
-                qtd_acoes += int(item.provento.valor_unitario * calcular_qtd_acoes_ate_dia_por_ticker(investidor, item.acao_ticker, item.data, considerar_trade, ignorar_alteracao_id) / 100)
+        alteracoes = EventoAlteracaoAcao.objects.filter(Q(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia]) | Q(nova_acao__ticker=ticker, data__lte=dia)) \
+            .exclude(id=ignorar_alteracao_id).annotate(tipo=Value(u'Alteração', output_field=CharField())).select_related('acao', 'nova_acao')
+        
+        lista_conjunta = sorted(chain(agrupamentos, desdobramentos, bonificacoes, alteracoes, operacoes), key=attrgetter('data'))
+        
+        for elemento in lista_conjunta:
+            if elemento.tipo == 'Operação':
+                qtd_acoes += elemento.qtd_final
+            elif elemento.tipo == 'Agrupamento':
+                qtd_acoes = elemento.qtd_apos(qtd_acoes)
+            elif elemento.tipo == 'Desdobramento':
+                qtd_acoes = elemento.qtd_apos(qtd_acoes)
+            elif elemento.tipo == 'Bonificação':
+                if elemento.acao.ticker == ticker and elemento.acao_recebida.ticker == ticker:
+                    qtd_acoes += elemento.qtd_bonus(qtd_acoes)
+                elif elemento.acao_recebida.ticker == ticker:
+                    qtd_acoes += elemento.qtd_bonus(calcular_qtd_acoes_ate_dia_por_ticker(investidor, elemento.acao.ticker, elemento.data))
+            elif elemento.tipo == 'Alteração':
+                if elemento.acao.ticker == ticker:
+                    qtd_acoes = 0
+                elif elemento.nova_acao.ticker == ticker:
+                    qtd_acoes += calcular_qtd_acoes_ate_dia_por_ticker(investidor, elemento.acao.ticker, elemento.data, 
+                                                                       ignorar_alteracao_id=elemento.id)
+    
     
     return qtd_acoes
 
@@ -384,13 +444,13 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id, destinacao='B'):
     
     return qtd_acoes
 
-def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao='B'):
+def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao=OperacaoAcao.DESTINACAO_BH):
     """
     Calcula a quantidade de proventos provisionada até dia determinado para ações
     
     Parâmetros: Investidor
                 Dia da posição de proventos
-                Destinação ('B' ou 'T')
+                Destinação (B&H ou Trade)
     Retorno: Quantidade provisionada no dia
     """
     operacoes = OperacaoAcao.objects.filter(investidor=investidor, destinacao=destinacao, data__lte=dia).annotate(acao_ticker=F('acao__ticker')).order_by('data') \
@@ -691,7 +751,7 @@ def verificar_se_existe_evento_para_acao(acao_ticker, data_limite=None):
     # Verificar se há evento, se outra ação foi alterada para esta ou se esta ação foi recebida como bonus por outra
     return any([classe.objects.filter(acao__ticker=acao_ticker, data__lte=data_limite).exists() for classe in EventoAcao.__subclasses__()]) \
         or EventoAlteracaoAcao.objects.filter(nova_acao__ticker=acao_ticker, data__lte=data_limite).exists() \
-        or EventoBonusAcao.objects.filter(nova_acao__ticker=acao_ticker, data__lte=data_limite).exists()
+        or EventoBonusAcaoRecebida.objects.filter(acao_recebida__ticker=acao_ticker, bonus__data__lte=data_limite).exists()
         
 def verificar_se_existe_evento_para_acao_periodo(acao_ticker, data_inicio, data_fim):
     """
@@ -710,7 +770,7 @@ def verificar_se_existe_evento_para_acao_periodo(acao_ticker, data_inicio, data_
             return True
     if EventoAlteracaoAcao.objects.filter(nova_acao__ticker=acao_ticker, data__range=[data_inicio, data_fim]).exists():
         return True
-    return EventoBonusAcao.objects.filter(nova_acao__ticker=acao_ticker, data__range=[data_inicio, data_fim]).exists()
+    return EventoBonusAcaoRecebida.objects.filter(acao_recebida__ticker=acao_ticker, bonus__data__range=[data_inicio, data_fim]).exists()
         
 def verificar_se_existe_evento_para_acoes_periodo(acao_tickers, data_inicio, data_fim):
     """
@@ -729,7 +789,7 @@ def verificar_se_existe_evento_para_acoes_periodo(acao_tickers, data_inicio, dat
             return True
     if EventoAlteracaoAcao.objects.filter(nova_acao__ticker__in=acao_tickers, data__range=[data_inicio, data_fim]).exists():
         return True
-    return EventoBonusAcao.objects.filter(nova_acao__ticker__in=acao_tickers, data__range=[data_inicio, data_fim]).exists()
+    return EventoBonusAcaoRecebida.objects.filter(acao_recebida__ticker__in=acao_tickers, bonus__data__range=[data_inicio, data_fim]).exists()
 
 def listar_acoes_com_evento_periodo(acao_tickers, data_inicio, data_fim):
     """
@@ -749,7 +809,7 @@ def listar_acoes_com_evento_periodo(acao_tickers, data_inicio, data_fim):
                          .values_list('nova_acao__ticker', flat=True))
     
     # Adicionar recebimentos por bônus
-    lista_tickers.extend(EventoBonusAcao.objects.filter(nova_acao__ticker__in=acao_tickers, data__range=[data_inicio, data_fim]) \
-                         .values_list('nova_acao__ticker', flat=True))
+    lista_tickers.extend(EventoBonusAcaoRecebida.objects.filter(acao_recebida__ticker__in=acao_tickers, bonus__data__range=[data_inicio, data_fim]) \
+                         .values_list('acao_recebida__ticker', flat=True))
     
     return list(set(lista_tickers))

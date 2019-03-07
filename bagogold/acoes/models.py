@@ -147,9 +147,9 @@ class AtualizacaoSelicProvento (models.Model):
         return calcular_valor_atualizado_com_taxas_selic(taxas_dos_dias, self.provento.valor_unitario) - self.provento.valor_unitario
     
 class OperacaoAcao (models.Model):
-    DESTINACAO_BH = 'B'
+    DESTINACAO_BH = 1
     DESCRICAO_DESTINACAO_BH = 'Buy and Hold'
-    DESTINACAO_TRADE = 'T'
+    DESTINACAO_TRADE = 2
     DESCRICAO_DESTINACAO_TRADE = 'Trading'
     
     ESCOLHAS_DESTINACAO = ((DESTINACAO_BH, DESCRICAO_DESTINACAO_BH),
@@ -164,9 +164,9 @@ class OperacaoAcao (models.Model):
     acao = models.ForeignKey('Acao', verbose_name='Ação')
     consolidada = models.NullBooleanField(u'Consolidada?', blank=True, null=True)
     """
-    B = Buy and Hold; T = Trading
+    1 = Buy and Hold; 2 = Trading
     """
-    destinacao = models.CharField(u'Destinação', max_length=1, choices=ESCOLHAS_DESTINACAO)
+    destinacao = models.SmallIntegerField(u'Destinação', choices=ESCOLHAS_DESTINACAO)
     investidor = models.ForeignKey('bagogold.Investidor', related_name='op_acao_novo')
      
     def __unicode__(self):
@@ -182,7 +182,7 @@ class OperacaoAcao (models.Model):
     
     @property
     def link(self):
-        if self.destinacao == 'B':
+        if self.destinacao == OperacaoAcao.DESTINACAO_BH:
             return reverse('acoes:bh:editar_operacao_bh', kwargs={'id_operacao': self.id})
         else:
             return reverse('acoes:trading:editar_operacao_acao_t', kwargs={'id_operacao': self.id})
@@ -276,7 +276,7 @@ class EventoDesdobramentoAcao (EventoAcao):
         return 0 if qtd_apos == 0 else preco_medio_inicial * qtd_inicial / qtd_apos
     
 class EventoBonusAcao (EventoAcao):
-    proporcao = models.DecimalField(u'Proporção de desdobramento', max_digits=16, decimal_places=12, validators=[MinValueValidator(Decimal('1.000000000001'))])
+    proporcao = models.DecimalField(u'Proporção de desdobramento', max_digits=16, decimal_places=12, validators=[MinValueValidator(Decimal('0.000000000001'))])
     valor_fracao = models.DecimalField(u'Valor para as frações', max_digits=6, decimal_places=2, default=Decimal('0.00'))
     data_pgto_fracao = models.DateField(u'Data de pagamento para as frações', blank=True, null=True)
     preco_unitario_acao = models.DecimalField(u'Preço unitário por ação', blank=True, null=True, max_digits=11, decimal_places=2)
@@ -284,12 +284,27 @@ class EventoBonusAcao (EventoAcao):
     class Meta:
         unique_together=('acao', 'data')
         
-    def qtd_apos(self, qtd_inicial):
+    def qtd_bonus(self, qtd_inicial):
         return Decimal(floor(qtd_inicial * self.proporcao))
     
     def preco_medio_apos(self, preco_medio_inicial, qtd_inicial):
         qtd_apos = self.qtd_apos(qtd_inicial)
         return 0 if qtd_apos == 0 else preco_medio_inicial * qtd_inicial / qtd_apos
+    
+    @property
+    def acao_recebida(self):
+        if hasattr(self, 'eventobonusacaorecebida'):
+            return self.eventobonusacaorecebida.acao_recebida
+        return self.acao
+    
+class EventoBonusAcaoRecebida (models.Model):
+    bonus = models.OneToOneField('EventoBonusAcao')
+    acao_recebida = models.ForeignKey('Acao')
+    
+    def save(self, *args, **kwargs):
+        if self.acao_recebida == self.bonus.acao:
+            raise ValueError('Ação recebida não pode ser igual a ação que recebeu bonificação')
+        super(EventoBonusAcaoRecebida, self).save(*args, **kwargs)
     
 # Checkpoints
 class CheckpointAcao(models.Model):
