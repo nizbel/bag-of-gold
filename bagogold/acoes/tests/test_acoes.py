@@ -33,10 +33,10 @@ class CalcularAtualizacaoProventoSelicTestCase(TestCase):
         empresa = Empresa.objects.create(nome='BB', nome_pregao='BBAS')
         acao = Acao.objects.create(ticker='BBAS3', empresa=empresa)
         provento_1 = ProventoAcao.objects.create(data_ex=datetime.date(2017, 3, 2), data_pagamento=datetime.date(2017, 3, 10), acao=acao,
-                                           valor_unitario=Decimal('0.13676821544'), tipo_provento='J', oficial_bovespa=True)
+                                           valor_unitario=Decimal('0.13676821544'), tipo_provento=ProventoAcao.TIPO_PROVENTO_JSCP, oficial_bovespa=True)
         
         provento_2 = ProventoAcao.objects.create(data_ex=datetime.date(2017, 3, 2), data_pagamento=datetime.date(2017, 3, 10), acao=acao,
-                                           valor_unitario=Decimal('0.02531542157'), tipo_provento='J', oficial_bovespa=True)
+                                           valor_unitario=Decimal('0.02531542157'), tipo_provento=ProventoAcao.TIPO_PROVENTO_JSCP, oficial_bovespa=True)
         
         data = datetime.date(2016, 6, 1)
         while data < datetime.date(2017, 3, 10):
