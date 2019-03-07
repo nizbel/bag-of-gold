@@ -2,27 +2,20 @@
 import datetime
 from decimal import Decimal
 
-import boto3
 from django.contrib.auth.models import User
 from django.db.models.aggregates import Count
 from django.test import TestCase
 
-from bagogold.acoes.models import OperacaoAcao, EventoDesdobramentoAcao,\
-    EventoAgrupamentoAcao, EventoBonusAcao, EventoAlteracaoAcao
 from bagogold.acoes.models import Acao, ProventoAcao, \
-    AtualizacaoSelicProvento, HistoricoAcao
+    AtualizacaoSelicProvento, OperacaoAcao, EventoDesdobramentoAcao, \
+    EventoAgrupamentoAcao, EventoBonusAcao, EventoAlteracaoAcao
+from bagogold.acoes.utils import verificar_tipo_acao, \
+    calcular_qtd_acoes_ate_dia_por_ticker
 from bagogold.bagogold.models.empresa import Empresa
 from bagogold.bagogold.models.taxas_indexacao import HistoricoTaxaSelic
-from bagogold.acoes.utils import verificar_tipo_acao,\
-    calcular_qtd_acoes_ate_dia_por_ticker
-from bagogold.bagogold.utils.bovespa import buscar_historico_recente_bovespa, \
-    processar_historico_recente_bovespa
-from bagogold.bagogold.utils.misc import verificar_feriado_bovespa, \
-    ultimo_dia_util
+from bagogold.bagogold.utils.misc import verificar_feriado_bovespa
 from bagogold.bagogold.utils.taxas_indexacao import \
     calcular_valor_atualizado_com_taxas_selic
-from bagogold.fii.models import FII, HistoricoFII
-from conf.settings_local import AWS_STORAGE_BUCKET_NAME
 
 
 class VerificarTipoAcaoTestCase(TestCase):
@@ -90,31 +83,6 @@ class CalcularAtualizacaoProventoSelicTestCase(TestCase):
         
         self.assertAlmostEqual(atualizacao.valor_rendimento, Decimal('0.00059183169'), delta=Decimal('0.00000000001'))
         
-# class BuscarHistoricoRecenteTestCase(TestCase):
-#     def setUp(self):
-#         empresa_acao = Empresa.objects.create(nome='Banco do Brasil', nome_pregao='BBAS')
-#         Acao.objects.create(ticker='BBAS3', tipo='ON', empresa=empresa_acao)
-#         
-#         empresa_fii = Empresa.objects.create(nome='BBPO', nome_pregao='BBPO')
-#         FII.objects.create(ticker='BBPO11', empresa=empresa_fii)
-#         
-#     def test_buscar_historico_recente_bovespa(self):
-#         """Testa se a busca por histórico recente retorna nome de documento"""
-#         ultima_data_util = ultimo_dia_util()
-#         nome_arq = buscar_historico_recente_bovespa(ultima_data_util)
-#         self.assertTrue(nome_arq != None and nome_arq != '')
-#         boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=nome_arq)
-#         
-#     def test_processar_historico_recente_bovespa(self):
-#         ultima_data_util = ultimo_dia_util()
-#         nome_arq = buscar_historico_recente_bovespa(ultima_data_util)
-# #         try:
-#         processar_historico_recente_bovespa(boto3.client('s3').get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=nome_arq))
-# #         except:
-# #             pass
-#         boto3.client('s3').delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=nome_arq)
-#         self.assertTrue(HistoricoAcao.objects.all().count() > 0)
-#         self.assertTrue(HistoricoFII.objects.all().count() > 0)
 
 class EventosAcoesTestCase(TestCase):
     # TODO Testar frações e pagamentos de frações

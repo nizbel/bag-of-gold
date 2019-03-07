@@ -795,6 +795,24 @@ class DivisaoOperacaoAcao (models.Model):
     def percentual_divisao(self):
         return Decimal(self.quantidade) / self.operacao.quantidade
     
+class CheckpointDivisaoAcao (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    acao = models.ForeignKey('acoes.Acao')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    quantidade = models.IntegerField(u'Quantidade no ano', validators=[MinValueValidator(0)])
+    preco_medio = models.DecimalField(u'Preço médio', max_digits=11, decimal_places=4)
+    
+    class Meta:
+        unique_together=('acao', 'ano', 'divisao')
+    
+class CheckpointDivisaoProventosAcao (models.Model):
+    ano = models.SmallIntegerField(u'Ano')
+    divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
+    valor = models.DecimalField(u'Valor da poupança de proventos', max_digits=22, decimal_places=16)
+        
+    class Meta:
+        unique_together=('ano', 'divisao')
+    
 class DivisaoOperacaoTD (models.Model):
     divisao = models.ForeignKey('Divisao', verbose_name=u'Divisão')
     operacao = models.ForeignKey('tesouro_direto.OperacaoTitulo')

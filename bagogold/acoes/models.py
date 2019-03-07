@@ -60,16 +60,23 @@ class ProventoOficialManager(models.Manager):
         return super(ProventoOficialManager, self).get_queryset().filter(oficial_bovespa=True)
     
 class ProventoAcao (models.Model):
-    ESCOLHAS_TIPO_PROVENTO_ACAO=(('A', "Ações"),
-                            ('D', "Dividendos"),
-                            ('J', "Juros sobre capital próprio"),)
+    TIPO_PROVENTO_DIVIDENDO = 1
+    DESCRICAO_TIPO_PROVENTO_DIVIDENDO = u'Dividendos'
+    TIPO_PROVENTO_JSCP = 2
+    DESCRICAO_TIPO_PROVENTO_JSCP = u'JSCP'
+    TIPO_PROVENTO_ACOES = 3
+    DESCRICAO_TIPO_PROVENTO_ACOES = u'Ações'
+    
+    ESCOLHAS_TIPO_PROVENTO_ACAO=((TIPO_PROVENTO_DIVIDENDO, DESCRICAO_TIPO_PROVENTO_DIVIDENDO),
+                            (TIPO_PROVENTO_JSCP, DESCRICAO_TIPO_PROVENTO_JSCP),
+                            (TIPO_PROVENTO_ACOES, DESCRICAO_TIPO_PROVENTO_ACOES),)
     
     acao = models.ForeignKey('Acao', verbose_name='Ação')
     valor_unitario = models.DecimalField(u'Valor unitário', max_digits=20, decimal_places=16)
     """
-    A = proventos em ações, D = dividendos, J = juros sobre capital próprio
+    1 = dividendos, 2 = juros sobre capital próprio, 3 = proventos em ações
     """
-    tipo_provento = models.CharField(u'Tipo de provento', max_length=1)
+    tipo_provento = models.SmallIntegerField(u'Tipo de provento')
     data_ex = models.DateField(u'Data EX')
     data_pagamento = models.DateField(u'Data do pagamento', blank=True, null=True)
     observacao = models.CharField(u'Observação', blank=True, null=True, max_length=300)
@@ -79,24 +86,15 @@ class ProventoAcao (models.Model):
         unique_together = ['acao', 'valor_unitario', 'data_ex', 'data_pagamento', 'tipo_provento', 'oficial_bovespa']
         
     def __unicode__(self):
-        tipo = ''
-        if self.tipo_provento == 'A':
-            tipo = u'Ações'
-        elif self.tipo_provento == 'D':
-            tipo = u'Dividendos'
-        elif self.tipo_provento == 'J':
-            tipo = u'JSCP'
+        tipo = self.descricao_tipo_provento
         return u'%s de %s com valor %s e data EX %s a ser pago em %s' % (tipo, self.acao.ticker, self.valor_unitario, self.data_ex, self.data_pagamento)
     
+    @property
     def descricao_tipo_provento(self):
-        if self.tipo_provento == 'A':
-            return u'Ações'
-        elif self.tipo_provento == 'D':
-            return u'Dividendos'
-        elif self.tipo_provento == 'J':
-            return u'JSCP'
-        else:
-            return u'Indefinido'
+        for tipo_id, descricao in ProventoAcao.ESCOLHAS_TIPO_PROVENTO_ACAO:
+            if tipo_id == self.tipo_provento:
+                return descricao
+        raise ValueError('Tipo de provento inválido')
     
     @property
     def valor_final(self):
@@ -287,9 +285,9 @@ class EventoBonusAcao (EventoAcao):
     def qtd_bonus(self, qtd_inicial):
         return Decimal(floor(qtd_inicial * self.proporcao))
     
-    def preco_medio_apos(self, preco_medio_inicial, qtd_inicial):
-        qtd_apos = self.qtd_apos(qtd_inicial)
-        return 0 if qtd_apos == 0 else preco_medio_inicial * qtd_inicial / qtd_apos
+#     def preco_medio_apos(self, preco_medio_inicial, qtd_inicial):
+#         qtd_apos = self.qtd_apos(qtd_inicial)
+#         return 0 if qtd_apos == 0 else preco_medio_inicial * qtd_inicial / qtd_apos
     
     @property
     def acao_recebida(self):
