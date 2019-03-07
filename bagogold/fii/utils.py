@@ -224,6 +224,7 @@ def calcular_qtd_fiis_ate_dia_por_ticker(investidor, dia, ticker, ignorar_incorp
                 Ticker do FII
                 Dia final
                 Id da incorporação a ser ignorada
+                Verificar se FII tem evento no período?
     Retorno: Quantidade de FIIs para o ticker determinado
     """
     if verificar_evento and not verificar_se_existe_evento_para_fii_periodo(ticker, dia.replace(month=1).replace(day=1), dia):
