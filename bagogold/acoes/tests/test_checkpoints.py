@@ -421,7 +421,7 @@ class CheckpointEventoAposOperacaoTestCase(TestCase):
         OperacaoAcao.objects.create(acao=acao_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 10, 20), quantidade=102, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
         OperacaoAcao.objects.create(acao=acao_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 10, 31), quantidade=42, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
          
-        EventoIncorporacaoAcao.objects.create(acao=acao_1, data=datetime.date(2017, 5, 17), novo_acao=acao_2)
+        EventoAlteracaoAcao.objects.create(acao=acao_1, data=datetime.date(2017, 5, 17), novo_acao=acao_2)
         EventoDesdobramentoAcao.objects.create(acao=acao_2, data=datetime.date(2017, 5, 17), proporcao=Decimal('10'))
         EventoDesdobramentoAcao.objects.create(acao=acao_1, data=datetime.date(2017, 5, 17), proporcao=Decimal('9.3674360842'))
          

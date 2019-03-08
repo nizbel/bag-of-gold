@@ -290,6 +290,40 @@ def calcular_lucro_trade_ate_data(investidor, data):
         
     return lucro_acumulado
 
+def calcular_qtd_acoes_ate_dia(investidor, dia=None):
+    """ 
+    Calcula a quantidade de ações até dia determinado
+    
+    Parâmetros: Investidor
+                Dia final
+    Retorno: Quantidade de ações {ticker: qtd}
+    """
+    # TODO implementar
+    return
+
+#     # Preparar data
+#     if data == None:
+#         data = datetime.date.today()
+#         
+#     if destinacao not in ['', 'B', 'T']:
+#         raise ValueError
+#     # Buscar proventos em ações
+#     acoes_operadas = OperacaoAcao.objects.filter(investidor=investidor, data__lte=data).values_list('acao', flat=True) if destinacao == '' \
+#             else OperacaoAcao.objects.filter(investidor=investidor, data__lte=data, destinacao=destinacao).values_list('acao', flat=True)
+#     
+#     # Remover ações repetidas
+#     acoes_operadas = list(set(acoes_operadas))
+#     
+#     proventos_em_acoes = list(set(AcaoProvento.objects.filter(provento__acao__in=acoes_operadas, provento__data_pagamento__lte=data) \
+#                                   .values_list('acao_recebida', flat=True)))
+#     
+#     # Adicionar ações recebidas pelo investidor
+#     acoes_investidor = list(set(acoes_operadas + proventos_em_acoes))
+#     
+#     return acoes_investidor
+
+
+
 def calcular_qtd_acoes_ate_dia_por_ticker(investidor, ticker, dia, considerar_trade=False, ignorar_alteracao_id=None, verificar_evento=True):
     """ 
     Calcula a quantidade de ações até dia determinado
@@ -444,6 +478,19 @@ def calcular_qtd_acoes_ate_dia_por_divisao(dia, divisao_id, destinacao='B'):
     
     return qtd_acoes
 
+def calcular_qtd_acoes_ate_dia_por_ticker_por_divisao(dia, divisao_id, ticker, ignorar_alteracao_id=None):
+    """ 
+    Calcula a quantidade de ações até dia determinado para um ticker determinado
+    
+    Parâmetros: Dia final
+                Id da divisão
+                Ticker da ação
+                Id da alteração a ser ignorada
+    Retorno: Quantidade de ações para o ticker determinado
+    """
+    # TODO implementar
+    return
+
 def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao=OperacaoAcao.DESTINACAO_BH):
     """
     Calcula a quantidade de proventos provisionada até dia determinado para ações
@@ -575,9 +622,20 @@ def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'
     
     return total_proventos.quantize(Decimal('0.01'))
 
+def calcular_preco_medio_acoes_ate_dia(investidor, dia=None):
+    """
+    Calcula o preço médio das ações do investidor em dia determinado
+    
+    Parâmetros: Investidor
+                Dia
+    Retorno: Preços médios {ticker: preco_medio}
+    """
+    # TODO implementar
+    return {}
+
 def calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, ticker, dia, ignorar_alteracao_id=None):
     """ 
-    Calcula o preço médio de ua ação do investidor em dia determinado
+    Calcula o preço médio de uma ação do investidor em dia determinado
     
     Parâmetros: Investidor
                 Ticker da ação
@@ -640,6 +698,30 @@ def calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, ticker, dia, ignor
                     qtd_acao += qtd_incorporada
         
     return preco_medio_acao
+
+def calcular_preco_medio_acoes_ate_dia_por_divisao(divisao, dia=None):
+    """
+    Calcula o preço médio das ações da divisão em dia determinado
+    
+    Parâmetros: Divisão
+                Dia
+    Retorno: Preços médios {ticker: preco_medio}
+    """
+    # TODO implementar
+    return {}
+
+def calcular_preco_medio_acoes_ate_dia_por_ticker_por_divisao(divisao, dia, ticker, ignorar_alteracao_id=None):
+    """ 
+    Calcula o preço médio de uma ação da divisão em dia determinado
+    
+    Parâmetros: Divisão
+                Ticker da ação
+                Dia final
+                Id da alteração a ser ignorada
+    Retorno: Preço médio da ação
+    """
+    # TODO implementar
+    return 0
 
 def verificar_tipo_acao(ticker):
     categoria = int(re.search('\d+', ticker).group(0))

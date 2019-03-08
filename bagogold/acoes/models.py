@@ -308,18 +308,20 @@ class EventoBonusAcaoRecebida (models.Model):
 class CheckpointAcao(models.Model):
     ano = models.SmallIntegerField(u'Ano')
     acao = models.ForeignKey('Acao')
+    destinacao = models.SmallIntegerField(u'Destinação', choices=OperacaoAcao.ESCOLHAS_DESTINACAO)
     investidor = models.ForeignKey('bagogold.Investidor')
     quantidade = models.IntegerField(u'Quantidade no ano', validators=[MinValueValidator(0)])
     preco_medio = models.DecimalField(u'Preço médio', max_digits=11, decimal_places=4)
     
     class Meta:
-        unique_together=('acao', 'ano', 'investidor')
+        unique_together=('acao', 'ano', 'investidor', 'destinacao')
         
 class CheckpointProventosAcao(models.Model):
     ano = models.SmallIntegerField(u'Ano')
+    destinacao = models.SmallIntegerField(u'Destinação', choices=OperacaoAcao.ESCOLHAS_DESTINACAO)
     investidor = models.ForeignKey('bagogold.Investidor')
     valor = models.DecimalField(u'Valor da poupança de proventos', max_digits=22, decimal_places=16)
         
     class Meta:
-        unique_together=('ano', 'investidor')
+        unique_together=('ano', 'investidor', 'destinacao')
     
