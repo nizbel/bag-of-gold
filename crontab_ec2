@@ -26,7 +26,7 @@
 0 23 12-16 * * docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py buscar_historico_ipca
 25 22 * * * docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py buscar_ipca_projetado
 30 8,22 * * 1-5 docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preencher_historico_di
-35 8,22 * * 1-5 docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preencher_historico_selic 1
+35 8,22 * * 1-5 docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preencher_historico_selic -b
 
 # Apenas prod
 # * * * * * docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py rodar_dropbox

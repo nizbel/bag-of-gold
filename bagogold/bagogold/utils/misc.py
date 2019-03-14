@@ -78,7 +78,7 @@ def buscar_valores_diarios_selic(data_inicial=None, data_final=None):
         data_inicial = datetime.date.today() - datetime.timedelta(days=30)
     if data_final == None:
         data_final = datetime.date.today()
-        
+         
     if data_final < data_inicial:
         raise ValueError('Data final deve ser igual ou posterior a data inicial')
     # Verifica se o intervalo entre as datas inicial e final é menor do que 10 anos
@@ -90,29 +90,44 @@ def buscar_valores_diarios_selic(data_inicial=None, data_final=None):
         elif data_final.month == data_inicial.month:
             if data_final.day > data_inicial.day:
                 raise ValueError('Intervalo deve ser inferior a 10 anos')
+
+    selic_url = 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados?formato=json&dataInicial=%s&dataFinal=%s' \
+        % (data_inicial.strftime('%d/%m/%Y'), data_final.strftime('%d/%m/%Y'))
     
-    selic_url = 'https://www3.bcb.gov.br/selic/rest/taxaSelicApurada/pub/search?parametrosOrdenacao=%5B%7B%22nome%22%3A%22dataCotacao%22%2C%22decrescente%22%3Atrue%7D%5D&page=1&pageSize=2513'
-    head = { 'Content-Type': 'application/json; charset=UTF-8',
-             'Accept': 'application/json, text/javascript, */*; q=0.01',
-             'X-Requested-With': 'XMLHttpRequest' }
-    data = {'dataInicial': data_inicial.strftime('%d/%m/%Y'), 'dataFinal': data_final.strftime('%d/%m/%Y')}
-    response = requests.post(selic_url, json.dumps(data), headers=head)
+    response = requests.get(selic_url)
     
     retorno = json.loads(response.text)
-    if retorno['totalItems'] > 0:
-        lista_datas_valores = list()
-        # Ler registros do JSON
-        
-        for item in retorno['registros']:
-#             print item
-            data = datetime.datetime.strptime(item['dataCotacao'], '%d/%m/%Y').date()
-            fator_diario = Decimal(item['fatorDiario']).quantize(Decimal('0.000000000001'))
-            if fator_diario.is_zero():
-                continue
-            lista_datas_valores.append((data, fator_diario))
-        return lista_datas_valores
-    else:
-        return list()
+    
+    
+    lista_datas_valores = list()
+    for item in retorno:
+        data = datetime.datetime.strptime(item['data'], '%d/%m/%Y').date()
+        valor = 1 + (Decimal(item['valor']) / 100)
+        lista_datas_valores.append((data, valor))
+    
+    return lista_datas_valores
+#     selic_url = 'https://www3.bcb.gov.br/selic/rest/taxaSelicApurada/pub/search?parametrosOrdenacao=%5B%7B%22nome%22%3A%22dataCotacao%22%2C%22decrescente%22%3Atrue%7D%5D&page=1&pageSize=2513'
+#     head = { 'Content-Type': 'application/json; charset=UTF-8',
+#              'Accept': 'application/json, text/javascript, */*; q=0.01',
+#              'X-Requested-With': 'XMLHttpRequest' }
+#     data = {'dataInicial': data_inicial.strftime('%d/%m/%Y'), 'dataFinal': data_final.strftime('%d/%m/%Y')}
+#     response = requests.post(selic_url, json.dumps(data), headers=head)
+#     
+#     retorno = json.loads(response.text)
+#     if retorno['totalItems'] > 0:
+#         lista_datas_valores = list()
+#         # Ler registros do JSON
+#         
+#         for item in retorno['registros']:
+# #             print item
+#             data = datetime.datetime.strptime(item['dataCotacao'], '%d/%m/%Y').date()
+#             fator_diario = Decimal(item['fatorDiario']).quantize(Decimal('0.000000000001'))
+#             if fator_diario.is_zero():
+#                 continue
+#             lista_datas_valores.append((data, fator_diario))
+#         return lista_datas_valores
+#     else:
+#         return list()
      
 def calcular_rendimentos_ate_data(investidor, data, tipo_investimentos='ABCDEFILORT'):
     """
