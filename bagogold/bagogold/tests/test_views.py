@@ -4,6 +4,7 @@ from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.test.testcases import TestCase
+from django.test.utils import freeze_time
 from django.urls.base import reverse
 
 from bagogold.bagogold.models.acoes import Acao, OperacaoAcao, HistoricoAcao
@@ -31,7 +32,7 @@ from bagogold.lci_lca.models import LetraCredito, \
     HistoricoPorcentagemLetraCredito, HistoricoCarenciaLetraCredito, \
     HistoricoVencimentoLetraCredito, OperacaoLetraCredito, \
     OperacaoVendaLetraCredito
-from bagogold.tesouro_direto.models import Titulo, OperacaoTitulo,\
+from bagogold.tesouro_direto.models import Titulo, OperacaoTitulo, \
     HistoricoTitulo
 
 
@@ -300,6 +301,94 @@ class ProxVencimentosPainelGeralTestCase(TestCase):
         # Contexto
         self.assertIn('prox_vencimentos', response.context)
         self.assertEqual(response.context['prox_vencimentos'], [])
+        
+    def test_investidor_logado_com_investimentos_vencidos_na_data(self):
+        """Testa investidor logado com investimentos vencidos na data"""
+        with freeze_time(float(1552996800)):
+            vencido = User.objects.create_user('vencido', 'vencido@teste.com', 'vencido')
+            self.vencido = vencido.investidor 
+            
+            # Cadastrar investimentos
+            #CDB/RDB
+            cdb_rdb_1 = CDB_RDB.objects.create(investidor=self.vencido, nome='CDB teste 1', tipo='C', tipo_rendimento=2)
+            HistoricoPorcentagemCDB_RDB.objects.create(cdb_rdb=cdb_rdb_1, porcentagem=Decimal(100))
+            HistoricoCarenciaCDB_RDB.objects.create(cdb_rdb=cdb_rdb_1, carencia=Decimal(365))
+            HistoricoVencimentoCDB_RDB.objects.create(cdb_rdb=cdb_rdb_1, vencimento=Decimal(365))
+            
+            self.operacao_cdb_rdb_1 = OperacaoCDB_RDB.objects.create(cdb_rdb=cdb_rdb_1, investidor=self.vencido, quantidade=Decimal(1000), 
+                                           data=(datetime.date.today() - datetime.timedelta(days=365)), tipo_operacao='C')
+            
+            # CRI/CRA
+            cri_cra_1 = CRI_CRA.objects.create(nome='CRI teste 1', codigo_isin='BRCRITESTE1', tipo=CRI_CRA.TIPO_CRI, tipo_indexacao=CRI_CRA.TIPO_INDEXACAO_DI,
+                                               porcentagem=Decimal(98), juros_adicional=0, data_emissao=(datetime.date.today() - datetime.timedelta(days=470)),
+                                               valor_emissao=Decimal(1000), data_inicio_rendimento=(datetime.date.today() - datetime.timedelta(days=460)),
+                                               data_vencimento=datetime.date.today(), investidor=self.vencido)
+            
+            # CRI 1
+            self.operacao_cri_cra_1 = OperacaoCRI_CRA.objects.create(cri_cra=cri_cra_1, preco_unitario=Decimal(1200), quantidade=1, 
+                                                                     data=(datetime.date.today() - datetime.timedelta(days=160)), tipo_operacao='C',
+                                                                     taxa=0)
+            
+            # Debentures
+            debenture_1 = Debenture.objects.create(codigo='TESTE91', indice=Debenture.PREFIXADO, porcentagem=Decimal('6.5'), 
+                                                   data_emissao=(datetime.date.today() - datetime.timedelta(days=470)), valor_emissao=Decimal(1000),
+                                                   data_inicio_rendimento=(datetime.date.today() - datetime.timedelta(days=460)), 
+                                                   data_vencimento=datetime.date.today(), incentivada=True, 
+                                                   padrao_snd=True)
+            
+            HistoricoValorDebenture.objects.create(debenture=debenture_1, valor_nominal=1000, juros=Decimal('32.3'), premio=0, 
+                                               data=datetime.date.today() - datetime.timedelta(days=5))
+            HistoricoValorDebenture.objects.create(debenture=debenture_1, valor_nominal=1000, juros=Decimal('34.3'), premio=0, 
+                                               data=datetime.date.today() - datetime.timedelta(days=1))
+            
+            # Debenture 1
+            self.operacao_deb_1 = OperacaoDebenture.objects.create(investidor=self.vencido, debenture=debenture_1, preco_unitario=Decimal(1200),
+                                                                   quantidade=1, data=(datetime.date.today() - datetime.timedelta(days=160)), taxa=0,
+                                                                   tipo_operacao='C')
+            
+            # LC
+            lc_1 = LetraCambio.objects.create(investidor=self.vencido, nome='LC teste 1', tipo_rendimento=2)
+            HistoricoPorcentagemLetraCambio.objects.create(lc=lc_1, porcentagem=Decimal(100))
+            HistoricoCarenciaLetraCambio.objects.create(lc=lc_1, carencia=Decimal(365))
+            HistoricoVencimentoLetraCambio.objects.create(lc=lc_1, vencimento=Decimal(365))
+            
+            # LC 1
+            self.operacao_lc_1 = OperacaoLetraCambio.objects.create(lc=lc_1, investidor=self.vencido, quantidade=Decimal(1000), 
+                                           data=(datetime.date.today() - datetime.timedelta(days=365)), tipo_operacao='C')
+            
+            # LCI/LCA
+            lci_lca_1 = LetraCredito.objects.create(investidor=self.vencido, nome='LCI teste 1', tipo_rendimento=2)
+            HistoricoPorcentagemLetraCredito.objects.create(letra_credito=lci_lca_1, porcentagem=Decimal(100))
+            HistoricoCarenciaLetraCredito.objects.create(letra_credito=lci_lca_1, carencia=Decimal(365))
+            HistoricoVencimentoLetraCredito.objects.create(letra_credito=lci_lca_1, vencimento=Decimal(365))
+            
+            # LCI 1
+            self.operacao_lci_lca_1 = OperacaoLetraCredito.objects.create(letra_credito=lci_lca_1, investidor=self.vencido, quantidade=Decimal(1000), 
+                                           data=(datetime.date.today() - datetime.timedelta(days=365)), tipo_operacao='C')
+            
+            # Tesouro direto
+            titulo_1 = Titulo.objects.create(tipo='LTN', data_vencimento=datetime.date.today(), 
+                                             data_inicio=(datetime.date.today() - datetime.timedelta(days=725)))
+            
+            # Título 1
+            self.operacao_titulo_1 = OperacaoTitulo.objects.create(investidor=self.vencido, preco_unitario=Decimal(700), quantidade=1, 
+                                                                   data=(datetime.date.today() - datetime.timedelta(days=150)), taxa_bvmf=0,
+                                                                   taxa_custodia=0, tipo_operacao='C', titulo=titulo_1, consolidada=True)
+            
+            
+            self.client.login(username='vencido', password='vencido')
+            response = self.client.get(reverse('inicio:proximos_vencimentos'), {}, HTTP_X_REQUESTED_WITH='XMLHttpRequest')
+            self.assertEqual(response.status_code, 200)
+            
+            # Contexto
+            self.assertEqual(len(response.context['prox_vencimentos']), 6)
+            # Todas as operações devem estar na lista
+            self.assertIn(self.operacao_cdb_rdb_1, response.context['prox_vencimentos'])
+            self.assertIn(self.operacao_cri_cra_1, response.context['prox_vencimentos'])
+            self.assertIn(self.operacao_deb_1, response.context['prox_vencimentos'])
+            self.assertIn(self.operacao_lc_1, response.context['prox_vencimentos'])
+            self.assertIn(self.operacao_lci_lca_1, response.context['prox_vencimentos'])
+            self.assertIn(self.operacao_titulo_1, response.context['prox_vencimentos'])
 
 class ListarDivisoesTestCase(TestCase):
     

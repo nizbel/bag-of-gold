@@ -1372,14 +1372,18 @@ def prox_vencimentos_painel_geral(request):
                 operacao.quantidade = operacao.valor_inicial
                 operacao.taxa = operacao.porcentagem()
                 operacao.atual = calcular_valor_operacao_cdb_rdb_ate_dia(operacao, data_atual)
-                qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
-                # Se prefixado apenas pegar rendimento de 1 dia
-                if operacao.cdb_rdb.eh_prefixado():
-                    operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
-                elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
-                    # Considerar rendimento do dia anterior
-                    operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({taxa_final: qtd_dias_uteis_ate_vencimento},
-                                                         operacao.atual, operacao.taxa)
+                if data_final >= operacao.data_vencimento():
+                    operacao.valor_vencimento = operacao.atual
+                else:
+                    qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
+                    # Se prefixado apenas pegar rendimento de 1 dia
+                    if operacao.cdb_rdb.eh_prefixado():
+                        operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
+                    elif operacao.cdb_rdb.tipo_rendimento == CDB_RDB.CDB_RDB_DI:
+                        # Considerar rendimento do dia anterior
+                        operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({taxa_final: qtd_dias_uteis_ate_vencimento},
+                                                             operacao.atual, operacao.taxa)
+                        
                 str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
                 operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                  
@@ -1432,14 +1436,18 @@ def prox_vencimentos_painel_geral(request):
                 operacao.quantidade = operacao.valor_inicial
                 operacao.taxa = operacao.porcentagem()
                 operacao.atual = calcular_valor_operacao_lc_ate_dia(operacao, data_atual)
-                qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
-                # Se prefixado apenas pegar rendimento de 1 dia
-                if operacao.lc.eh_prefixado():
-                    operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
-                elif operacao.lc.tipo_rendimento == LetraCambio.LC_DI:
-                    # Considerar rendimento do dia anterior
-                    operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({taxa_final: qtd_dias_uteis_ate_vencimento},
-                                                         operacao.atual, operacao.taxa)
+                if data_final >= operacao.data_vencimento():
+                    operacao.valor_vencimento = operacao.atual
+                else:
+                    qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
+                    # Se prefixado apenas pegar rendimento de 1 dia
+                    if operacao.lc.eh_prefixado():
+                        operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
+                    elif operacao.lc.tipo_rendimento == LetraCambio.LC_DI:
+                        # Considerar rendimento do dia anterior
+                        operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({taxa_final: qtd_dias_uteis_ate_vencimento},
+                                                             operacao.atual, operacao.taxa)
+                        
                 str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
                 operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                 
@@ -1462,14 +1470,18 @@ def prox_vencimentos_painel_geral(request):
                 operacao.quantidade = operacao.valor_inicial
                 operacao.taxa = operacao.porcentagem()
                 operacao.atual = calcular_valor_operacao_lci_lca_ate_dia(operacao, data_atual)
-                qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
-                # Se prefixado apenas pegar rendimento de 1 dia
-                if operacao.letra_credito.tipo_rendimento == LetraCredito.LCI_LCA_PREFIXADO:
-                    operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
-                elif operacao.letra_credito.tipo_rendimento == LetraCredito.LCI_LCA_DI:
-                    # Considerar rendimento do dia anterior
-                    operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({taxa_final: qtd_dias_uteis_ate_vencimento},
-                                                         operacao.atual, operacao.taxa)
+                if data_final >= operacao.data_vencimento():
+                    operacao.valor_vencimento = operacao.atual
+                else:
+                    qtd_dias_uteis_ate_vencimento = qtd_dias_uteis_no_periodo(data_final + datetime.timedelta(days=1), operacao.data_vencimento())
+                    # Se prefixado apenas pegar rendimento de 1 dia
+                    if operacao.letra_credito.tipo_rendimento == LetraCredito.LCI_LCA_PREFIXADO:
+                        operacao.valor_vencimento = calcular_valor_atualizado_com_taxa_prefixado(operacao.atual, operacao.taxa, qtd_dias_uteis_ate_vencimento)
+                    elif operacao.letra_credito.tipo_rendimento == LetraCredito.LCI_LCA_DI:
+                        # Considerar rendimento do dia anterior
+                        operacao.valor_vencimento = calcular_valor_atualizado_com_taxas_di({taxa_final: qtd_dias_uteis_ate_vencimento},
+                                                             operacao.atual, operacao.taxa)
+                        
                 str_auxiliar = str(operacao.valor_vencimento.quantize(Decimal('.0001')))
                 operacao.valor_vencimento = Decimal(str_auxiliar[:len(str_auxiliar)-2])
                 
