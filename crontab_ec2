@@ -4,7 +4,7 @@
 20 9,23 * * 1-5 docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preencher_historico_acao_fii
 */15 9-18 * * 1-5 docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preencher_valores_diarios_td
 50 8,20 * * 1-5 docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py  preencher_historico_ano_atual_td
-0 */6 * * * docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preparar_backup
+0 6,18 * * * docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py preparar_backup
 30 20 * * * docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py buscar_acoes_existentes_bovespa
 0 21 * * * docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py buscar_proventos_acoes 0
 20 21 * * * docker run --add-host=database:18.221.194.175 nizbel/bagofgold:cron python manage.py buscar_fiis_existentes_bovespa
