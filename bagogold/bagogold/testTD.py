@@ -191,7 +191,7 @@ def buscar_valores_diarios():
         string_importante = data[data.find('mercadostatus'):
                                  data.find('Descubra o título mais indicado para você')]
         string_compra = string_importante[:string_importante.rfind('mercadostatus')]
-        linhas = re.findall('<tr class="[^"]*?camposTesouroDireto[^"]*?">.*?</tr>', string_compra)
+        linhas = re.findall('<tr class="[^"]*?camposTesouroDireto[^"]*?">.*?</tr>', string_compra, re.DOTALL)
         contador = 0
         valores_diarios = []
         for linha in linhas:
@@ -221,7 +221,7 @@ def buscar_valores_diarios():
                 if contador == 5:
                     contador = 0
         string_venda = string_importante[string_importante.rfind('mercadostatus'):]
-        linhas = re.findall('<tr class="[^"]*?camposTesouroDireto[^"]*?">.*?</tr>', string_venda)
+        linhas = re.findall('<tr class="[^"]*?camposTesouroDireto[^"]*?">.*?</tr>', string_venda, re.DOTALL)
         contador = 0
         for linha in linhas:
             campos = re.findall('<td.*?>.*?</td>', linha)

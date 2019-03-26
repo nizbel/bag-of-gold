@@ -151,27 +151,27 @@ class CalcularValorVencimentoIPCATestCase(TestCase):
 class CalcularValorVencimentoSelicTestCase(TestCase):
     def setUp(self):
         # Preparar título Selic
-        Titulo.objects.create(tipo=Titulo.TIPO_OFICIAL_SELIC, data_vencimento=datetime.date(2024, 8, 1), data_inicio=datetime.date(2008, 8, 1))
+        self.titulo = Titulo.objects.create(tipo=Titulo.TIPO_OFICIAL_SELIC, data_vencimento=datetime.date(2024, 8, 1), data_inicio=datetime.date(2008, 8, 1))
         
         # Preparar histórico de Selic
         # TODO melhorar isso
         
         # Data inicial é 01-01-2000
         data_inicial = datetime.date(2000, 1, 1)
-        while data_inicial <= datetime.date.today():
+        while data_inicial <= datetime.date(2018, 5, 15):
         
             # Data final máxima é a data atual
             data_final = datetime.date(data_inicial.year+10, data_inicial.month, data_inicial.day)
-            if data_final > datetime.date.today():
-                data_final = datetime.date.today()
+            if data_final > datetime.date(2018, 5, 15):
+                data_final = datetime.date(2018, 5, 15)
         
             dados = buscar_valores_diarios_selic(data_inicial, data_final)
             for data, valor in dados:
-                HistoricoTaxaSelic.objects.create(data=data, taxa_diaria=valor)
+                if not HistoricoTaxaSelic.objects.filter(data=data,taxa_diaria=valor).exists():
+                    HistoricoTaxaSelic.objects.create(data=data, taxa_diaria=valor)
             data_inicial = data_final + datetime.timedelta(days=1)
         
     def test_vencimento_no_dia_9_5_2018(self):
         """Testa o valor de vencimento da Selic para 09/05/2018"""
-        titulo = Titulo.objects.get(tipo=Titulo.TIPO_OFICIAL_SELIC)
-        self.assertAlmostEqual(titulo.valor_vencimento(datetime.date(2018, 5, 15)), Decimal('9503.531384'), delta=Decimal('0.01'))
+        self.assertAlmostEqual(self.titulo.valor_vencimento(datetime.date(2018, 5, 15)), Decimal('9503.531384'), delta=Decimal('0.01'))
                                
