@@ -859,7 +859,7 @@ class TransferenciaEntreDivisoes(models.Model):
     divisao_recebedora = models.ForeignKey('Divisao', verbose_name=u'Divisão recebedora', blank=True, null=True, related_name='divisao_recebedora')
     data = models.DateField(u'Data da transferência', blank=True, null=True)
     """
-    B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debênture; F = FII; I = Fundo de investimento;
+    A = Letra de Câmbio; B = Buy and Hold; C = CDB/RDB; D = Tesouro Direto; E = Debênture; F = FII; I = Fundo de investimento;
     L = Letra de Crédito; M = Criptomoeda;  O = Outros investimentos; R = CRI/CRA; T = Trading; N = Não alocado
     """
     investimento_origem = models.CharField('Investimento de origem', blank=True, null=True, max_length=1)
@@ -895,7 +895,7 @@ class TransferenciaEntreDivisoes(models.Model):
             return 'FII'
         elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_FUNDO_INV:
             return 'Fundo de inv.'
-        elif self.investimento_destino == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LC:
+        elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LC:
             return 'Letra de Câmbio'
         elif self.investimento_origem == TransferenciaEntreDivisoes.TIPO_INVESTIMENTO_LCI_LCA:
             return 'Letra de Crédito'
