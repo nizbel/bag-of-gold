@@ -1,6 +1,13 @@
 # Use an official Python runtime as a parent image
 FROM python:2.7
 
+COPY requirements.txt /home/bagofgold/bagogold/requirements.txt
+
+WORKDIR /home/bagofgold/bagogold
+
+# Install any needed packages specified in requirements.txt
+RUN pip install --trusted-host pypi.python.org -r requirements.txt
+
 COPY . /home/bagofgold/bagogold
 
 COPY conf/settings_prod.py /home/bagofgold/bagogold/conf/settings_local.py
@@ -12,11 +19,6 @@ RUN rm /home/bagofgold/bagogold/conf/.pgpass
 
 # Apagar arquivos pyc
 RUN find /home/bagofgold/bagogold -name "*.pyc" | xargs rm
-
-WORKDIR /home/bagofgold/bagogold
-
-# Install any needed packages specified in requirements.txt
-RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
 # Preparar html
 RUN python manage.py minificar_html
