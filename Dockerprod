@@ -18,7 +18,7 @@ RUN rm /home/bagofgold/bagogold/conf/settings_prod.py
 RUN rm /home/bagofgold/bagogold/conf/.pgpass
 
 # Apagar arquivos pyc
-RUN find /home/bagofgold/bagogold -name "*.pyc" | xargs rm
+# RUN find /home/bagofgold/bagogold -name "*.pyc" | xargs rm
 
 # Preparar html
 RUN python manage.py minificar_html
@@ -47,8 +47,6 @@ RUN mv /home/bagofgold/bagogold/credentials /var/www/.aws/credentials
 # Remover pastas nao utilizadas
 RUN rm -rf /home/bagofgold/bagogold/apache-conf
 RUN rm -rf /home/bagofgold/bagogold/backups
-
-RUN apt-get install nano
 
 # Run app.py when the container launches
 CMD apachectl -D FOREGROUND

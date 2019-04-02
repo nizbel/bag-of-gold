@@ -22,7 +22,7 @@ RUN chmod 0600 /root/.pgpass
 RUN rm /home/bagofgold/bagogold/conf/.pgpass
 
 # Apagar arquivos pyc
-RUN find /home/bagofgold/bagogold -name "*.pyc" | xargs rm
+# RUN find /home/bagofgold/bagogold -name "*.pyc" | xargs rm
 
 # Preparar html e static
 RUN python manage.py minificar_html
@@ -34,7 +34,6 @@ RUN mv /home/bagofgold/bagogold/credentials /root/.aws/credentials
 
 RUN apt-get update
 RUN apt-get install -y postgresql-client
-RUN apt-get install nano
 
 # Remover pastas nao utilizadas
 RUN rm -rf /home/bagofgold/bagogold/apache-conf
