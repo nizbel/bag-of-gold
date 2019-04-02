@@ -5,7 +5,7 @@ Dockercron
 node_modules/
 gulpfile.js
 .settings/
-.hg/cache
+.hg/
 output_pylint.txt
 output_test.txt
 
