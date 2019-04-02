@@ -21,3 +21,4 @@ conf/*
 backups.tar.gz
 output_pylint.txt
 output_test.txt
+version
