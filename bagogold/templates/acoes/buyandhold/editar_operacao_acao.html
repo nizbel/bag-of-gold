@@ -80,10 +80,12 @@
 				<div class="form-group col-md-6 {% if form_operacao_acao.acao.errors %} has-error {% endif %}">
 					<label class="control-label col-md-4" style="text-align: left;"> {{form_operacao_acao.acao.label}}: </label>
 					<div class="col-md-8">
+                        {% localize off %}
 						<select class="selectpicker form-control" id="id_acao" name="acao">
 							{% for key, value in form_operacao_acao.fields.acao.widget.choices %}<option value="{{ key }}" 
                             {% if key == form_operacao_acao.acao.value|add:'0' %}selected="selected"{% endif %}>{{ value }}</option>{% endfor %}
 						</select>
+						{% endlocalize %}
 						{% if form_operacao_acao.acao.errors %} <span class="help-block"> {{ form_operacao_acao.acao.errors.as_text }} </span> {% endif %}
 					</div>
 				</div>
