@@ -8,6 +8,8 @@ BRANCH=${BRANCH:-default}  # set value to 'default' if it was empty
 
 if [ "$BRANCH" == "prod" ] ; then
     python manage.py test --keepdb &> ~/bagogold/output_test.txt
+    python manage.py definir_versao_atual
 elif [ "$BRANCH" == "hotfix" ] ; then
     python manage.py test --keepdb &> ~/bagogold/output_test.txt
+    python manage.py definir_versao_atual
 fi

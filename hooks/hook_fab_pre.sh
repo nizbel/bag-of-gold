@@ -6,7 +6,7 @@
 BRANCH=$(hg log --template '{branch}' -r $HG_NODE)
 BRANCH=${BRANCH:-default}  # set value to 'default' if it was empty
 
-if [ "$BRANCH" == "default" ] ; then
+if [ "$BRANCH" == "prod" ] ; then
     fab dev gerar_css_def
 elif [ "$BRANCH" == "hotfix" ] ; then
     fab dev gerar_css_def
