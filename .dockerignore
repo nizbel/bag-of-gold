@@ -1,7 +1,6 @@
 Dockerdev
 Dockerprod
 Dockercron
-version
 
 node_modules/
 gulpfile.js
