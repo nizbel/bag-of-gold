@@ -369,7 +369,7 @@ def painel(request):
     if request.user.is_authenticated():
         investidor = request.user.investidor
     else:
-        return TemplateResponse(request, 'debentures/painel.html', {'debentures': list(), 'dados': {}})
+        return TemplateResponse(request, 'debentures/painel.html', {'debentures': {}, 'dados': {}})
     
     # Processa primeiro operações de venda (V), depois compra (C)
     operacoes = OperacaoDebenture.objects.filter(investidor=investidor).exclude(data__isnull=True).order_by('data') 
@@ -415,7 +415,7 @@ def painel(request):
     
     ultima_taxa_di = HistoricoTaxaDI.objects.all().order_by('-data')[0]
     ultima_taxa_selic = HistoricoTaxaSelic.objects.all().order_by('-data')[0]
-    ultima_taxa_ipca = HistoricoIPCA.objects.all().order_by('-ano', '-mes')[0]
+    ultima_taxa_ipca = HistoricoIPCA.objects.all().order_by('-data_inicio')[0]
     
     for debenture_id in debentures.keys():
         debentures[debenture_id].total_investido = debentures[debenture_id].quantidade * debentures[debenture_id].preco_medio
