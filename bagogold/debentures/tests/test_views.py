@@ -16,6 +16,7 @@ from bagogold.debentures.models import Debenture, OperacaoDebenture, \
 class DetalharDebentureTestCase (TestCase):
     @classmethod
     def setUpTestData(cls):
+        super(DetalharDebentureTestCase, cls).setUpTestData()
         # Usuário sem operações
         User.objects.create_user(username='nizbel', password='nizbel')
         
@@ -79,6 +80,7 @@ class DetalharDebentureTestCase (TestCase):
 class PainelTestCase (TestCase):
     @classmethod
     def setUpTestData(cls):
+        super(PainelTestCase, cls).setUpTestData()
         # Usuário sem operações
         User.objects.create_user(username='nizbel', password='nizbel')
         

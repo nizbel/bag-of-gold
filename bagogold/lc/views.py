@@ -142,8 +142,8 @@ def editar_lc(request, lc_id):
                 
         # TODO verificar o que pode acontecer na exclusão
         elif request.POST.get("delete"):
-            if OperacaoLetraCambio.objects.filter(investimento=lc).exists():
-                messages.error(request, 'Não é possível excluir o %s pois existem operações cadastradas' % (lc.descricao_tipo()))
+            if OperacaoLetraCambio.objects.filter(lc=lc).exists():
+                messages.error(request, u'Não é possível excluir %s pois existem operações cadastradas' % (lc.nome))
                 return HttpResponseRedirect(reverse('lcambio:detalhar_lc', kwargs={'lc_id': lc.id}))
             else:
                 lc.delete()
