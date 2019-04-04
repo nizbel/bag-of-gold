@@ -324,7 +324,7 @@ def calcular_qtd_acoes_ate_dia(investidor, dia=None):
 
 
 
-def calcular_qtd_acoes_ate_dia_por_ticker(investidor, ticker, dia, considerar_trade=False, ignorar_alteracao_id=None, verificar_evento=True):
+def calcular_qtd_acoes_ate_dia_por_ticker(investidor, ticker, dia, destinacao=OperacaoAcao.DESTINACAO_BH, ignorar_alteracao_id=None, verificar_evento=True):
     """ 
     Calcula a quantidade de ações até dia determinado
     
@@ -366,23 +366,45 @@ def calcular_qtd_acoes_ate_dia_por_ticker(investidor, ticker, dia, considerar_tr
 #                 qtd_acoes += int(item.provento.valor_unitario * calcular_qtd_acoes_ate_dia_por_ticker(investidor, item.acao_ticker, item.data, considerar_trade, ignorar_alteracao_id) / 100)
     
     if verificar_evento and not verificar_se_existe_evento_para_acao_periodo(ticker, dia.replace(month=1).replace(day=1), dia):
-        if CheckpointAcao.objects.filter(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0).exists():
-            qtd_acoes = CheckpointAcao.objects.get(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0).quantidade
+        if destinacao == 0:
+            if CheckpointAcao.objects.filter(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0).exists():
+                qtd_acoes = CheckpointAcao.objects.filter(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0).aggregate(qtd_final=Sum('quantidade'))['quantidade']
+            else:
+                qtd_acoes = 0
+            qtd_acoes += (OperacaoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor).exclude(data__isnull=True) \
+                .aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+                                          When(tipo_operacao='V', then=F('quantidade')*-1),
+                                          output_field=DecimalField())))['total'] or 0)
+            
         else:
-            qtd_acoes = 0
-        qtd_acoes += (OperacaoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor).exclude(data__isnull=True) \
-            .aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
-                                      When(tipo_operacao='V', then=F('quantidade')*-1),
-                                      output_field=DecimalField())))['total'] or 0)
+            if CheckpointAcao.objects.filter(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0, destinacao=destinacao).exists():
+                qtd_acoes = CheckpointAcao.objects.get(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0, destinacao=destinacao).quantidade
+            else:
+                qtd_acoes = 0
+            qtd_acoes += (OperacaoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor, destinacao=destinacao)
+                          .exclude(data__isnull=True).aggregate(total=Sum(Case(When(tipo_operacao='C', then=F('quantidade')),
+                                          When(tipo_operacao='V', then=F('quantidade')*-1),
+                                          output_field=DecimalField())))['total'] or 0)
+            
     else:
-        if CheckpointAcao.objects.filter(investidor=investidor, ano=dia.year-1, acao__ticker=ticker).exists():
-            qtd_acoes = CheckpointAcao.objects.get(investidor=investidor, ano=dia.year-1, acao__ticker=ticker).quantidade
+        if destinacao == 0:
+            if CheckpointAcao.objects.filter(investidor=investidor, ano=dia.year-1, acao__ticker=ticker).exists():
+                qtd_acoes = CheckpointAcao.objects.filter(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0).aggregate(qtd_final=Sum('quantidade'))['quantidade']
+            else:
+                qtd_acoes = 0
+            operacoes = OperacaoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor).exclude(data__isnull=True) \
+                .annotate(qtd_final=(Case(When(tipo_operacao='C', then=F('quantidade')),
+                                          When(tipo_operacao='V', then=F('quantidade')*-1),
+                                          output_field=DecimalField()))).annotate(tipo=Value(u'Operação', output_field=CharField())).select_related('acao')
         else:
-            qtd_acoes = 0
-        operacoes = OperacaoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor).exclude(data__isnull=True) \
-            .annotate(qtd_final=(Case(When(tipo_operacao='C', then=F('quantidade')),
-                                      When(tipo_operacao='V', then=F('quantidade')*-1),
-                                      output_field=DecimalField()))).annotate(tipo=Value(u'Operação', output_field=CharField())).select_related('acao')
+            if CheckpointAcao.objects.filter(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, destinacao=destinacao).exists():
+                qtd_acoes = CheckpointAcao.objects.get(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, destinacao=destinacao).quantidade
+            else:
+                qtd_acoes = 0
+            operacoes = OperacaoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor, destinacao=destinacao) \
+                .exclude(data__isnull=True).annotate(qtd_final=(Case(When(tipo_operacao='C', then=F('quantidade')),
+                                          When(tipo_operacao='V', then=F('quantidade')*-1),
+                                          output_field=DecimalField()))).annotate(tipo=Value(u'Operação', output_field=CharField())).select_related('acao')
                                       
                                       
         # Verificar agrupamentos e desdobramentos
@@ -414,12 +436,12 @@ def calcular_qtd_acoes_ate_dia_por_ticker(investidor, ticker, dia, considerar_tr
                 if elemento.acao.ticker == ticker and elemento.acao_recebida.ticker == ticker:
                     qtd_acoes += elemento.qtd_bonus(qtd_acoes)
                 elif elemento.acao_recebida.ticker == ticker:
-                    qtd_acoes += elemento.qtd_bonus(calcular_qtd_acoes_ate_dia_por_ticker(investidor, elemento.acao.ticker, elemento.data))
+                    qtd_acoes += elemento.qtd_bonus(calcular_qtd_acoes_ate_dia_por_ticker(investidor, elemento.acao.ticker, elemento.data, destinacao))
             elif elemento.tipo == 'Alteração':
                 if elemento.acao.ticker == ticker:
                     qtd_acoes = 0
                 elif elemento.nova_acao.ticker == ticker:
-                    qtd_acoes += calcular_qtd_acoes_ate_dia_por_ticker(investidor, elemento.acao.ticker, elemento.data, 
+                    qtd_acoes += calcular_qtd_acoes_ate_dia_por_ticker(investidor, elemento.acao.ticker, elemento.data, destinacao,
                                                                        ignorar_alteracao_id=elemento.id)
     
     
@@ -555,7 +577,7 @@ def calcular_poupanca_prov_acao_ate_dia(investidor, dia, destinacao=OperacaoAcao
     
     return total_proventos.quantize(Decimal('0.01'))
 
-def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao='B'):
+def calcular_poupanca_prov_acao_ate_dia_por_divisao(dia, divisao, destinacao=OperacaoAcao.DESTINACAO_BH):
     """
     Calcula a quantidade de proventos provisionada até dia determinado para uma divisão para ações
     
@@ -633,7 +655,7 @@ def calcular_preco_medio_acoes_ate_dia(investidor, dia=None):
     # TODO implementar
     return {}
 
-def calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, ticker, dia, ignorar_alteracao_id=None):
+def calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, ticker, dia, destinacao=OperacaoAcao.DESTINACAO_BH, ignorar_alteracao_id=None):
     """ 
     Calcula o preço médio de uma ação do investidor em dia determinado
     
@@ -643,15 +665,15 @@ def calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, ticker, dia, ignor
                 Id da incorporação a ser ignorada
     Retorno: Preço médio da ação
     """
-    if CheckpointAcao.objects.filter(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0).exists():
-        info_acao = CheckpointAcao.objects.get(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0)
+    if CheckpointAcao.objects.filter(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0, destinacao=destinacao).exists():
+        info_acao = CheckpointAcao.objects.get(investidor=investidor, ano=dia.year-1, acao__ticker=ticker, quantidade__gt=0, destinacao=destinacao)
         qtd_acao = info_acao.quantidade
         preco_medio_acao = info_acao.preco_medio
     else:
         qtd_acao = 0
         preco_medio_acao = 0
     
-    operacoes = OperacaoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor) \
+    operacoes = OperacaoAcao.objects.filter(acao__ticker=ticker, data__range=[dia.replace(month=1).replace(day=1), dia], investidor=investidor, destinacao=destinacao) \
         .annotate(custo_total=(Case(When(tipo_operacao='C', then=F('quantidade')*F('preco_unitario') + F('corretagem') + F('emolumentos')), output_field=DecimalField()))) \
         .annotate(tipo=Value(u'Operação', output_field=CharField()))
              
@@ -691,9 +713,9 @@ def calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, ticker, dia, ignor
                 qtd_acao = 0
                 preco_medio_acao = 0
             elif elemento.nova_acao.ticker == ticker:
-                qtd_incorporada = calcular_qtd_acoes_ate_dia_por_ticker(investidor, elemento.acao.ticker, elemento.data, elemento.id)
+                qtd_incorporada = calcular_qtd_acoes_ate_dia_por_ticker(investidor, elemento.acao.ticker, elemento.data, destinacao, elemento.id)
                 if qtd_incorporada + qtd_acao > 0:
-                    preco_medio_acao = (calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, elemento.acao.ticker, elemento.data, elemento.id) * qtd_incorporada + \
+                    preco_medio_acao = (calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, elemento.acao.ticker, elemento.data, destinacao, elemento.id) * qtd_incorporada + \
                                         qtd_acao * preco_medio_acao) / (qtd_incorporada + qtd_acao)
                     qtd_acao += qtd_incorporada
         

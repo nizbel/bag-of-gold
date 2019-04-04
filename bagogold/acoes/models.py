@@ -153,6 +153,12 @@ class OperacaoAcao (models.Model):
     ESCOLHAS_DESTINACAO = ((DESTINACAO_BH, DESCRICAO_DESTINACAO_BH),
                            (DESTINACAO_TRADE, DESCRICAO_DESTINACAO_TRADE))
     
+    @staticmethod
+    def destinacao_descricao(destinacao):
+        for escolha in OperacaoAcao.ESCOLHAS_DESTINACAO:
+            if escolha[0] == destinacao:
+                return escolha[1]
+    
     preco_unitario = models.DecimalField(u'Preço unitário', max_digits=11, decimal_places=2)  
     quantidade = models.IntegerField(u'Quantidade') 
     data = models.DateField(u'Data', blank=True, null=True)
@@ -315,6 +321,10 @@ class CheckpointAcao(models.Model):
     
     class Meta:
         unique_together=('acao', 'ano', 'investidor', 'destinacao')
+        
+    def __unicode__(self):
+        return u'%s: %s com %s %s a R$ %s (%s)' % (self.ano, self.investidor, self.quantidade, self.acao, self.preco_medio, 
+                                                   OperacaoAcao.destinacao_descricao(self.destinacao))
         
 class CheckpointProventosAcao(models.Model):
     ano = models.SmallIntegerField(u'Ano')

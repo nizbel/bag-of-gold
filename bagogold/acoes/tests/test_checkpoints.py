@@ -412,22 +412,28 @@ class CheckpointEventoAposOperacaoTestCase(TestCase):
         acao_1 = Acao.objects.create(ticker='BAPO11', empresa=empresa_1)
         empresa_2 = Empresa.objects.create(nome='BB', nome_pregao='Acao BB')
         acao_2 = Acao.objects.create(ticker='BBPO11', empresa=empresa_1)
-        OperacaoAcao.objects.create(acao=acao_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 1, 10), quantidade=24, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
-        OperacaoAcao.objects.create(acao=acao_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 3, 13), quantidade=13, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoAcao.objects.create(acao=acao_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 1, 10), quantidade=24, preco_unitario=Decimal('100'), 
+                                    corretagem=100, emolumentos=100, destinacao=OperacaoAcao.DESTINACAO_BH)
+        OperacaoAcao.objects.create(acao=acao_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 3, 13), quantidade=13, preco_unitario=Decimal('100'), 
+                                    corretagem=100, emolumentos=100, destinacao=OperacaoAcao.DESTINACAO_BH)
          
          
-        OperacaoAcao.objects.create(acao=acao_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 9, 1), quantidade=45, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
-        OperacaoAcao.objects.create(acao=acao_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 8, 15), quantidade=82, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
-        OperacaoAcao.objects.create(acao=acao_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 10, 20), quantidade=102, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
-        OperacaoAcao.objects.create(acao=acao_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 10, 31), quantidade=42, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoAcao.objects.create(acao=acao_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 9, 1), quantidade=45, preco_unitario=Decimal('100'), 
+                                    corretagem=100, emolumentos=100, destinacao=OperacaoAcao.DESTINACAO_BH)
+        OperacaoAcao.objects.create(acao=acao_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 8, 15), quantidade=82, preco_unitario=Decimal('100'), 
+                                    corretagem=100, emolumentos=100, destinacao=OperacaoAcao.DESTINACAO_BH)
+        OperacaoAcao.objects.create(acao=acao_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 10, 20), quantidade=102, preco_unitario=Decimal('100'), 
+                                    corretagem=100, emolumentos=100, destinacao=OperacaoAcao.DESTINACAO_BH)
+        OperacaoAcao.objects.create(acao=acao_2, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2017, 10, 31), quantidade=42, preco_unitario=Decimal('100'), 
+                                    corretagem=100, emolumentos=100, destinacao=OperacaoAcao.DESTINACAO_BH)
          
-        EventoAlteracaoAcao.objects.create(acao=acao_1, data=datetime.date(2017, 5, 17), novo_acao=acao_2)
+        EventoAlteracaoAcao.objects.create(acao=acao_1, data=datetime.date(2017, 5, 17), nova_acao=acao_2)
         EventoDesdobramentoAcao.objects.create(acao=acao_2, data=datetime.date(2017, 5, 17), proporcao=Decimal('10'))
         EventoDesdobramentoAcao.objects.create(acao=acao_1, data=datetime.date(2017, 5, 17), proporcao=Decimal('9.3674360842'))
          
     def test_qtd(self):
         """Testa se algoritmo calculou quantidade atual corretamente"""
-        self.assertEqual(calcular_qtd_acoes_ate_dia_por_ticker(self.investidor, datetime.date(2018, 2, 13), 'BBPO11'), 617)
+        self.assertEqual(calcular_qtd_acoes_ate_dia_por_ticker(self.investidor, 'BBPO11', datetime.date(2018, 2, 13)), 617)
  
 class AtualizarCheckpointAnualTestCase(TestCase):
     @classmethod
@@ -440,9 +446,11 @@ class AtualizarCheckpointAnualTestCase(TestCase):
         empresa_1 = Empresa.objects.create(nome='BA', nome_pregao='Acao BA')
         acao_1 = Acao.objects.create(ticker='BAPO11', empresa=empresa_1)
          
-        OperacaoAcao.objects.create(acao=acao_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2016, 5, 11), quantidade=43, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoAcao.objects.create(acao=acao_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(2016, 5, 11), 
+                                    quantidade=43, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100, destinacao=OperacaoAcao.DESTINACAO_BH)
         # Gera operação no futuro para depois trazer para ano atual
-        OperacaoAcao.objects.create(acao=acao_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(datetime.date.today().year+1, 5, 11), quantidade=43, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoAcao.objects.create(acao=acao_1, investidor=user.investidor, tipo_operacao='C', data=datetime.date(datetime.date.today().year+1, 5, 11), 
+                                    quantidade=43, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100, destinacao=OperacaoAcao.DESTINACAO_BH)
         # Apagar checkpoint gerado
         CheckpointAcao.objects.filter(ano__gt=datetime.date.today().year).delete()
           
@@ -527,5 +535,6 @@ class AtualizarCheckpointAnualTestCase(TestCase):
         acao = Acao.objects.get(ticker='BAPO11')
          
         ano_atual = datetime.date.today().year
-        OperacaoAcao.objects.create(acao=acao, investidor=investidor, tipo_operacao='V', data=datetime.date(2016, 5, 11), quantidade=43, preco_unitario=Decimal('100'), corretagem=100, emolumentos=100)
+        OperacaoAcao.objects.create(acao=acao, investidor=investidor, tipo_operacao='V', data=datetime.date(2016, 5, 11), quantidade=43, preco_unitario=Decimal('100'), 
+                                    corretagem=100, emolumentos=100, destinacao=OperacaoAcao.DESTINACAO_BH)
         self.assertFalse(CheckpointAcao.objects.filter(investidor=investidor, acao=acao).exists())
