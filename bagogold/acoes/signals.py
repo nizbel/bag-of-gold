@@ -112,35 +112,36 @@ def preparar_checkpointacao(sender, instance, created, **kwargs):
     """ 
     Cria novo checkpoint ou altera existente
     """
-    gerar_checkpoint_acao(instance.investidor, instance.acao, ano, OperacaoAcao.DESTINACAO_BH)
-    gerar_checkpoint_acao(instance.investidor, instance.acao, ano, OperacaoAcao.DESTINACAO_TRADE)
+    destinacao = instance.destinacao
+    gerar_checkpoint_acao(instance.investidor, instance.acao, ano, destinacao)
+#     gerar_checkpoint_acao(instance.investidor, instance.acao, ano, OperacaoAcao.DESTINACAO_TRADE)
     # Verificar se Acao é alterada
     alteracao = None if not EventoAlteracaoAcao.objects.filter(acao=instance.acao).exists() else EventoAlteracaoAcao.objects.get(acao=instance.acao)
     # Se existe alteração
     if alteracao and alteracao.data.year == ano:
-        gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, ano, OperacaoAcao.DESTINACAO_BH)
-        gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, ano, OperacaoAcao.DESTINACAO_TRADE)
+        gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, ano, destinacao)
+#         gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, ano, OperacaoAcao.DESTINACAO_TRADE)
           
     # Alterar checkpoint de poupança de proventos
-    gerar_checkpoint_proventos_acao(instance.investidor, ano, OperacaoAcao.DESTINACAO_BH)
-    gerar_checkpoint_proventos_acao(instance.investidor, ano, OperacaoAcao.DESTINACAO_TRADE)
+    gerar_checkpoint_proventos_acao(instance.investidor, ano, destinacao)
+#     gerar_checkpoint_proventos_acao(instance.investidor, ano, OperacaoAcao.DESTINACAO_TRADE)
       
     """
     Verificar se existem anos posteriores
     """
     if ano != datetime.date.today().year:
         for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-            gerar_checkpoint_acao(instance.investidor, instance.acao, prox_ano, OperacaoAcao.DESTINACAO_BH)
-            gerar_checkpoint_acao(instance.investidor, instance.acao, prox_ano, OperacaoAcao.DESTINACAO_TRADE)
+            gerar_checkpoint_acao(instance.investidor, instance.acao, prox_ano, destinacao)
+#             gerar_checkpoint_acao(instance.investidor, instance.acao, prox_ano, OperacaoAcao.DESTINACAO_TRADE)
               
             # Se existe alteração
             if alteracao and alteracao.data.year <= prox_ano:
-                gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, prox_ano, OperacaoAcao.DESTINACAO_BH)
-                gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, prox_ano, OperacaoAcao.DESTINACAO_TRADE)
+                gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, prox_ano, destinacao)
+#                 gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, prox_ano, OperacaoAcao.DESTINACAO_TRADE)
                   
             # Alterar checkpoint de poupança de proventos
-            gerar_checkpoint_proventos_acao(instance.investidor, prox_ano, OperacaoAcao.DESTINACAO_BH)
-            gerar_checkpoint_proventos_acao(instance.investidor, prox_ano, OperacaoAcao.DESTINACAO_TRADE)
+            gerar_checkpoint_proventos_acao(instance.investidor, prox_ano, destinacao)
+#             gerar_checkpoint_proventos_acao(instance.investidor, prox_ano, OperacaoAcao.DESTINACAO_TRADE)
   
   
 @receiver(post_save, sender=UsoProventosOperacaoAcao, dispatch_uid="usoproventosoperacaoacao_criada_alterada")
@@ -157,35 +158,36 @@ def preparar_checkpointacao_delete(sender, instance, **kwargs):
     """ 
     Altera checkpoint existente
     """
-    gerar_checkpoint_acao(instance.investidor, instance.acao, ano, OperacaoAcao.DESTINACAO_BH)
+    destinacao = instance.destinacao
+    gerar_checkpoint_acao(instance.investidor, instance.acao, ano, destinacao)
     gerar_checkpoint_acao(instance.investidor, instance.acao, ano, OperacaoAcao.DESTINACAO_TRADE)
     # Verificar se Acao é alterada
     alteracao = None if not EventoAlteracaoAcao.objects.filter(acao=instance.acao).exists() else EventoAlteracaoAcao.objects.get(acao=instance.acao)
     # Se existe alteração
     if alteracao and alteracao.data.year == ano:
-        gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, ano, OperacaoAcao.DESTINACAO_BH)
-        gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, ano, OperacaoAcao.DESTINACAO_TRADE)
+        gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, ano, destinacao)
+#         gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, ano, OperacaoAcao.DESTINACAO_TRADE)
           
     # Alterar checkpoint de poupança de proventos
-    gerar_checkpoint_proventos_acao(instance.investidor, ano, OperacaoAcao.DESTINACAO_BH)
-    gerar_checkpoint_proventos_acao(instance.investidor, ano, OperacaoAcao.DESTINACAO_TRADE)
+    gerar_checkpoint_proventos_acao(instance.investidor, ano, destinacao)
+#     gerar_checkpoint_proventos_acao(instance.investidor, ano, OperacaoAcao.DESTINACAO_TRADE)
   
     """
     Verificar se existem anos posteriores
     """
     if ano != datetime.date.today().year:
         for prox_ano in range(ano + 1, datetime.date.today().year + 1):
-            gerar_checkpoint_acao(instance.investidor, instance.acao, prox_ano, OperacaoAcao.DESTINACAO_BH)
-            gerar_checkpoint_acao(instance.investidor, instance.acao, prox_ano, OperacaoAcao.DESTINACAO_TRADE)
+            gerar_checkpoint_acao(instance.investidor, instance.acao, prox_ano, destinacao)
+#             gerar_checkpoint_acao(instance.investidor, instance.acao, prox_ano, OperacaoAcao.DESTINACAO_TRADE)
               
             # Se existe alteração
             if alteracao and alteracao.data.year <= prox_ano:
-                gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, prox_ano, OperacaoAcao.DESTINACAO_BH)
-                gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, prox_ano, OperacaoAcao.DESTINACAO_TRADE)
+                gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, prox_ano, destinacao)
+#                 gerar_checkpoint_acao(instance.investidor, alteracao.nova_acao, prox_ano, OperacaoAcao.DESTINACAO_TRADE)
                   
             # Alterar checkpoint de poupança de proventos
-            gerar_checkpoint_proventos_acao(instance.investidor, prox_ano, OperacaoAcao.DESTINACAO_BH)
-            gerar_checkpoint_proventos_acao(instance.investidor, prox_ano, OperacaoAcao.DESTINACAO_TRADE)
+            gerar_checkpoint_proventos_acao(instance.investidor, prox_ano, destinacao)
+#             gerar_checkpoint_proventos_acao(instance.investidor, prox_ano, OperacaoAcao.DESTINACAO_TRADE)
   
 # Preparar checkpoints para alterações em eventos de Acao
 @receiver(post_save, sender=EventoAgrupamentoAcao, dispatch_uid="evento_agrupamento_criado_alterado")
@@ -278,7 +280,7 @@ def preparar_checkpointacao_evento_delete(sender, instance, **kwargs):
               
               
 def gerar_checkpoint_acao(investidor, acao, ano, destinacao):
-    quantidade = calcular_qtd_acoes_ate_dia_por_ticker(investidor, acao.ticker, datetime.date(ano, 12, 31))
+    quantidade = calcular_qtd_acoes_ate_dia_por_ticker(investidor, acao.ticker, datetime.date(ano, 12, 31), destinacao)
     preco_medio = calcular_preco_medio_acoes_ate_dia_por_ticker(investidor, acao.ticker, datetime.date(ano, 12, 31))
     if CheckpointAcao.objects.filter(investidor=investidor, acao=acao, ano=ano-1).exclude(quantidade=0).exists() or quantidade != 0:
         CheckpointAcao.objects.update_or_create(investidor=investidor, acao=acao, ano=ano, destinacao=destinacao,
