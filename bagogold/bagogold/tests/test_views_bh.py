@@ -8,6 +8,7 @@ from django.test.testcases import TestCase
 
 from bagogold.bagogold.models.acoes import OperacaoAcao, Acao
 from bagogold.bagogold.models.empresa import Empresa
+from bagogold.bagogold.models.divisoes import DivisaoOperacaoAcao
 
 
 class EditarOperacaoTestCase (TestCase):
@@ -28,6 +29,10 @@ class EditarOperacaoTestCase (TestCase):
         cls.operacao = OperacaoAcao.objects.create(data=datetime.date.today(), investidor=cls.tester.investidor, quantidade=100,
                                                    preco_unitario=20, consolidada=True, acao=cls.acao, corretagem=10, emolumentos=1,
                                                    tipo_operacao='C', destinacao='B')
+        DivisaoOperacaoAcao.objects.create(divisao=cls.tester.investidor.divisaoprincipal.divisao, quantidade=cls.operacao.quantidade, 
+                                           operacao=cls.operacao)
+        
+        # TODO Testar situação de uso de proventos
         
     def test_usuario_deslogado(self):
         """Testa acesso de usuário deslogado"""
@@ -52,9 +57,10 @@ class EditarOperacaoTestCase (TestCase):
         # Criar outra ação
         nova_acao = Acao.objects.create(empresa=self.empresa, ticker='BBAS4')
         
-        response = self.client.post(reverse('acoes:bh:editar_operacao_bh', kwargs={'data': datetime.date.today() + datetime.timedelta(days=1), 'quantidade': 101,
-                                                   'preco_unitario': 21, 'consolidada': True, 'acao': self.nova_acao.id, 'corretagem': 11, 'emolumentos': 2,
-                                                   'tipo_operacao': 'C', 'save': 1}))
+        response = self.client.post(reverse('acoes:bh:editar_operacao_bh', kwargs={'id_operacao': self.operacao.id}), 
+                                    {'data': datetime.date.today() + datetime.timedelta(days=1), 'quantidade': 101,
+                                     'preco_unitario': 21, 'consolidada': True, 'acao': nova_acao.id, 'corretagem': 11, 'emolumentos': 2,
+                                     'tipo_operacao': 'C', 'save': 1})
         
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('acoes:bh:historico_bh'))
