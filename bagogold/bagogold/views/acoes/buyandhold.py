@@ -110,8 +110,10 @@ def editar_operacao_acao(request, id_operacao):
                 else:
                     if form_uso_proventos.is_valid():
                         operacao_acao.save()
-                        divisao_operacao = DivisaoOperacaoAcao.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_acao, quantidade=operacao_acao.quantidade)
-                        divisao_operacao.save()
+                        divisao_operacao = DivisaoOperacaoAcao.objects.get(divisao=investidor.divisaoprincipal.divisao, operacao=operacao_acao)
+                        if divisao_operacao.quantidade != operacao_acao.quantidade:
+                            divisao_operacao.quantidade = operacao_acao.quantidade
+                            divisao_operacao.save()
                         uso_proventos = form_uso_proventos.save(commit=False)
 #                         print uso_proventos.qtd_utilizada 
                         if uso_proventos.qtd_utilizada > 0:
