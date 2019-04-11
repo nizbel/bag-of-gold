@@ -21,14 +21,16 @@ from bagogold.fii.models import FII
 
 
 # A thread 'Principal' indica se ainda está rodando a thread principal
-threads_rodando = {'Principal': 1}
+threads_busca_doc_rodando = {'Principal': 1}
+threads_cria_doc_rodando = list()
+threads_gera_info_rodando = list()
 documentos_para_download = list()
 informacoes_rendimentos = list()
 
 class CriarDocumentoThread(Thread):
     def run(self):
         try:
-            while len(threads_rodando) > 0 or len(documentos_para_download) > 0 or len(informacoes_rendimentos) > 0:
+            while len(threads_busca_doc_rodando) > 0 or len(documentos_para_download) > 0 or len(informacoes_rendimentos) > 0:
                 while len(documentos_para_download) > 0:
                     documento = documentos_para_download.pop(0)
                     
@@ -37,18 +39,19 @@ class CriarDocumentoThread(Thread):
                 
                 time.sleep(5)
         except Exception as e:
-                template = "An exception of type {0} occured. Arguments:\n{1!r}\nURL: {2}, Empresa: {3}"
-                message = template.format(type(e).__name__, e.args, documento.url, documento.empresa)
-                if settings.ENV == 'PROD':
-                    mail_admins(u'Erro na thread de criar documento de fiis', message.decode('utf-8'))
-                elif settings.ENV == 'DEV':
-                    print message
+            template = "An exception of type {0} occured. Arguments:\n{1!r}\nURL: {2}, Empresa: {3}"
+            message = template.format(type(e).__name__, e.args, documento.url, documento.empresa)
+            if settings.ENV == 'PROD':
+                mail_admins(u'Erro na thread de criar documento de fiis', message.decode('utf-8'))
+            elif settings.ENV == 'DEV':
+                print message
+        threads_cria_doc_rodando.pop()
                 
 class GeraInfoDocumentoProtocoloThread(Thread):
     def run(self):
         try:
 #             prot = list()
-            while len(threads_rodando) > 0 or len(informacoes_rendimentos) > 0:
+            while len(threads_busca_doc_rodando) > 0 or len(informacoes_rendimentos) > 0:
                 while len(informacoes_rendimentos) > 0:
                     info = informacoes_rendimentos.pop(0)
                     ticker = info['ticker']
@@ -73,12 +76,13 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                 time.sleep(10)
 #             print list(reversed(sorted(prot, key=lambda tup: tup[0])))
         except Exception as e:
-                template = "An exception of type {0} occured. Arguments:\n{1!r}"
-                message = template.format(type(e).__name__, e.args)
-                if settings.ENV == 'PROD':
-                    mail_admins(u'Erro na thread de gerar infos do documento de fiis', message.decode('utf-8'))
-                elif settings.ENV == 'DEV':
-                    print message
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            if settings.ENV == 'PROD':
+                mail_admins(u'Erro na thread de gerar infos do documento de fiis', message.decode('utf-8'))
+            elif settings.ENV == 'DEV':
+                print message
+        threads_gera_info_rodando.pop()
                 
 class BuscaRendimentosFIIThread(Thread):
     def __init__(self, ticker, antigos, ano_inicial):
@@ -100,8 +104,8 @@ class BuscaRendimentosFIIThread(Thread):
 #             print self.ticker, message
             pass
         # Tenta remover seu código da listagem de threads até conseguir
-        while self.ticker in threads_rodando:
-            del threads_rodando[self.ticker]
+        while self.ticker in threads_busca_doc_rodando:
+            del threads_busca_doc_rodando[self.ticker]
 
 class Command(BaseCommand):
     help = 'Busca rendimentos de FII na Bovespa'
@@ -131,10 +135,12 @@ class Command(BaseCommand):
         for _ in range(6):
             thread_criar_documento = CriarDocumentoThread()
             thread_criar_documento.start()
+            threads_cria_doc_rodando.append(1)
             
         # Prepara thread de geração de info para documento
         thread_gerar_info = GeraInfoDocumentoProtocoloThread()
         thread_gerar_info.start()
+        threads_gera_info_rodando.append(1)
             
         # Quantas threads correrão por vez
         qtd_threads = 8
@@ -146,30 +152,33 @@ class Command(BaseCommand):
             while contador < len(fiis):
                 fii = fiis[contador]
                 t = BuscaRendimentosFIIThread(fii, antigos, ano_inicial)
-                threads_rodando[fii] = 1
+                threads_busca_doc_rodando[fii] = 1
                 t.start()
                 contador += 1
-                while (len(threads_rodando) > qtd_threads):
-#                     print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+                while (len(threads_busca_doc_rodando) > qtd_threads):
+#                     print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_busca_doc_rodando), '... Infos:', len(informacoes_rendimentos), contador
                     time.sleep(3)
-            while (len(threads_rodando) > 1 or len(documentos_para_download) > 0 or len(informacoes_rendimentos) > 0):
-#                 print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
+            while 'Principal' in threads_busca_doc_rodando.keys():
+                del threads_busca_doc_rodando['Principal']
+            while (len(threads_busca_doc_rodando) > 0 or len(threads_gera_info_rodando) > 0 or len(threads_cria_doc_rodando) > 0):
+#                 print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_busca_doc_rodando), '... Infos:', len(informacoes_rendimentos), contador
+#                 print 'threads gera info:', len(threads_gera_info_rodando), '... threads cria doc:', len(threads_cria_doc_rodando)
                 time.sleep(3)
-            while 'Principal' in threads_rodando.keys():
-                del threads_rodando['Principal']
                 
             # Após buscar, tenta ler os proventos com documento estruturado
             for pendencia in PendenciaDocumentoProvento.objects.filter(documento__tipo_documento=DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO,
                                                                    documento__tipo='F').order_by('documento__protocolo'):
                 try:
                     ler_provento_estruturado_fii(pendencia.documento)
+                except KeyboardInterrupt:
+                    raise
                 except:
                     if settings.ENV == 'DEV':
                         print traceback.format_exc()
         except KeyboardInterrupt:
-#             print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_rodando), '... Infos:', len(informacoes_rendimentos), contador
-            while 'Principal' in threads_rodando.keys():
-                del threads_rodando['Principal']
+#             print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_busca_doc_rodando), '... Infos:', len(informacoes_rendimentos), contador
+            while 'Principal' in threads_busca_doc_rodando.keys():
+                del threads_busca_doc_rodando['Principal']
                 time.sleep(3)
 #         print datetime.datetime.now() - inicio
 
