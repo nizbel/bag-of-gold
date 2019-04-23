@@ -201,6 +201,8 @@ class OperacaoCDB_RDB (models.Model):
         if data_venda == None:
             data_venda = datetime.date.today()
         if self.tipo_operacao == 'C':
+            # TODO rodar testes
+            return (self.carencia() <= (data_venda - self.data).days)
             if HistoricoCarenciaCDB_RDB.objects.filter(data__lte=data_venda).exists():
 #             historico = HistoricoCarenciaCDB_RDB.objects.exclude(data=None).filter(data__lte=data_venda).order_by('-data')
 #             if historico:
