@@ -70,6 +70,51 @@ class ValorCDB_RDBAteDiaTestCase(TestCase):
                                             cdb_rdb=rdb, investidor=investidor)
         OperacaoVendaCDB_RDB.objects.create(operacao_compra=OperacaoCDB_RDB.objects.get(investidor=investidor, cdb_rdb=rdb, tipo_operacao='C'), operacao_venda=operacao_venda)
         self.assertAlmostEqual(calcular_valor_venda_cdb_rdb(operacao_venda), Decimal('3030.91'), delta=0.01)
+        
+class VerificarSeVendaPermitidaTestCase(TestCase):
+    """Testa se Operação em CDB/RDB pode ser vendida"""
+    @classmethod
+    def setUpTestData(cls):
+        super(VerificarSeVendaPermitidaTestCase, cls).setUpTestData()
+        
+        # Usuário
+        user = User.objects.create(username='tester')
+        
+        # CDB 1
+        cdb_1 = CDB_RDB.objects.create(nome="CDB Teste", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_PREFIXADO)
+        HistoricoCarenciaCDB_RDB.objects.create(cdb_rdb=cdb_1, carencia=360)
+        
+        # Operações CDB 1
+        cls.operacao_1_cdb_1 = OperacaoCDB_RDB.objects.create(quantidade=Decimal(2000), data=datetime.date.today(), tipo_operacao='C', \
+                                            cdb_rdb=cdb_1, investidor=user.investidor)
+        cls.operacao_2_cdb_1 = OperacaoCDB_RDB.objects.create(quantidade=Decimal(2000), data=datetime.date.today() - datetime.timedelta(days=360), tipo_operacao='C', \
+                                            cdb_rdb=cdb_1, investidor=user.investidor)
+                                            
+        # CDB 2
+        cdb_2 = CDB_RDB.objects.create(nome="CDB Teste", investidor=user.investidor, tipo='C', tipo_rendimento=CDB_RDB.CDB_RDB_PREFIXADO)
+        HistoricoCarenciaCDB_RDB.objects.create(cdb_rdb=cdb_2, carencia=120)
+        
+        # Operações CDB 1
+        cls.operacao_1_cdb_2 = OperacaoCDB_RDB.objects.create(quantidade=Decimal(2000), data=datetime.date.today() - datetime.timedelta(days=100), tipo_operacao='C', \
+                                            cdb_rdb=cdb_2, investidor=user.investidor)
+        cls.operacao_2_cdb_2 = OperacaoCDB_RDB.objects.create(quantidade=Decimal(2000), data=datetime.date.today() - datetime.timedelta(days=360), tipo_operacao='C', \
+                                            cdb_rdb=cdb_2, investidor=user.investidor)
+    
+    def test_venda_permitida_no_dia_da_compra(self):
+        """Testa se operação feita no mesmo dia é dada como não permitida vender"""
+        self.assertFalse(self.operacao_1_cdb_1.venda_permitida())
+        
+    def test_venda_permitida_dia_carencia(self):
+        """Testa se operação é permitida ser vendida exatamente no dia do fim da carência"""
+        self.assertTrue(self.operacao_2_cdb_1.venda_permitida())
+        
+    def test_venda_permitida_antes_carencia(self):
+        """Testa se operação tem venda não permitida antes da carência"""
+        self.assertFalse(self.operacao_1_cdb_2.venda_permitida())
+        
+    def test_venda_permitida_apos_carencia(self):
+        """Testa se operação tem venda permitida após carência"""
+        self.assertTrue(self.operacao_2_cdb_2.venda_permitida())
 
 class CalcularValorCDB_RDBPrefixadoTestCase(TestCase):
     
