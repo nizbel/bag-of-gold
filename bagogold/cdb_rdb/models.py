@@ -201,16 +201,7 @@ class OperacaoCDB_RDB (models.Model):
         if data_venda == None:
             data_venda = datetime.date.today()
         if self.tipo_operacao == 'C':
-            # TODO rodar testes
             return (self.carencia() <= (data_venda - self.data).days)
-            if HistoricoCarenciaCDB_RDB.objects.filter(data__lte=data_venda).exists():
-#             historico = HistoricoCarenciaCDB_RDB.objects.exclude(data=None).filter(data__lte=data_venda).order_by('-data')
-#             if historico:
-                # Verifica o período de carência pegando a data mais recente antes da operação de compra
-                return (HistoricoCarenciaCDB_RDB.objects.filter(data__lte=data_venda).order_by('-data')[0].carencia <= (data_venda - self.data).days)
-            else:
-                carencia = HistoricoCarenciaCDB_RDB.objects.get(cdb_rdb=self.cdb_rdb_id).carencia
-                return (carencia <= (data_venda - self.data).days)
         else:
             return False
     
