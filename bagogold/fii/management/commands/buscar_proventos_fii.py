@@ -24,7 +24,6 @@ if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
 getattr(ssl, '_create_unverified_context', None)):
     ssl._create_default_https_context = ssl._create_unverified_context
 
-
 # A thread 'Principal' indica se ainda está rodando a thread principal
 threads_busca_doc_rodando = {'Principal': 1}
 threads_cria_doc_rodando = list()
