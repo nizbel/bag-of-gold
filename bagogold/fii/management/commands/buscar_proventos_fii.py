@@ -19,6 +19,11 @@ from bagogold.bagogold.utils.gerador_proventos import \
     ler_provento_estruturado_fii
 from bagogold.fii.models import FII
 
+import os, ssl
+if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
+getattr(ssl, '_create_unverified_context', None)):
+    ssl._create_default_https_context = ssl._create_unverified_context
+
 
 # A thread 'Principal' indica se ainda está rodando a thread principal
 threads_rodando = {'Principal': 1}
@@ -37,12 +42,12 @@ class CriarDocumentoThread(Thread):
                 
                 time.sleep(5)
         except Exception as e:
-                template = "An exception of type {0} occured. Arguments:\n{1!r}\nURL: {2}, Empresa: {3}"
-                message = template.format(type(e).__name__, e.args, documento.url, documento.empresa)
-                if settings.ENV == 'PROD':
-                    mail_admins(u'Erro na thread de criar documento de fiis', message.decode('utf-8'))
-                elif settings.ENV == 'DEV':
-                    print message
+            template = "An exception of type {0} occured. Arguments:\n{1!r}\nURL: {2}, Empresa: {3}"
+            message = template.format(type(e).__name__, e.args, documento.url, documento.empresa)
+            if settings.ENV == 'PROD':
+                mail_admins(u'Erro na thread de criar documento de fiis', message.decode('utf-8'))
+            elif settings.ENV == 'DEV':
+                print message
                 
 class GeraInfoDocumentoProtocoloThread(Thread):
     def run(self):
@@ -73,12 +78,12 @@ class GeraInfoDocumentoProtocoloThread(Thread):
                 time.sleep(10)
 #             print list(reversed(sorted(prot, key=lambda tup: tup[0])))
         except Exception as e:
-                template = "An exception of type {0} occured. Arguments:\n{1!r}"
-                message = template.format(type(e).__name__, e.args)
-                if settings.ENV == 'PROD':
-                    mail_admins(u'Erro na thread de gerar infos do documento de fiis', message.decode('utf-8'))
-                elif settings.ENV == 'DEV':
-                    print message
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            if settings.ENV == 'PROD':
+                mail_admins(u'Erro na thread de gerar infos do documento de fiis', message.decode('utf-8'))
+            elif settings.ENV == 'DEV':
+                print message
                 
 class BuscaRendimentosFIIThread(Thread):
     def __init__(self, ticker, antigos, ano_inicial):
@@ -107,7 +112,7 @@ class Command(BaseCommand):
     help = 'Busca rendimentos de FII na Bovespa'
     
     def add_arguments(self, parser):
-        parser.add_argument('--ano_inicial', default=datetime.date.today().year)
+        parser.add_argument('--ano_inicial', default=datetime.date.today().year-1)
         parser.add_argument('--todos', action='store_true')
         parser.add_argument('--antigos', action='store_true')
 
@@ -202,7 +207,7 @@ def buscar_rendimentos_fii_antigos(ticker, num_tentativas):
         info_documentos = re.findall('<a[^>]*?href=\"([^>]*?)\"[^>]*?>Distribuiç.*?<span.*?>(.*?)</span>.*?</tr>', string_importante,flags=re.IGNORECASE|re.MULTILINE|re.DOTALL)
         info_documentos += re.findall('<a[^>]*?href=\"([^>]*?)\"[^>]*?>Amortizaç.*?<span.*?>(.*?)</span>.*?</tr>', string_importante,flags=re.IGNORECASE|re.MULTILINE|re.DOTALL)
 #         print len(urls)
-        for index, info in enumerate(reversed(info_documentos)):
+        for _, info in enumerate(reversed(info_documentos)):
             data_hora = datetime.datetime.strptime(info[0].split('strData=')[1], "%Y-%m-%dT%H:%M:%S.%f") 
             qtd_dias = (data_hora.date() - datetime.date(2010, 1, 1)).days
             qtd_mili = qtd_dias * 24 * 3600 * 1000 + data_hora.hour * 3600 * 1000 + data_hora.minute * 60 * 1000 \
