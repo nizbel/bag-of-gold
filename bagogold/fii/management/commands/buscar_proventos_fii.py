@@ -20,6 +20,11 @@ from bagogold.bagogold.utils.gerador_proventos import \
 from bagogold.fii.models import FII
 
 
+import os, ssl
+if (not os.environ.get('PYTHONHTTPSVERIFY', '') and
+getattr(ssl, '_create_unverified_context', None)):
+    ssl._create_default_https_context = ssl._create_unverified_context
+
 # A thread 'Principal' indica se ainda está rodando a thread principal
 threads_busca_doc_rodando = {'Principal': 1}
 threads_cria_doc_rodando = list()
@@ -111,7 +116,7 @@ class Command(BaseCommand):
     help = 'Busca rendimentos de FII na Bovespa'
     
     def add_arguments(self, parser):
-        parser.add_argument('--ano_inicial', default=datetime.date.today().year)
+        parser.add_argument('--ano_inicial', default=datetime.date.today().year-1)
         parser.add_argument('--todos', action='store_true')
         parser.add_argument('--antigos', action='store_true')
 
@@ -211,7 +216,7 @@ def buscar_rendimentos_fii_antigos(ticker, num_tentativas):
         info_documentos = re.findall('<a[^>]*?href=\"([^>]*?)\"[^>]*?>Distribuiç.*?<span.*?>(.*?)</span>.*?</tr>', string_importante,flags=re.IGNORECASE|re.MULTILINE|re.DOTALL)
         info_documentos += re.findall('<a[^>]*?href=\"([^>]*?)\"[^>]*?>Amortizaç.*?<span.*?>(.*?)</span>.*?</tr>', string_importante,flags=re.IGNORECASE|re.MULTILINE|re.DOTALL)
 #         print len(urls)
-        for index, info in enumerate(reversed(info_documentos)):
+        for _, info in enumerate(reversed(info_documentos)):
             data_hora = datetime.datetime.strptime(info[0].split('strData=')[1], "%Y-%m-%dT%H:%M:%S.%f") 
             qtd_dias = (data_hora.date() - datetime.date(2010, 1, 1)).days
             qtd_mili = qtd_dias * 24 * 3600 * 1000 + data_hora.hour * 3600 * 1000 + data_hora.minute * 60 * 1000 \
