@@ -58,6 +58,7 @@ class GeraInfoDocumentoProtocoloThread(Thread):
             while len(threads_busca_doc_rodando) > 0 or len(informacoes_rendimentos) > 0:
                 while len(informacoes_rendimentos) > 0:
                     info = informacoes_rendimentos.pop(0)
+                    print info
                     ticker = info['ticker']
                     url = info['url']
                     data_referencia = info['data_ref']
@@ -101,11 +102,12 @@ class BuscaRendimentosFIIThread(Thread):
                 buscar_rendimentos_fii_antigos(self.ticker, 0)
             if self.ano_inicial != 0:
                 for ano in range(self.ano_inicial, datetime.date.today().year + 1):
+                    print ano
                     buscar_rendimentos_fii(self.ticker, ano, 0)
         except Exception as e:
-#             template = "An exception of type {0} occured. Arguments:\n{1!r}"
-#             message = template.format(type(e).__name__, e.args)
-#             print self.ticker, message
+            template = "An exception of type {0} occured. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            print self.ticker, message
             pass
         # Tenta remover seu código da listagem de threads até conseguir
         while self.ticker in threads_busca_doc_rodando:
@@ -149,8 +151,8 @@ class Command(BaseCommand):
         # Quantas threads correrão por vez
         qtd_threads = 8
         
-#         fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.filter(ticker='RBRF11')]).values_list('codigo_cvm', flat=True)
-        fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.all()]).values_list('codigo_cvm', flat=True)
+        fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.filter(ticker='BBPO11')]).values_list('codigo_cvm', flat=True)
+#         fiis = Empresa.objects.filter(codigo_cvm__in=[fii.ticker[:4] for fii in FII.objects.all()]).values_list('codigo_cvm', flat=True)
         contador = 0
         try:
             while contador < len(fiis):
@@ -160,27 +162,27 @@ class Command(BaseCommand):
                 t.start()
                 contador += 1
                 while (len(threads_busca_doc_rodando) > qtd_threads):
-#                     print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_busca_doc_rodando), '... Infos:', len(informacoes_rendimentos), contador
+                    print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_busca_doc_rodando), '... Infos:', len(informacoes_rendimentos), contador
                     time.sleep(3)
             while 'Principal' in threads_busca_doc_rodando.keys():
                 del threads_busca_doc_rodando['Principal']
             while (len(threads_busca_doc_rodando) > 0 or len(threads_gera_info_rodando) > 0 or len(threads_cria_doc_rodando) > 0):
-#                 print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_busca_doc_rodando), '... Infos:', len(informacoes_rendimentos), contador
-#                 print 'threads gera info:', len(threads_gera_info_rodando), '... threads cria doc:', len(threads_cria_doc_rodando)
+                print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_busca_doc_rodando), '... Infos:', len(informacoes_rendimentos), contador
+                print 'threads gera info:', len(threads_gera_info_rodando), '... threads cria doc:', len(threads_cria_doc_rodando)
                 time.sleep(3)
                 
             # Após buscar, tenta ler os proventos com documento estruturado
-            for pendencia in PendenciaDocumentoProvento.objects.filter(documento__tipo_documento=DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO,
-                                                                   documento__tipo='F').order_by('documento__protocolo'):
-                try:
-                    ler_provento_estruturado_fii(pendencia.documento)
-                except KeyboardInterrupt:
-                    raise
-                except:
-                    if settings.ENV == 'DEV':
-                        print traceback.format_exc()
+#             for pendencia in PendenciaDocumentoProvento.objects.filter(documento__tipo_documento=DocumentoProventoBovespa.TIPO_DOCUMENTO_AVISO_COTISTAS_ESTRUTURADO,
+#                                                                    documento__tipo='F').order_by('documento__protocolo'):
+#                 try:
+#                     ler_provento_estruturado_fii(pendencia.documento)
+#                 except KeyboardInterrupt:
+#                     raise
+#                 except:
+#                     if settings.ENV == 'DEV':
+#                         print traceback.format_exc()
         except KeyboardInterrupt:
-#             print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_busca_doc_rodando), '... Infos:', len(informacoes_rendimentos), contador
+            print 'Documentos para download:', len(documentos_para_download), '... Threads:', len(threads_busca_doc_rodando), '... Infos:', len(informacoes_rendimentos), contador
             while 'Principal' in threads_busca_doc_rodando.keys():
                 del threads_busca_doc_rodando['Principal']
                 time.sleep(3)
@@ -244,29 +246,36 @@ def buscar_rendimentos_fii(ticker, ano, num_tentativas):
             br.find_control("ctl00$contentPlaceHolderConteudo$ucInformacoesRelevantes$btnBuscar").disabled = True
         except:
             pass
-        br.find_control(id='ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_cmbAno').value = [str(ano)]
+        br.find_control('ctl00$contentPlaceHolderConteudo$ucInformacoesRelevantes$cmbAno').value = [str(ano)]
         br["__EVENTARGUMENT"] = ''
         br['__EVENTTARGET'] = 'ctl00$contentPlaceHolderConteudo$ucInformacoesRelevantes$lkbCategoriaTodas'
         response = br.submit()
         
         html = response.read()
     except ControlNotFoundError:
+        print 'controles', num_tentativas
         if num_tentativas == 3:
             raise ValueError(u'Não encontrou os controles')
         return buscar_rendimentos_fii(ticker, ano, num_tentativas+1)
     
     if 'Sistema indisponivel' in html:
+        print 'sistema indisponivel', num_tentativas
         if num_tentativas == 3:
             raise ValueError(u'O sistema está indisponível')
         return buscar_rendimentos_fii(ticker, ano, num_tentativas+1)
     
     inicio = html.find('<div id="ctl00_contentPlaceHolderConteudo_ucInformacoesRelevantes_conteudoDetalhes">')
+    if inicio == -1:
+        print html
+    else:
+        print inicio
+    
     fim = html.find('<script', inicio)
     string_importante = (html[inicio:fim])
     
     infos = re.findall('Data Referência:.*?(\d{2}/\d{2}/\d{4}).*?<tr><td>Assunto:</td><td>[^<]*(?:Distribuiç|Rendimento|Amortizaç)[^<]*</td></tr>.*?<a href=\"(https://fnet.bmfbovespa.com.br/fnet/publico/downloadDocumento\?id=[\d]*?)\">(.*?)</a>', string_importante,flags=re.IGNORECASE|re.DOTALL)
     
     for info in infos:
-#         print info, ticker
+        print info, ticker
         informacoes_rendimentos.append({'url': info[1], 'data_ref': info[0], 'ticker': ticker, 'tipo': info[2], 'protocolo': info[1].split('id=')[1]})
     

@@ -1,0 +1,21 @@
+/.git/
+/backup-*
+/ultimo_backup-*
+/doc proventos/
+/backups/teste-*
+/templates/teste/
+/apache-conf/
+/node_modules/
+/.project
+/.pydevproject
+/.settings/
+/.vscode*
+*.pyc
+*.orig
+/COTAHIST_A.tar.gz
+/conf/
+*~
+/backups.tar.gz
+/output_pylint.txt
+/output_test.txt
+/version
